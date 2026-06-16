@@ -58,7 +58,7 @@ const providers = [
   { id: "p10", name: "Nina Patel", avatar: "https://i.pravatar.cc/200?img=44", verified: true, location: "Atlanta, GA", bio: "Friendly, fast, and fully insured. Book with confidence." },
 ];
 
-const raw: Array<Omit<Service, "id" | "slug" | "provider" | "gallery"> & { providerIdx: number; imageId: string; galleryIds: string[] }> = [
+const raw: Array<Omit<Service, "id" | "slug" | "provider" | "gallery" | "image"> & { providerIdx: number; imageId: string; galleryIds: string[] }> = [
   // Creative & Design
   { title: "Professional Photographer", category: "Creative & Design", categorySlug: "creative-design", description: "Event, portrait, and product photography by award-winning shooters.", longDescription: "Capture the moments that matter with a pro photographer who handles everything from lighting and direction to editing and delivery of high-resolution images.", price: 180, rating: 4.9, reviewCount: 412, providerIdx: 0, imageId: "photo-1554048612-b6a482bc67e5", galleryIds: ["photo-1542038784456-1ea8e935640e", "photo-1452587925148-ce544e77e70d", "photo-1606983340126-99ab4feaa64a"] },
   { title: "Graphic Designer", category: "Creative & Design", categorySlug: "creative-design", description: "Logos, brand kits, social media assets — concept to delivery.", longDescription: "Work 1-on-1 with a senior designer to craft a visual identity that fits your brand. Includes concepts, revisions, and source files.", price: 95, rating: 4.8, reviewCount: 287, providerIdx: 1, imageId: "photo-1561070791-2526d30994b8", galleryIds: ["photo-1626785774573-4b799315345d", "photo-1611532736597-de2d4265fba3"] },
