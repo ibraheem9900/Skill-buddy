@@ -14,6 +14,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as JobsRouteImport } from './routes/jobs'
+import { Route as FaqsRouteImport } from './routes/faqs'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -51,6 +53,16 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqsRoute = FaqsRouteImport.update({
+  id: '/faqs',
+  path: '/faqs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -129,6 +141,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -149,6 +163,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -170,6 +186,8 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -192,6 +210,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -212,6 +232,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -232,6 +254,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -253,6 +277,8 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
+  FaqsRoute: typeof FaqsRoute
+  JobsRoute: typeof JobsRoute
   NotificationsRoute: typeof NotificationsRoute
   PrivacyRoute: typeof PrivacyRoute
   ServicesRoute: typeof ServicesRouteWithChildren
@@ -298,6 +324,20 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faqs': {
+      id: '/faqs'
+      path: '/faqs'
+      fullPath: '/faqs'
+      preLoaderRoute: typeof FaqsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -416,6 +456,8 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
+  FaqsRoute: FaqsRoute,
+  JobsRoute: JobsRoute,
   NotificationsRoute: NotificationsRoute,
   PrivacyRoute: PrivacyRoute,
   ServicesRoute: ServicesRouteWithChildren,

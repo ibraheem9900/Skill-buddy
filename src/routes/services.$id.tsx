@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Star, MapPin, Play, BadgeCheck, Heart, Share2, ArrowLeft } from "lucide-react";
+import { Star, MapPin, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList } from "lucide-react";
 import { useState } from "react";
-import { DownloadAppModal } from "@/components/download-app-modal";
+import { QRDownloadModal } from "@/components/qr-download-modal";
 import { ServiceCard } from "@/components/service-card";
 
 export const Route = createFileRoute("/services/$id")({
@@ -68,7 +68,6 @@ function ServiceDetail() {
                 <Play className="h-7 w-7 translate-x-0.5 fill-current" />
               </button>
               <div className="absolute right-4 top-4 flex gap-2">
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur"><Heart className="h-4 w-4" /></button>
                 <button className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur"><Share2 className="h-4 w-4" /></button>
               </div>
             </div>
@@ -172,44 +171,65 @@ function ServiceDetail() {
             </div>
           </div>
 
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-elegant">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Starting at</div>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="font-mono text-4xl font-extrabold">${service.price}</span>
+                <span className="font-mono text-4xl font-extrabold text-primary">${service.price}</span>
                 <span className="text-sm text-muted-foreground">/booking</span>
               </div>
-              <Button onClick={() => setOpen(true)} size="lg" className="mt-6 h-12 w-full shadow-elegant">Book Now</Button>
-              <p className="mt-3 text-center text-xs text-muted-foreground">Free cancellation up to 24h before</p>
+              <Button onClick={() => setOpen(true)} size="lg" className="mt-6 h-12 w-full gap-2 shadow-elegant">
+                <ClipboardList className="h-5 w-5" /> Post a Job
+              </Button>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Get bids from verified pros within minutes.
+              </p>
               <div className="mt-6 grid grid-cols-2 gap-3 text-center text-xs">
                 <div className="rounded-xl bg-surface p-3"><div className="font-bold">100%</div><div className="text-muted-foreground">Money-back</div></div>
                 <div className="rounded-xl bg-surface p-3"><div className="font-bold">24/7</div><div className="text-muted-foreground">Support</div></div>
               </div>
             </div>
+
+            {related.length > 0 && (
+              <div className="rounded-3xl border border-border bg-card p-4">
+                <h3 className="px-2 pb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                  More in {service.category}
+                </h3>
+                <div className="space-y-2">
+                  {related.map((r) => (
+                    <Link
+                      key={r.id}
+                      to="/services/$id"
+                      params={{ id: r.slug }}
+                      className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-accent"
+                    >
+                      <img src={r.image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <div className="line-clamp-1 text-sm font-semibold">{r.title}</div>
+                        <div className="font-mono text-xs text-primary">${r.price}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
-
-        {related.length > 0 && (
-          <div className="mt-16">
-            <h2 className="mb-6 text-2xl font-extrabold">Similar services</h2>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
-              {related.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs text-muted-foreground">Total</div>
-            <div className="font-mono text-xl font-bold">${service.price}</div>
+            <div className="text-xs text-muted-foreground">From</div>
+            <div className="font-mono text-xl font-bold text-primary">${service.price}</div>
           </div>
-          <Button onClick={() => setOpen(true)} size="lg" className="flex-1">Book Now</Button>
+          <Button onClick={() => setOpen(true)} size="lg" className="flex-1 gap-2">
+            <ClipboardList className="h-5 w-5" /> Post a Job
+          </Button>
         </div>
       </div>
 
-      <DownloadAppModal open={open} onOpenChange={setOpen} />
+      <QRDownloadModal open={open} onOpenChange={setOpen} />
     </SiteShell>
   );
 }
