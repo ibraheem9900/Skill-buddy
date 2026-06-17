@@ -14,7 +14,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as FaqRouteImport } from './routes/faq'
+import { Route as JobsRouteImport } from './routes/jobs'
+import { Route as FaqsRouteImport } from './routes/faqs'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -53,9 +54,14 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqsRoute = FaqsRouteImport.update({
+  id: '/faqs',
+  path: '/faqs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -128,7 +134,8 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -148,7 +155,8 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -169,7 +177,8 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
+  '/faqs': typeof FaqsRoute
+  '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRouteWithChildren
@@ -191,7 +200,8 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -211,7 +221,8 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -231,7 +242,8 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
+    | '/faqs'
+    | '/jobs'
     | '/notifications'
     | '/privacy'
     | '/services'
@@ -252,7 +264,8 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
-  FaqRoute: typeof FaqRoute
+  FaqsRoute: typeof FaqsRoute
+  JobsRoute: typeof JobsRoute
   NotificationsRoute: typeof NotificationsRoute
   PrivacyRoute: typeof PrivacyRoute
   ServicesRoute: typeof ServicesRouteWithChildren
@@ -300,11 +313,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faqs': {
+      id: '/faqs'
+      path: '/faqs'
+      fullPath: '/faqs'
+      preLoaderRoute: typeof FaqsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -415,7 +435,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
-  FaqRoute: FaqRoute,
+  FaqsRoute: FaqsRoute,
+  JobsRoute: JobsRoute,
   NotificationsRoute: NotificationsRoute,
   PrivacyRoute: PrivacyRoute,
   ServicesRoute: ServicesRouteWithChildren,
@@ -428,13 +449,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

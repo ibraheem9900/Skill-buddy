@@ -33,9 +33,10 @@ export function Footer() {
         <FooterCol title="Top Services" links={CATEGORIES.slice(0, 6).map((c) => ({ to: "/services", label: c.name, search: { category: c.slug } }))} />
         <FooterCol title="Company" links={[
           { to: "/about", label: "About Us" },
-          { to: "/become-a-provider", label: "Become a Pro" },
-          { to: "/contact", label: "Contact" },
-          { to: "/faq", label: "FAQ" },
+          { to: "/jobs", label: "Jobs" },
+          { to: "/become-a-provider", label: "Become a SkillBuddy" },
+          { to: "/contact", label: "Contact Us" },
+          { to: "/faqs", label: "FAQs" },
         ]} />
         <FooterCol title="Legal" links={[
           { to: "/terms", label: "Terms" },
