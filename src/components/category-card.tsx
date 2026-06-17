@@ -6,7 +6,9 @@ import type { CategoryDef, AnimKind } from "@/lib/categories";
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
-const animVariants: Record<AnimKind, { hover: object; transition?: object }> = {
+import type { TargetAndTransition, Transition } from "framer-motion";
+
+const animVariants: Record<AnimKind, { hover: TargetAndTransition; transition?: Transition }> = {
   sweep:  { hover: { rotate: [0, -18, 18, -10, 10, 0] }, transition: { duration: 0.8 } },
   walk:   { hover: { x: [0, 6, 0, 6, 0] }, transition: { duration: 0.7 } },
   drive:  { hover: { x: [0, 10, -2, 0] }, transition: { duration: 0.6 } },
