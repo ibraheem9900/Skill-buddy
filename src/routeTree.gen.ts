@@ -16,7 +16,6 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as FaqsRouteImport } from './routes/faqs'
-import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -63,11 +62,6 @@ const JobsRoute = JobsRouteImport.update({
 const FaqsRoute = FaqsRouteImport.update({
   id: '/faqs',
   path: '/faqs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -140,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
   '/faqs': typeof FaqsRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
@@ -162,7 +155,6 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
   '/faqs': typeof FaqsRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
@@ -185,7 +177,6 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
-  '/faq': typeof FaqRoute
   '/faqs': typeof FaqsRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
@@ -209,7 +200,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
     | '/faqs'
     | '/jobs'
     | '/notifications'
@@ -231,7 +221,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
     | '/faqs'
     | '/jobs'
     | '/notifications'
@@ -253,7 +242,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/explore'
-    | '/faq'
     | '/faqs'
     | '/jobs'
     | '/notifications'
@@ -276,7 +264,6 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
-  FaqRoute: typeof FaqRoute
   FaqsRoute: typeof FaqsRoute
   JobsRoute: typeof JobsRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -338,13 +325,6 @@ declare module '@tanstack/react-router' {
       path: '/faqs'
       fullPath: '/faqs'
       preLoaderRoute: typeof FaqsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -455,7 +435,6 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
-  FaqRoute: FaqRoute,
   FaqsRoute: FaqsRoute,
   JobsRoute: JobsRoute,
   NotificationsRoute: NotificationsRoute,
