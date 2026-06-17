@@ -2,7 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { CATEGORIES, getServicesByCategory } from "@/lib/data";
 import * as Icons from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import { motion } from "framer-motion";
+
+type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
 export const Route = createFileRoute("/categories")({
   head: () => ({ meta: [{ title: "Categories — SkillBuddy" }, { name: "description", content: "Browse all 11 service categories on SkillBuddy." }] }),
@@ -19,7 +22,7 @@ function CategoriesPage() {
         </div>
         <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
           {CATEGORIES.map((c, i) => {
-            const Icon = (Icons as never)[c.icon] ?? Icons.Sparkles;
+            const Icon = ((Icons as unknown as Record<string, IconCmp>)[c.icon] ?? Icons.Sparkles) as IconCmp;
             const count = getServicesByCategory(c.slug).length;
             return (
               <motion.div key={c.slug} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}>
