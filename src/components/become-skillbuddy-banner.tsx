@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export function BecomeSkillBuddyBanner() {
+  const { t } = useI18n();
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-emerald-600 to-teal-500 p-8 text-primary-foreground shadow-elegant sm:p-12">
@@ -24,16 +26,12 @@ export function BecomeSkillBuddyBanner() {
         <div className="relative grid gap-6 md:grid-cols-[1.4fr_auto] md:items-center">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" /> Earn on your terms
+              <Sparkles className="h-3.5 w-3.5" /> {t("banner.title")}
             </div>
             <h2 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl md:text-4xl">
-              Are you a skilled professional?
-              <br className="hidden sm:block" />
-              Join SkillBuddy and start earning today.
+              {t("banner.title")}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm opacity-90 sm:text-base">
-              Set your own rates, choose your jobs, and grow your client base across the Baltics.
-            </p>
+            <p className="mt-3 max-w-2xl text-sm opacity-90 sm:text-base">{t("banner.sub")}</p>
           </div>
           <motion.div
             animate={{ boxShadow: ["0 0 0 0 rgba(255,255,255,0.5)", "0 0 0 14px rgba(255,255,255,0)"] }}
@@ -44,7 +42,7 @@ export function BecomeSkillBuddyBanner() {
               to="/become-a-provider"
               className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-base font-bold text-primary transition hover:scale-105"
             >
-              Become a SkillBuddy <ArrowRight className="h-5 w-5" />
+              {t("banner.cta")} <ArrowRight className="h-5 w-5" />
             </Link>
           </motion.div>
         </div>
