@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { Smartphone } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -13,6 +14,7 @@ const ANDROID_URL = "https://play.google.com/store/apps/details?id=com.skillbudd
 const IOS_URL = "https://apps.apple.com/app/skillbuddy/id000000000";
 
 export function QRDownloadModal({ open, onOpenChange, title, message }: Props) {
+  const { t } = useI18n();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-border p-0 overflow-hidden">
@@ -20,14 +22,12 @@ export function QRDownloadModal({ open, onOpenChange, title, message }: Props) {
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary shadow-elegant">
             <Smartphone className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h2 className="font-display text-2xl font-extrabold">{title ?? "📱 Book via the SkillBuddy App"}</h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            {message ?? "To post a job and receive bids from verified professionals, please download the SkillBuddy app."}
-          </p>
+          <h2 className="font-display text-2xl font-extrabold">📱 {title ?? t("qr.title")}</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{message ?? t("qr.message")}</p>
         </div>
         <div className="grid grid-cols-2 gap-4 p-6">
-          <QRBlock label="Android" sublabel="Google Play" url={ANDROID_URL} />
-          <QRBlock label="iOS" sublabel="App Store" url={IOS_URL} />
+          <QRBlock label={t("common.android")} sublabel={t("common.googlePlay")} url={ANDROID_URL} />
+          <QRBlock label={t("common.ios")} sublabel={t("common.appStore")} url={IOS_URL} />
         </div>
       </DialogContent>
     </Dialog>

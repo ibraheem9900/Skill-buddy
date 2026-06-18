@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Star, X } from "lucide-react";
+import { Search, SlidersHorizontal, Star, X, ArrowRight } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { z } from "zod";
@@ -8,11 +8,12 @@ import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { SiteShell } from "@/components/site-shell";
 import { ServiceCard } from "@/components/service-card";
 import { CATEGORIES_FULL } from "@/lib/categories";
-import { SERVICES } from "@/lib/data";
+import { CATEGORIES, SERVICES } from "@/lib/data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useI18n } from "@/lib/i18n";
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
@@ -35,7 +36,23 @@ export const Route = createFileRoute("/services")({
   component: ServicesPage,
 });
 
+// Main category icons mapped to lucide
+const MAIN_CATEGORY_ICONS: Record<string, string> = {
+  "creative-design": "Palette",
+  "pet-care": "PawPrint",
+  "beauty-personal": "Sparkles",
+  "health-wellness": "HeartPulse",
+  "home-property": "Home",
+  "household-assistance": "Users",
+  "education-training": "GraduationCap",
+  "event-party": "PartyPopper",
+  "business-pro": "Briefcase",
+  "travel-transport": "Plane",
+  "repair-custom": "Wrench",
+};
+
 function ServicesPage() {
+  const { t } = useI18n();
   const search = Route.useSearch();
   const [cat, setCat] = useState<string | undefined>(search.category);
   const [q, setQ] = useState(search.q ?? "");
@@ -44,14 +61,8 @@ function ServicesPage() {
   const [minRating, setMinRating] = useState(0);
 
   const filtered = useMemo(() => {
-    // map our category slug → service.categorySlug guesses via name match
     let r = SERVICES.filter((s) => {
-      if (cat) {
-        const catDef = CATEGORIES_FULL.find((c) => c.slug === cat);
-        if (catDef && !s.title.toLowerCase().includes(catDef.name.toLowerCase().split(" ")[0]) && !s.category.toLowerCase().includes(catDef.name.toLowerCase().split(" ")[0])) {
-          return false;
-        }
-      }
+      if (cat && s.categorySlug !== cat) return false;
       if (s.price < price[0] || s.price > price[1]) return false;
       if (s.rating < minRating) return false;
       if (q && !s.title.toLowerCase().includes(q.toLowerCase()) && !s.description.toLowerCase().includes(q.toLowerCase())) return false;
@@ -64,38 +75,60 @@ function ServicesPage() {
     return r;
   }, [cat, q, sort, price, minRating]);
 
-  const activeCat = CATEGORIES_FULL.find((c) => c.slug === cat);
+  const activeCat = CATEGORIES.find((c) => c.slug === cat);
 
   return (
     <SiteShell>
+      {/* Top category bar */}
+      <div className="border-b border-border bg-card">
+        <div className="mx-auto max-w-7xl px-2 sm:px-4">
+          <div className="flex gap-3 overflow-x-auto py-4 sm:gap-4">
+            <CategoryPill
+              icon="LayoutGrid"
+              name={t("services.allCategories")}
+              active={!cat}
+              onClick={() => setCat(undefined)}
+            />
+            {CATEGORIES.map((c) => (
+              <CategoryPill
+                key={c.slug}
+                icon={MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles"}
+                name={c.name}
+                active={cat === c.slug}
+                onClick={() => setCat(c.slug)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="border-b border-border bg-surface/30">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-            {activeCat ? activeCat.name : "Browse all services"}
+            {activeCat ? activeCat.name : t("services.browseAll")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {activeCat ? activeCat.description : `Find the right pro from ${SERVICES.length}+ trusted services.`}
+            {activeCat ? activeCat.description : `${SERVICES.length}+ ${t("services.results")}`}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search services..." className="h-12 pl-10" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("services.search")} className="h-12 pl-10" />
             </div>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
               className="h-12 rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="popular">Most popular</option>
-              <option value="rating">Highest rated</option>
-              <option value="price-asc">Price: low to high</option>
-              <option value="price-desc">Price: high to low</option>
+              <option value="popular">{t("services.sortPopular")}</option>
+              <option value="rating">{t("services.sortRating")}</option>
+              <option value="price-asc">{t("services.sortPriceAsc")}</option>
+              <option value="price-desc">{t("services.sortPriceDesc")}</option>
             </select>
-            {/* Mobile filter sheet */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" className="h-12 lg:hidden">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" /> Filters
+                  <SlidersHorizontal className="mr-2 h-4 w-4" /> {t("services.filters")}
                 </Button>
               </SheetTrigger>
               <SheetContent side="bottom" className="rounded-t-3xl p-0">
@@ -111,42 +144,22 @@ function ServicesPage() {
       </div>
 
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[260px_1fr]">
+        {/* Desktop filter sidebar */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 rounded-2xl border border-border bg-card p-4">
-            <h3 className="mb-3 px-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">Categories</h3>
-            <button
-              onClick={() => setCat(undefined)}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                !cat ? "bg-primary text-primary-foreground" : "hover:bg-accent"
-              }`}
-            >
-              All categories
-            </button>
-            <div className="mt-1 max-h-[60vh] space-y-0.5 overflow-y-auto pr-1">
-              {CATEGORIES_FULL.map((c) => {
-                const Icon = ((Icons as unknown as Record<string, IconCmp>)[c.icon] ?? Icons.Sparkles) as IconCmp;
-                const active = cat === c.slug;
-                return (
-                  <button
-                    key={c.slug}
-                    onClick={() => setCat(c.slug)}
-                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                      active ? "bg-primary text-primary-foreground" : "hover:bg-accent"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="line-clamp-1">{c.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <FilterPanel
+              embedded
+              price={price} setPrice={setPrice}
+              minRating={minRating} setMinRating={setMinRating}
+              onReset={() => { setPrice([0, 1500]); setMinRating(0); }}
+            />
           </div>
         </aside>
 
         <div>
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <p className="text-sm text-muted-foreground">
-              <span className="font-mono font-bold text-foreground">{filtered.length}</span> results
+              <span className="font-mono font-bold text-foreground">{filtered.length}</span> {t("services.results")}
             </p>
             {activeCat && (
               <button
@@ -159,38 +172,77 @@ function ServicesPage() {
           </div>
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-12 text-center">
-              <p className="text-muted-foreground">No services match your filters.</p>
-              <Button asChild variant="link"><Link to="/services">Reset</Link></Button>
+              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <Search className="h-7 w-7" />
+              </div>
+              <h3 className="font-display text-xl font-bold">{t("services.noResults")}</h3>
+              <p className="mt-2 text-muted-foreground">{t("services.cantFind")}</p>
+              <div className="mt-5 flex justify-center gap-2">
+                <Button asChild variant="outline"><Link to="/contact">{t("services.contactUs")}</Link></Button>
+                <Button onClick={() => { setQ(""); setCat(undefined); setMinRating(0); setPrice([0, 1500]); }}>
+                  {t("common.reset")}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
               {filtered.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
             </div>
           )}
+
+          {/* Request a Quote CTA */}
+          <div className="mt-12 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center">
+            <h3 className="font-display text-2xl font-extrabold">{t("sec.requestCustom")}</h3>
+            <p className="mt-2 text-muted-foreground">{t("sec.requestCustomSub")}</p>
+            <Button asChild variant="outline" className="mt-5 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+              <Link to="/contact">{t("common.requestQuote")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </div>
         </div>
       </div>
     </SiteShell>
   );
 }
 
+function CategoryPill({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
+  const Icon = ((Icons as unknown as Record<string, IconCmp>)[icon] ?? Icons.Sparkles) as IconCmp;
+  return (
+    <button
+      onClick={onClick}
+      className="group flex shrink-0 flex-col items-center gap-2 px-2 transition"
+    >
+      <div className={`grid h-14 w-14 place-items-center rounded-full transition ${
+        active ? "bg-primary text-primary-foreground shadow-elegant" : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+      }`}>
+        <Icon className="h-6 w-6" />
+      </div>
+      <span className={`whitespace-nowrap text-xs font-medium ${active ? "text-primary" : "text-foreground/80 group-hover:text-primary"}`}>
+        {name}
+      </span>
+    </button>
+  );
+}
+
 function FilterPanel({
-  price, setPrice, minRating, setMinRating, onReset,
+  price, setPrice, minRating, setMinRating, onReset, embedded,
 }: {
   price: [number, number];
   setPrice: (v: [number, number]) => void;
   minRating: number;
   setMinRating: (n: number) => void;
   onReset: () => void;
+  embedded?: boolean;
 }) {
+  const { t } = useI18n();
   return (
-    <div className="flex max-h-[80vh] flex-col">
-      <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted-foreground/30" />
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
-        <h3 className="font-display text-lg font-bold">Filters</h3>
+    <div className={`flex flex-col ${embedded ? "" : "max-h-[80vh]"}`}>
+      {!embedded && <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted-foreground/30" />}
+      <div className={`flex-1 space-y-6 ${embedded ? "" : "overflow-y-auto p-6"}`}>
+        <h3 className="font-display text-lg font-bold">{t("services.filters")}</h3>
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <label className="text-sm font-semibold">Price range</label>
-            <span className="font-mono text-sm font-bold text-primary">${price[0]} — ${price[1]}</span>
+            <label className="text-sm font-semibold">{t("services.priceRange")}</label>
+            <span className="font-mono text-sm font-bold text-primary">€{price[0]} — €{price[1]}</span>
           </div>
           <Slider
             min={0} max={1500} step={10}
@@ -200,27 +252,27 @@ function FilterPanel({
           />
         </div>
         <div>
-          <label className="mb-3 block text-sm font-semibold">Minimum rating</label>
+          <label className="mb-3 block text-sm font-semibold">{t("services.minRating")}</label>
           <div className="grid grid-cols-4 gap-2">
             {[0, 4, 4.5, 4.8].map((r) => (
               <button
                 key={r}
                 onClick={() => setMinRating(r)}
-                className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-3 text-sm font-medium transition ${
+                className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition ${
                   minRating === r
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-card hover:bg-accent"
                 }`}
               >
-                <Star className="h-3.5 w-3.5 fill-current" />{r === 0 ? "Any" : `${r}+`}
+                <Star className="h-3 w-3 fill-current" />{r === 0 ? t("services.any") : `${r}+`}
               </button>
             ))}
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 grid grid-cols-2 gap-3 border-t border-border bg-card p-4">
-        <Button variant="outline" onClick={onReset}>Reset</Button>
-        <Button>Apply</Button>
+      <div className={`grid grid-cols-2 gap-3 ${embedded ? "pt-4" : "sticky bottom-0 border-t border-border bg-card p-4"}`}>
+        <Button variant="outline" onClick={onReset}>{t("common.reset")}</Button>
+        <Button>{t("common.apply")}</Button>
       </div>
     </div>
   );

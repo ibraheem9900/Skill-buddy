@@ -174,9 +174,9 @@ function ServiceDetail() {
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-elegant">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Starting at</div>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="font-mono text-4xl font-extrabold text-primary">${service.price}</span>
-                <span className="text-sm text-muted-foreground">/booking</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="font-mono text-4xl font-extrabold text-primary">€{service.price}</span>
+                <span className="font-mono text-sm text-muted-foreground">· {service.price * 10} pts</span>
               </div>
               <Button onClick={() => setOpen(true)} size="lg" className="mt-6 h-12 w-full gap-2 shadow-elegant">
                 <ClipboardList className="h-5 w-5" /> Post a Job
@@ -206,7 +206,7 @@ function ServiceDetail() {
                       <img src={r.image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
                         <div className="line-clamp-1 text-sm font-semibold">{r.title}</div>
-                        <div className="font-mono text-xs text-primary">${r.price}</div>
+                        <div className="font-mono text-xs text-primary">€{r.price} · {r.price * 10} pts</div>
                       </div>
                     </Link>
                   ))}
@@ -220,8 +220,9 @@ function ServiceDetail() {
       <div className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs text-muted-foreground">From</div>
-            <div className="font-mono text-xl font-bold text-primary">${service.price}</div>
+            <div className="text-xs text-muted-foreground">Total Price</div>
+            <div className="font-mono text-xl font-bold text-primary">€{service.price}</div>
+            <div className="font-mono text-[10px] text-muted-foreground">{service.price * 10} pts</div>
           </div>
           <Button onClick={() => setOpen(true)} size="lg" className="flex-1 gap-2">
             <ClipboardList className="h-5 w-5" /> Post a Job
