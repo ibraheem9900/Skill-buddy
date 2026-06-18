@@ -46,6 +46,7 @@ const en: Dict = {
   "step.5.title": "Job Done", "step.5.desc": "Pay securely after the job is finished.",
   // Services page
   "services.browseAll": "Browse all services",
+  "services.findRight": "Find the right professional for any job",
   "services.search": "Search services...",
   "services.results": "results",
   "services.sortPopular": "Most popular", "services.sortRating": "Highest rated",

@@ -1,0 +1,1 @@
+- [TanStack Router file-based nesting](tanstack-route-nesting.md) — services.tsx must render <Outlet /> or child routes never mount; use services.index.tsx for list content

@@ -13,15 +13,15 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.3) }}
-      whileHover={{ y: -4 }}
       className="group h-full"
     >
       <Link
         to="/services/$id"
         params={{ id: service.slug }}
-        className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition hover:shadow-elegant"
+        className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition hover:shadow-elegant hover:-translate-y-1"
+        style={{ transition: "box-shadow 0.2s, transform 0.2s" }}
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+        <div className="relative overflow-hidden bg-muted" style={{ height: 200, flexShrink: 0 }}>
           <img
             src={service.image}
             alt={service.title}

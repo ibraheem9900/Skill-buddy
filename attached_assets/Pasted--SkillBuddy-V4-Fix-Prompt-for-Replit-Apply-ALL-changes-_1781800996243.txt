@@ -1,0 +1,227 @@
+# SkillBuddy — V4 Fix Prompt for Replit
+
+> Apply ALL changes below carefully. Do not break any existing working functionality.
+
+---
+
+## 1. 🏠 HOMEPAGE — Category Slider Mobile Fix
+
+**Current Problem:** Left/right arrow buttons for the category slider only work on desktop. On mobile, there are no arrow buttons visible.
+
+**Required Fix:**
+- Add LEFT (←) and RIGHT (→) arrow buttons to the category slider on **BOTH desktop AND mobile**
+- On mobile: arrows should be smaller but still clearly visible and tappable (min 40px touch target)
+- Arrow buttons style:
+  - Circular button, white background (light mode) / dark gray background (dark mode)
+  - Green arrow icon inside
+  - Slight shadow: `box-shadow: 0 2px 8px rgba(0,0,0,0.15)`
+  - On hover: background turns light green
+  - Position: left arrow on the left edge of slider, right arrow on right edge
+  - Both arrows always visible (not hidden on mobile)
+- Slider must smoothly animate left/right when arrows are clicked (CSS `scroll-behavior: smooth` or Framer Motion)
+- Keep dot indicators below slider on both desktop and mobile
+
+---
+
+## 2. 🗂️ SERVICES PAGE — Complete Fix (MOST IMPORTANT)
+
+### 2A. Page Header Structure Fix
+
+**Current Problem:** Services are dumped at the very top of the page with no proper heading or category navigation.
+
+**Required Structure (top to bottom):**
+
+```
+[Main Navbar]
+─────────────────────────────────────
+[Page Heading: "Our Services"]        ← Large bold heading
+[Subheading: "Find the right professional for any job"]
+─────────────────────────────────────
+[Category Slider with Left/Right Arrows]
+  ← [Arrow]  [Category 1] [Category 2] [Category 3]...  [Arrow] →
+  [Dot indicators below]
+─────────────────────────────────────
+[Service Cards Grid]                  ← Shows after category selected
+─────────────────────────────────────
+```
+
+- Page heading "Our Services" must appear FIRST, before categories
+- Below heading: horizontal category slider with LEFT and RIGHT arrow buttons
+- Category slider must work on BOTH desktop and mobile with arrows
+- After user clicks a category, services grid shows below filtered results
+
+### 2B. Category Slider in Services Page
+- Same arrow button design as homepage category slider
+- Show all main categories: Beauty & Personal Care | Business & Professional | Creative & Design | Education & Training | Event & Party | Health & Wellness | Home & Property | Personal & Household Assistance | Pet Care | Repair & Customization | Travel & Transportation
+- Each category: icon (circular gray bg) + label below
+- Active category: green background on icon, green bold text
+- Smooth slide animation when clicking arrows
+- On mobile: arrows visible, slider scrolls horizontally
+
+---
+
+## 3. 📄 SERVICE DETAIL PAGE — Full Layout (MOST CRITICAL FIX)
+
+**Current Problem:** Clicking on a service does not open it properly. Nothing shows or the layout is broken.
+
+**This is the most important fix. Every service click MUST open a full detail page.**
+
+### Required Layout (Desktop + Mobile):
+
+#### SECTION 1 — Hero Image Area (Full Width)
+- Large hero image at the top (full width of the page)
+- Dark gradient overlay at the bottom of the image
+- Centered overlay button: ▶ "Demo Video" (semi-transparent white pill button)
+- Below the main image: horizontal scrollable thumbnail strip
+  - Show 5 small thumbnails visible
+  - If more images exist: last thumbnail shows "+10" overlay indicator
+  - Thumbnails are clickable — clicking changes the main hero image
+- Top left: back arrow button (←)
+- Top right: share icon button
+
+#### SECTION 2 — Service Info (Below Hero)
+Display in this exact order:
+1. **Category badge** — small green pill label (e.g. "Home Cleaning")
+2. **Star rating** — ⭐ 4.5 (365 reviews) — stars in yellow, count in gray
+3. **Service Title** — Large bold text (e.g. "Deep House Cleaning") — Sora font, size 28px desktop / 22px mobile
+4. **Location** — 📍 address text in gray (e.g. "1012 Ocean Avenue, New York, USA")
+
+#### SECTION 3 — Three Tabs (About | Gallery | Review)
+- Tab bar with 3 tabs: **About** | **Gallery** | **Review**
+- Active tab: green underline + green text
+- Inactive tabs: gray text
+- Smooth content transition when switching tabs
+
+**About Tab content:**
+- Full service description (3-5 paragraphs)
+- "What's Included" section with bullet points (checkmark icons in green)
+- "What to Expect" section
+- Estimated duration
+- Provider info card (avatar, name, verified badge, rating)
+
+**Gallery Tab content:**
+- Header: "Gallery (25)" on left + "View All" link in green on right
+- 2-column masonry/grid photo layout
+- Photos from the service's past projects (use Unsplash images relevant to the service)
+- Clicking a photo opens full-screen lightbox viewer
+
+**Review Tab content:**
+- Overall rating large number (e.g. 3.9) with stars
+- Rating breakdown bars:
+  - Excellent ████████░░
+  - Good      ██████░░░░
+  - Average   ████░░░░░░
+  - Poor      ██░░░░░░░░
+- Individual review cards:
+  - User avatar + name + date + star rating
+  - Review text
+- "Write a Review" green button at bottom (only for logged-in users)
+
+#### SECTION 4 — Sticky Bottom Bar
+- Sticks to bottom of screen always visible while scrolling
+- Left side: 
+  - "Total Price" label (gray, small)
+  - Price in EUR: "€180.00" (green, bold, JetBrains Mono font)
+  - Credit points: "= 1800 pts" (gray, smaller)
+- Right side: **"Post a Job"** green rounded button
+
+**When "Post a Job" / "Book Now" button is clicked:**
+Show a centered modal popup:
+```
+┌─────────────────────────────────────┐
+│  📱 Book via the SkillBuddy App     │
+│                                     │
+│  To post a job and receive bids     │
+│  from verified professionals,       │
+│  please download the SkillBuddy app │
+│                                     │
+│  [QR Code Android] [QR Code iOS]   │
+│   Google Play        App Store      │
+│                                     │
+│           [✕ Close]                 │
+└─────────────────────────────────────┘
+```
+- Modal has backdrop blur + dark overlay behind it
+- Scale-in animation when opening (Framer Motion: scale 0.8→1.0, opacity 0→1)
+- Close on X click OR clicking outside the modal
+- QR codes: use placeholder QR code images for now (can be updated later)
+
+#### SECTION 5 — Related Services (Desktop: Right Sidebar | Mobile: Below)
+- Heading: "More in [Category Name]"
+- Show 4-5 other service cards from the same category
+- Each card: small image, service name, price, rating
+- Clicking switches to that service detail page WITHOUT going back
+
+### Desktop Layout (lg breakpoint and above):
+```
+┌──────────────────────────────┬─────────────────┐
+│  Hero Image (full width)     │                 │
+│  Thumbnails strip            │  Related        │
+│  ──────────────────────────  │  Services       │
+│  Category badge | Rating     │  Sidebar        │
+│  Service Title               │                 │
+│  Location                    │  [Card 1]       │
+│  ──────────────────────────  │  [Card 2]       │
+│  [About] [Gallery] [Review]  │  [Card 3]       │
+│  ──────────────────────────  │  [Card 4]       │
+│  Tab Content                 │                 │
+│                              │                 │
+└──────────────────────────────┴─────────────────┘
+[Sticky Bottom Bar: Price | Post a Job Button]
+```
+
+### Mobile Layout (matches the screenshot provided):
+- Full width hero image
+- Thumbnail strip below (scrollable)
+- Info section below thumbnails
+- Tabs below info
+- Tab content below tabs
+- Sticky bottom bar at very bottom
+- Related services shown as horizontal scroll section below tabs
+
+---
+
+## 4. 🎬 ANIMATIONS — Service Detail Page
+
+Add these animations:
+- **Hero image:** Fade in on load (opacity 0→1, 400ms)
+- **Thumbnails:** Slide in from right with stagger (50ms between each)
+- **Service title:** Slide up + fade in (translateY 20px→0, opacity 0→1)
+- **Tab switch:** Content fades out then new content fades in (200ms each)
+- **Gallery photos:** Stagger fade-in when Gallery tab is active (50ms between photos)
+- **Review cards:** Slide up with stagger when Review tab is active
+- **Sticky bar:** Slides up from bottom on page load (translateY 100%→0, 500ms delay)
+- **Modal popup:** Scale + fade in (scale 0.85→1, opacity 0→1, 250ms)
+
+---
+
+## 5. 🃏 SERVICE CARDS (in grid) — Fix
+
+Each service card in the grid must:
+- Have equal height and width (CSS grid with `align-items: stretch`)
+- Show: service image (top, fixed height 200px), category badge, service name, provider name, rating stars + count, price in EUR + credit points
+- NO bookmark icon
+- Hover effect: card lifts (translateY -4px), shadow increases, "View Details" button appears at bottom of card sliding up
+- Clicking anywhere on card → opens the full Service Detail Page (as described above)
+- All cards same size regardless of text length (use `min-height` and `line-clamp` for text)
+
+---
+
+## ✅ CHECKLIST
+
+- [ ] Homepage category slider: arrow buttons visible and working on BOTH mobile AND desktop
+- [ ] Services page: "Our Services" heading appears FIRST at top of page
+- [ ] Services page: category slider with arrows appears BELOW the heading
+- [ ] Services page: category slider arrows work on mobile too
+- [ ] Service cards: clicking ANY service card opens the full detail page
+- [ ] Service detail: hero image + video button + thumbnail strip (Section 1)
+- [ ] Service detail: category badge + rating + title + location (Section 2)
+- [ ] Service detail: About / Gallery / Review tabs with full content (Section 3)
+- [ ] Service detail: sticky bottom bar with price in EUR + credit points (Section 4)
+- [ ] Service detail: "Post a Job" / "Book Now" button → QR code modal popup
+- [ ] Service detail: related services sidebar (desktop) / section (mobile) (Section 5)
+- [ ] Service detail: all animations working (hero fade, thumbnails, tabs, sticky bar, modal)
+- [ ] Service cards grid: equal size, hover effects, "View Details" on hover
+- [ ] Desktop layout: two-column (main content + sidebar)
+- [ ] Mobile layout: single column, matches screenshot provided
+- [ ] Modal popup: backdrop blur, scale animation, close on X or outside click

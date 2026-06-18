@@ -24,6 +24,7 @@ import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as BecomeAProviderRouteImport } from './routes/become-a-provider'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as ServicesIdRouteImport } from './routes/services.$id'
 import { Route as ProvidersIdRouteImport } from './routes/providers.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -104,6 +105,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesIndexRoute = ServicesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ServicesRoute,
+} as any)
 const ServicesIdRoute = ServicesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -159,13 +166,13 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
-  '/services': typeof ServicesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -188,6 +195,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +219,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/providers/$id'
     | '/services/$id'
+    | '/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,13 +234,13 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/notifications'
     | '/privacy'
-    | '/services'
     | '/sitemap.xml'
     | '/terms'
     | '/auth/login'
     | '/auth/signup'
     | '/providers/$id'
     | '/services/$id'
+    | '/services'
   id:
     | '__root__'
     | '/'
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/providers/$id'
     | '/services/$id'
+    | '/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -383,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/services/': {
+      id: '/services/'
+      path: '/'
+      fullPath: '/services/'
+      preLoaderRoute: typeof ServicesIndexRouteImport
+      parentRoute: typeof ServicesRoute
+    }
     '/services/$id': {
       id: '/services/$id'
       path: '/$id'
@@ -416,10 +433,12 @@ declare module '@tanstack/react-router' {
 
 interface ServicesRouteChildren {
   ServicesIdRoute: typeof ServicesIdRoute
+  ServicesIndexRoute: typeof ServicesIndexRoute
 }
 
 const ServicesRouteChildren: ServicesRouteChildren = {
   ServicesIdRoute: ServicesIdRoute,
+  ServicesIndexRoute: ServicesIndexRoute,
 }
 
 const ServicesRouteWithChildren = ServicesRoute._addFileChildren(

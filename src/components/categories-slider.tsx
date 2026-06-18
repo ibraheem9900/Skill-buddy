@@ -22,7 +22,6 @@ export function CategoriesSlider() {
     update();
     embla.on("select", update);
     embla.on("reInit", () => { setSnaps(embla.scrollSnapList()); update(); });
-    // first-load hint nudge
     const t = setTimeout(() => {
       if (embla.canScrollNext()) {
         embla.scrollTo(1, false);
@@ -36,7 +35,7 @@ export function CategoriesSlider() {
   const scrollNext = useCallback(() => embla?.scrollNext(), [embla]);
 
   return (
-    <div className="relative">
+    <div className="relative px-8 sm:px-10">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
           {CATEGORIES_FULL.map((c) => (
@@ -57,17 +56,19 @@ export function CategoriesSlider() {
         onClick={scrollPrev}
         disabled={!canPrev}
         aria-label="Previous"
-        className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 -translate-x-3 items-center justify-center rounded-full border border-border bg-card p-2 shadow-card transition hover:bg-primary hover:text-primary-foreground disabled:opacity-40 md:flex"
+        className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+        style={{ minWidth: 40, minHeight: 40 }}
       >
-        <ChevronLeft className="h-5 w-5" />
+        <ChevronLeft className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
       </button>
       <button
         onClick={scrollNext}
         disabled={!canNext}
         aria-label="Next"
-        className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 translate-x-3 items-center justify-center rounded-full border border-border bg-card p-2 shadow-card transition hover:bg-primary hover:text-primary-foreground disabled:opacity-40 md:flex"
+        className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+        style={{ minWidth: 40, minHeight: 40 }}
       >
-        <ChevronRight className="h-5 w-5" />
+        <ChevronRight className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
       </button>
 
       {snaps.length > 1 && (
