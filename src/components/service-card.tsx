@@ -3,8 +3,10 @@ import { Star, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Service } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
 
 export function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -32,7 +34,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           </Badge>
           <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-elegant">
-              View details <ArrowRight className="h-3 w-3" />
+              {t("common.viewDetails")} <ArrowRight className="h-3 w-3" />
             </span>
           </div>
         </div>
@@ -51,10 +53,13 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           </div>
           <div className="mt-auto flex items-end justify-between border-t border-border pt-3">
             <div>
-              <div className="text-xs text-muted-foreground">Starting from</div>
-              <div className="font-mono text-lg font-bold text-primary">${service.price}</div>
+              <div className="text-xs text-muted-foreground">{t("common.from")}</div>
+              <div className="font-mono text-lg font-bold text-primary">€{service.price}</div>
+              <div className="font-mono text-[10px] text-muted-foreground">= {service.price * 10} pts</div>
             </div>
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Post a Job →</span>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {t("common.postJob")} →
+            </span>
           </div>
         </div>
       </Link>
