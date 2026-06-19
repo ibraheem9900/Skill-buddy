@@ -13,9 +13,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   // Enable Nitro explicitly so it runs on Vercel (outside the Lovable sandbox).
-  // preset: "vercel-edge" uses Vercel's Edge Runtime, which natively supports
-  // the Web Fetch API handler style exported by src/server.ts.
-  nitro: { preset: "vercel-edge" },
+  // "vercel" is the correct preset name in this Nitro beta — outputs to .vercel/output
+  // using Vercel's Build Output API, which Vercel picks up automatically.
+  nitro: { preset: "vercel" },
   vite: {
     server: {
       host: "0.0.0.0",
