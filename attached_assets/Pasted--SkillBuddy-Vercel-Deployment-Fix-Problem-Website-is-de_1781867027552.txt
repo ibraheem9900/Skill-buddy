@@ -1,0 +1,98 @@
+# SkillBuddy — Vercel Deployment Fix
+
+## Problem
+Website is deployed on Vercel but showing:
+```
+404: NOT_FOUND
+Code: NOT_FOUND
+```
+
+## Fix All of the Following:
+
+### 1. Check and Fix `package.json` scripts
+Make sure these scripts exist and are correct:
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+}
+```
+
+### 2. Fix `next.config.js` or `next.config.ts`
+Make sure the config file is correct and has no errors:
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ['images.unsplash.com', 'via.placeholder.com'],
+  },
+}
+
+module.exports = nextConfig
+```
+
+### 3. Fix Root Page
+Make sure `/app/page.tsx` (or `/pages/index.tsx`) exists and exports a valid default React component. This is the homepage — it must exist.
+
+### 4. Fix `app/layout.tsx`
+Make sure root layout exists at `app/layout.tsx` with proper structure:
+```tsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+### 5. Fix Environment Variables on Vercel
+If the project uses `.env` variables (database URL, API keys, etc.):
+- Go to Vercel Dashboard → Project → Settings → Environment Variables
+- Add ALL variables from your `.env` file there
+- Without these, the build will fail silently
+
+### 6. Vercel Build Settings
+In Vercel Dashboard → Project → Settings → General, set:
+- **Framework Preset:** Next.js
+- **Build Command:** `npm run build`
+- **Output Directory:** `.next`
+- **Install Command:** `npm install`
+- **Root Directory:** `./` (or wherever `package.json` is)
+
+### 7. Fix Any Import Errors
+Check that all imported components and modules exist. Any missing import will cause build to fail. Run `npm run build` locally first and fix ALL errors before deploying.
+
+### 8. Add `vercel.json` in root (if not exists)
+Create a `vercel.json` file in the project root:
+```json
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install"
+}
+```
+
+### 9. Fix Dynamic Routes
+For any dynamic routes like `/services/[id]`, `/careers/[id]`, etc.:
+- Make sure the folder and file structure is correct: `app/services/[id]/page.tsx`
+- Export a valid default component from each page file
+
+### 10. After All Fixes:
+- Run `npm run build` locally — make sure it completes with NO errors
+- Commit all changes to GitHub
+- Vercel will auto-redeploy from GitHub
+- If not auto-deploying: go to Vercel Dashboard → Deployments → click "Redeploy"
+
+## Expected Result
+Website loads correctly at `skill-buddy-nine.vercel.app` with no 404 error.
