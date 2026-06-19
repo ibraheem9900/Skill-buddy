@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  ArrowLeft, MapPin, Clock, Briefcase, Share2, Linkedin,
-  Copy, Check, CheckCircle2, X, Upload, ChevronRight,
+  ArrowLeft, MapPin, Clock, Briefcase, Linkedin,
+  Copy, Check, CheckCircle2, ChevronRight,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { QRDownloadModal } from "@/components/qr-download-modal";
 import {
   JOBS, WHAT_WE_OFFER, DEPT_COLORS, JOB_TYPE_COLORS,
   getJob,
@@ -299,29 +298,12 @@ function JobDetailPage() {
         </motion.div>
       </div>
 
-      {/* Apply Modal */}
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-background shadow-2xl"
-            >
-              <ApplyForm job={job} onClose={() => setModalOpen(false)} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <QRDownloadModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Apply via the SkillBuddy App"
+        message="To apply for this position, please download the SkillBuddy app."
+      />
     </SiteShell>
   );
 }
@@ -331,152 +313,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <h2 className="mb-4 font-display text-lg font-bold">{title}</h2>
       {children}
-    </div>
-  );
-}
-
-function ApplyForm({ job, onClose }: { job: ReturnType<typeof getJob>; onClose: () => void }) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", linkedin: "", cover: "" });
-  const [file, setFile] = useState<File | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = "Full name is required";
-    if (!form.email.trim()) e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
-    if (!form.cover.trim()) e.cover = "Cover letter is required";
-    if (!file) e.file = "CV/Resume is required";
-    else if (file.size > 5 * 1024 * 1024) e.file = "File must be under 5MB";
-    return e;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setSubmitting(true);
-    setTimeout(() => { setSubmitting(false); setSubmitted(true); }, 1400);
-  };
-
-  const set = (k: string, v: string) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => { const n = { ...e }; delete n[k]; return n; }); };
-
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center py-16 px-8 text-center">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="mb-6 grid h-20 w-20 place-items-center rounded-full bg-primary/10"
-        >
-          <motion.div
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <CheckCircle2 className="h-10 w-10 text-primary" />
-          </motion.div>
-        </motion.div>
-        <h2 className="font-display text-2xl font-extrabold">Application Received!</h2>
-        <p className="mx-auto mt-3 max-w-sm text-muted-foreground">
-          Thank you for applying for <span className="font-semibold text-foreground">{job?.title}</span>. We'll be in touch within 5 business days.
-        </p>
-        <Button onClick={onClose} className="mt-8">Done</Button>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div>
-          <div className="text-xs text-muted-foreground">Apply for</div>
-          <h2 className="font-display text-lg font-extrabold">{job?.title}</h2>
-        </div>
-        <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-accent">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="max-h-[70vh] overflow-y-auto px-6 py-5">
-        <div className="space-y-4">
-          <Field label="Full Name" required error={errors.name}>
-            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Jane Smith" className={errors.name ? "border-destructive" : ""} />
-          </Field>
-          <Field label="Email Address" required error={errors.email}>
-            <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="jane@example.com" className={errors.email ? "border-destructive" : ""} />
-          </Field>
-          <Field label="Phone Number" error={errors.phone}>
-            <Input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+372 5123 4567" />
-          </Field>
-          <Field label="LinkedIn Profile URL" error={errors.linkedin}>
-            <Input value={form.linkedin} onChange={(e) => set("linkedin", e.target.value)} placeholder="https://linkedin.com/in/yourname" />
-          </Field>
-          <Field label="Cover Letter" required error={errors.cover}>
-            <Textarea
-              value={form.cover}
-              onChange={(e) => set("cover", e.target.value)}
-              placeholder="Tell us why you'd be a great fit for this role..."
-              rows={5}
-              className={errors.cover ? "border-destructive" : ""}
-            />
-          </Field>
-          <Field label="Upload CV/Resume (PDF/DOC, max 5MB)" required error={errors.file}>
-            <label className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed p-4 transition hover:border-primary hover:bg-primary/5 ${errors.file ? "border-destructive" : "border-border"}`}>
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                {file ? (
-                  <span className="text-sm font-medium text-foreground truncate block">{file.name}</span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Choose file or drag and drop</span>
-                )}
-              </div>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                className="sr-only"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) { setFile(f); setErrors((er) => { const n = { ...er }; delete n.file; return n; }); }
-                }}
-              />
-            </label>
-          </Field>
-        </div>
-
-        <div className="mt-6 flex gap-3 border-t border-border pt-5">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button type="submit" disabled={submitting} className="flex-1 gap-2">
-            {submitting ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                  className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent"
-                />
-                Submitting...
-              </>
-            ) : (
-              <>Submit Application <ChevronRight className="h-4 w-4" /></>
-            )}
-          </Button>
-        </div>
-      </form>
-    </>
-  );
-}
-
-function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">
-        {label} {required && <span className="text-destructive">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
