@@ -24,6 +24,7 @@ export function Navbar() {
     { to: "/", label: t("nav.home") },
     { to: "/services", label: t("nav.services") },
     { to: "/jobs", label: t("nav.jobs") },
+    { to: "/careers", label: t("nav.careers") },
     { to: "/faqs", label: t("nav.faqs") },
     { to: "/contact", label: t("nav.contact") },
   ] as const;

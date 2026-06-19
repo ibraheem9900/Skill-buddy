@@ -21,12 +21,15 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as CareersRouteImport } from './routes/careers'
 import { Route as BecomeAProviderRouteImport } from './routes/become-a-provider'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as CareersIndexRouteImport } from './routes/careers.index'
 import { Route as ServicesIdRouteImport } from './routes/services.$id'
 import { Route as ProvidersIdRouteImport } from './routes/providers.$id'
+import { Route as CareersIdRouteImport } from './routes/careers.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 
@@ -90,6 +93,11 @@ const CategoriesRoute = CategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareersRoute = CareersRouteImport.update({
+  id: '/careers',
+  path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BecomeAProviderRoute = BecomeAProviderRouteImport.update({
   id: '/become-a-provider',
   path: '/become-a-provider',
@@ -110,6 +118,11 @@ const ServicesIndexRoute = ServicesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ServicesRoute,
 } as any)
+const CareersIndexRoute = CareersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CareersRoute,
+} as any)
 const ServicesIdRoute = ServicesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -119,6 +132,11 @@ const ProvidersIdRoute = ProvidersIdRouteImport.update({
   id: '/providers/$id',
   path: '/providers/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CareersIdRoute = CareersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CareersRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
@@ -135,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-provider': typeof BecomeAProviderRoute
+  '/careers': typeof CareersRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
@@ -149,8 +168,10 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/careers/': typeof CareersIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,8 +191,10 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/careers': typeof CareersIndexRoute
   '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
@@ -179,6 +202,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-provider': typeof BecomeAProviderRoute
+  '/careers': typeof CareersRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
@@ -193,8 +217,10 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/services/$id': typeof ServicesIdRoute
+  '/careers/': typeof CareersIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -203,6 +229,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-provider'
+    | '/careers'
     | '/categories'
     | '/chat'
     | '/contact'
@@ -217,8 +244,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/auth/login'
     | '/auth/signup'
+    | '/careers/$id'
     | '/providers/$id'
     | '/services/$id'
+    | '/careers/'
     | '/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -238,14 +267,17 @@ export interface FileRouteTypes {
     | '/terms'
     | '/auth/login'
     | '/auth/signup'
+    | '/careers/$id'
     | '/providers/$id'
     | '/services/$id'
+    | '/careers'
     | '/services'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/become-a-provider'
+    | '/careers'
     | '/categories'
     | '/chat'
     | '/contact'
@@ -260,8 +292,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/auth/login'
     | '/auth/signup'
+    | '/careers/$id'
     | '/providers/$id'
     | '/services/$id'
+    | '/careers/'
     | '/services/'
   fileRoutesById: FileRoutesById
 }
@@ -269,6 +303,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   BecomeAProviderRoute: typeof BecomeAProviderRoute
+  CareersRoute: typeof CareersRouteWithChildren
   CategoriesRoute: typeof CategoriesRoute
   ChatRoute: typeof ChatRoute
   ContactRoute: typeof ContactRoute
@@ -372,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/careers': {
+      id: '/careers'
+      path: '/careers'
+      fullPath: '/careers'
+      preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/become-a-provider': {
       id: '/become-a-provider'
       path: '/become-a-provider'
@@ -400,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesIndexRouteImport
       parentRoute: typeof ServicesRoute
     }
+    '/careers/': {
+      id: '/careers/'
+      path: '/'
+      fullPath: '/careers/'
+      preLoaderRoute: typeof CareersIndexRouteImport
+      parentRoute: typeof CareersRoute
+    }
     '/services/$id': {
       id: '/services/$id'
       path: '/$id'
@@ -413,6 +462,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/providers/$id'
       preLoaderRoute: typeof ProvidersIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/careers/$id': {
+      id: '/careers/$id'
+      path: '/$id'
+      fullPath: '/careers/$id'
+      preLoaderRoute: typeof CareersIdRouteImport
+      parentRoute: typeof CareersRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -430,6 +486,19 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface CareersRouteChildren {
+  CareersIdRoute: typeof CareersIdRoute
+  CareersIndexRoute: typeof CareersIndexRoute
+}
+
+const CareersRouteChildren: CareersRouteChildren = {
+  CareersIdRoute: CareersIdRoute,
+  CareersIndexRoute: CareersIndexRoute,
+}
+
+const CareersRouteWithChildren =
+  CareersRoute._addFileChildren(CareersRouteChildren)
 
 interface ServicesRouteChildren {
   ServicesIdRoute: typeof ServicesIdRoute
@@ -449,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   BecomeAProviderRoute: BecomeAProviderRoute,
+  CareersRoute: CareersRouteWithChildren,
   CategoriesRoute: CategoriesRoute,
   ChatRoute: ChatRoute,
   ContactRoute: ContactRoute,

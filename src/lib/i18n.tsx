@@ -15,6 +15,7 @@ type Dict = Record<string, string>;
 const en: Dict = {
   // Nav
   "nav.home": "Home", "nav.services": "Services", "nav.jobs": "Jobs",
+  "nav.careers": "Careers",
   "nav.faqs": "FAQs", "nav.contact": "Contact Us",
   "nav.login": "Log in", "nav.signup": "Sign Up",
   // Common
