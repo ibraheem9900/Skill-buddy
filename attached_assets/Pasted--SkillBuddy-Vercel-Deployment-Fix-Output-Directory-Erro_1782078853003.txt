@@ -1,0 +1,77 @@
+# SkillBuddy — Vercel Deployment Fix: Output Directory Error
+
+## Error
+```
+No Output Directory named "output" found after the Build completed.
+Update vercel.json#outputDirectory to ensure the correct output directory is generated.
+```
+
+## Root Cause
+Vercel is looking for a folder called "output" but TanStack Start + Nitro generates the build output in `.output` directory (with a dot prefix). The `vercel.json` has the wrong `outputDirectory` value.
+
+## Fix
+
+### Step 1: Update `vercel.json` in project root
+Replace the entire contents of `vercel.json` with this:
+
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".output/public",
+  "framework": null
+}
+```
+
+> Note: TanStack Start with Nitro outputs to `.output/public` — NOT `output` or `.next`
+
+### Step 2: Update `app.config.ts` (or `vite.config.ts`) — Add Vercel preset
+Make sure the Nitro config uses the Vercel preset. In `app.config.ts`:
+
+```typescript
+import { defineConfig } from '@tanstack/start/config'
+
+export default defineConfig({
+  server: {
+    preset: 'vercel',
+  },
+})
+```
+
+If the file is `vite.config.ts` with TanStack Start plugin, add:
+```typescript
+tanstackStart({
+  server: {
+    preset: 'vercel',
+  },
+})
+```
+
+### Step 3: Check `package.json` build script
+Make sure the build script is correct:
+```json
+{
+  "scripts": {
+    "build": "tsr generate && vinxi build",
+    "dev": "vinxi dev --port 5000",
+    "start": "node .output/server/index.mjs"
+  }
+}
+```
+
+### Step 4: Add `.vercelignore` in project root
+Create a `.vercelignore` file to exclude unnecessary files:
+```
+node_modules
+.git
+*.log
+```
+
+### Step 5: Commit and Redeploy
+After making all changes above:
+1. Commit everything to GitHub
+2. Go to Vercel Dashboard → click "Redeploy"
+3. Build should complete successfully and find `.output/public`
+
+## Expected Result
+Vercel finds the `.output/public` directory after build and deploys successfully with no errors.
