@@ -1,0 +1,251 @@
+# SkillBuddy — V8 Fix & Enhancement Prompt for Replit
+
+> Apply ALL changes below carefully. Do not break any existing working functionality.
+
+---
+
+## 1. SERVICES PAGE — Category Slider Fix
+
+**Current Problem:** Services page has a scroll-based category bar instead of a proper arrow-button slider like the homepage.
+
+**Required Fix:**
+- Replace the horizontal scroll category bar with an **arrow-button slider** — exactly identical to the homepage category slider
+- LEFT (←) arrow button on the left side
+- RIGHT (→) arrow button on the right side
+- No scrollbar visible — arrows control navigation only
+- Clicking arrow slides categories smoothly (same animation as homepage slider)
+- Dot indicators below the slider showing current position
+- Works on BOTH desktop AND mobile with arrows visible on both
+- Active category: green background icon + green bold text
+- Same card size, same icon style, same hover animation as homepage categories
+
+---
+
+## 2. SERVICES PAGE — Remove Filters Completely
+
+**Current Problem:** Services page has a filter sidebar (price range, rating, date, etc.)
+
+**Required Fix:**
+- Remove the filter sidebar/panel COMPLETELY from the Services page
+- Remove on BOTH desktop AND mobile
+- Remove the filter icon/button that opens the filter sheet on mobile
+- Remove any filter-related state, components, and code
+- Services page should show: Category Slider → Search Bar → Service Cards Grid (nothing else)
+
+---
+
+## 3. SERVICES PAGE — Search Bar Dropdown Animation Fix
+
+**Current Problem:** The sort/filter dropdown ("Newest", "Price Low-High", etc.) next to the search bar opens with no animation — it is completely basic and abrupt.
+
+**Required Fix:**
+- Add smooth Framer Motion animation to the dropdown:
+  - Open: `opacity: 0 → 1`, `y: -8px → 0px`, `scale: 0.96 → 1.0` — duration 200ms ease-out
+  - Close: reverse — `opacity: 1 → 0`, `y: 0 → -8px`, `scale: 1.0 → 0.96` — duration 150ms ease-in
+- Dropdown should have:
+  - Rounded corners (12px)
+  - Subtle shadow: `0 8px 24px rgba(0,0,0,0.12)`
+  - Clean white background (light mode) / dark card background (dark mode)
+  - Each option has hover background highlight (light green in light mode, dark green tint in dark mode)
+  - Selected option shows green checkmark on the right
+- Use Framer Motion `AnimatePresence` so exit animation plays when closing
+
+---
+
+## 4. CAREERS PAGE — Restore Application Form Popup (Remove QR Code)
+
+**Current Problem:** Careers page "Apply Now" button currently shows a QR code popup. This needs to be changed back to the proper job application form.
+
+**Required Fix:**
+- Remove the QR code popup from the Careers page "Apply Now" button completely
+- Restore the full job application modal form with these fields:
+
+```
+┌─────────────────────────────────────────┐
+│  Apply for: [Job Title]                 │
+│  ───────────────────────────────────    │
+│  Full Name *                            │
+│  [________________________________]     │
+│                                         │
+│  Email Address *                        │
+│  [________________________________]     │
+│                                         │
+│  Phone Number (optional)                │
+│  [________________________________]     │
+│                                         │
+│  LinkedIn Profile URL (optional)        │
+│  [________________________________]     │
+│                                         │
+│  Cover Letter *                         │
+│  [________________________________]     │
+│  [________________________________]     │
+│  [________________________________]     │
+│                                         │
+│  Upload CV/Resume * (PDF/DOC, max 5MB) │
+│  [📎 Choose File]                       │
+│                                         │
+│  [Cancel]    [Submit Application →]     │
+└─────────────────────────────────────────┘
+```
+
+- Form validation: required fields highlighted in red if empty on submit
+- Email format validation
+- File size check: reject files over 5MB with error message
+- "Submit Application" button shows loading spinner while submitting
+- After successful submit: show success state inside the modal:
+  - Green checkmark SVG animation (stroke draws itself)
+  - Message: "Application Received! We'll be in touch within 5 business days."
+  - Close button
+
+---
+
+## 5. CAREERS — Send Application Email to Admin
+
+**When user submits the application form, send all data via email to the admin.**
+
+Use EmailJS or Nodemailer (whichever is already configured in the project) to send an email to:
+**skillbuddyteam@gmail.com**
+
+Email format:
+```
+Subject: New Job Application — [Job Title]
+
+New application received for: [Job Title]
+Department: [Department]
+
+Applicant Details:
+──────────────────
+Name: [Full Name]
+Email: [Email Address]
+Phone: [Phone Number or "Not provided"]
+LinkedIn: [LinkedIn URL or "Not provided"]
+
+Cover Letter:
+──────────────────
+[Cover Letter text]
+
+CV/Resume:
+──────────────────
+[Attached file or download link]
+
+Submitted at: [Date and Time]
+```
+
+- If file upload is not possible via email, save the file to Supabase Storage or a temp folder and include a download link in the email
+- If EmailJS is used: configure the template to include all fields above
+- Show error toast if email sending fails: "Failed to send application. Please try again."
+
+---
+
+## 6. HOMEPAGE — Remove "Become a SkillBuddy" Banner
+
+**Current Problem:** There is a "Become a SkillBuddy" / "Join as Pro" banner/section on the homepage taking up space.
+
+**Required Fix:**
+- Remove the "Become a SkillBuddy" banner section from the homepage completely
+- Remove all related code and components for this banner
+
+---
+
+## 7. HOMEPAGE — Add "Join as Pro" Floating Button on Auth Page
+
+**Required Fix:**
+- On the Sign Up / Sign In page (`/auth/signup` and `/auth/login`), add a **floating animated button** that says "Join as a Pro →"
+- Position: fixed, bottom-right corner of the screen (`position: fixed; bottom: 32px; right: 32px`)
+- Style:
+  - Green background (`#2D7A5F`), white text, bold
+  - Rounded pill shape (`border-radius: 50px`)
+  - Subtle shadow: `0 4px 20px rgba(45, 122, 95, 0.4)`
+  - Icon: small star or person icon on the left
+- Animation:
+  - Infinite gentle pulse: `scale 1.0 → 1.05 → 1.0` every 2.5 seconds (Framer Motion)
+  - On hover: scale up to 1.08, shadow increases
+  - On tap/click: scale down to 0.95 (press effect)
+  - Entrance: slides up from bottom with fade-in on page load (delay 800ms)
+- Clicking it: scrolls to or highlights the "Sign Up as Provider" option, or opens a "Register as Service Provider" tab/toggle on the auth form
+
+---
+
+## 8. HOMEPAGE — "Most Booked Services" → Rename to "Popular Services"
+
+- Find all instances of "Most Booked Services" text on the homepage
+- Replace with "Popular Services"
+- Update in both the section heading AND any sub-labels
+
+---
+
+## 9. HOMEPAGE — Popular Services: 4 Cards + Arrow Slider
+
+**Current Problem:** Popular Services section shows 8 cards taking up too much homepage space. Also the section appears TWICE on the homepage (duplicate).
+
+**Required Fix:**
+
+**Remove duplicate:** Find and remove the second/duplicate "Most Booked Services" or "Popular Services" section. Only ONE instance should exist on the homepage.
+
+**Show only 4 cards at a time with arrow slider:**
+- Show exactly **4 service cards** visible at a time (1 row of 4)
+- Add LEFT (←) and RIGHT (→) arrow buttons on both sides — same style as category slider
+- Arrow buttons navigate through all 8 (or more) services — 4 visible at a time
+- Smooth slide animation when navigating (Framer Motion or CSS transform)
+- Dot indicators below showing current position (e.g., ●○)
+- On mobile: show 1 card at a time with arrows visible on both sides
+- On tablet: show 2 cards at a time
+- Cards must be equal size and perfectly aligned
+
+---
+
+## 10. LANGUAGE TRANSLATION — Fix Service Names & Banner Text
+
+**Current Problem:** When language is changed, most of the site translates BUT:
+- Service names (e.g., "Deep House Cleaning", "Pet Grooming", etc.) stay in English
+- Banner/promotional text stays in English
+
+**Required Fix:**
+
+**Service names must be translated:**
+- Every service name, service description, category name, and subcategory name must be added to the translation JSON files
+- Wrap ALL service/category text in `t()` function
+- In the data files (`src/lib/services.ts`, `src/lib/categories.ts`), instead of hardcoded English strings, use translation keys:
+
+```typescript
+// Instead of:
+{ name: "Deep House Cleaning", description: "Thorough cleaning..." }
+
+// Use translation keys:
+{ nameKey: "services.deep_house_cleaning.name", descKey: "services.deep_house_cleaning.desc" }
+
+// Then in the component:
+<h3>{t(service.nameKey)}</h3>
+<p>{t(service.descKey)}</p>
+```
+
+- Add ALL service name keys and their translations to all 5 language files:
+  - `en.json`, `et.json`, `ru.json`, `lv.json`, `lt.json`
+
+**Banner/promotional text must be translated:**
+- Every banner title, subtitle, CTA button text, promotional offer text must be wrapped in `t()`
+- Add these keys to all 5 translation files
+- Special offers banners, hero banner, any promotional section text — ALL must translate
+
+**Goal:** When user selects Estonian (or any language), literally ZERO English text should remain visible on the entire website — every single word must be in the selected language.
+
+---
+
+## ✅ CHECKLIST
+
+- [ ] Services page category bar: replaced with arrow-button slider (identical to homepage)
+- [ ] Services page: filters removed completely (desktop + mobile)
+- [ ] Services page search dropdown: Framer Motion animation on open/close
+- [ ] Careers "Apply Now": QR code removed, application form modal restored
+- [ ] Careers form: Full Name, Email, Phone (opt), LinkedIn (opt), Cover Letter, CV upload
+- [ ] Careers form: validation, loading state, success animation
+- [ ] Careers form: sends email to skillbuddyteam@gmail.com with all applicant details
+- [ ] Homepage: "Become a SkillBuddy" banner section removed
+- [ ] Auth page: floating "Join as a Pro →" animated button (fixed bottom-right)
+- [ ] Homepage: "Most Booked Services" renamed to "Popular Services" everywhere
+- [ ] Homepage: duplicate Popular Services section removed (only 1 instance)
+- [ ] Homepage Popular Services: shows 4 cards at a time with arrow slider
+- [ ] Homepage Popular Services: mobile shows 1 card, tablet shows 2 cards
+- [ ] Service names translated via t() keys in all 5 language files
+- [ ] Banner/promotional text translated via t() keys in all 5 language files
+- [ ] Changing language = ZERO English remaining anywhere on the site

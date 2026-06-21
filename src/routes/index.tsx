@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { Search, Sparkles, ArrowRight, Star, ClipboardList, Gavel, UserCheck, CheckCircle2, BookOpen } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Sparkles, ArrowRight, Star, ClipboardList, Gavel, UserCheck, CheckCircle2, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ServiceCard } from "@/components/service-card";
 import { CategoriesSlider } from "@/components/categories-slider";
-import { BecomeSkillBuddyBanner } from "@/components/become-skillbuddy-banner";
 import { SERVICES, TESTIMONIALS, OFFERS } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
 
@@ -26,12 +27,10 @@ function Home() {
   return (
     <SiteShell>
       <Hero />
-      <BecomeSkillBuddyBanner />
       <CategoriesSection />
       <SpecialOffers />
       <PopularServices />
       <HowItWorks />
-      <MostBooked />
       <Testimonials />
     </SiteShell>
   );
@@ -131,19 +130,93 @@ function SpecialOffers() {
 function PopularServices() {
   const { t } = useI18n();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
+
+  const [emblaRef, embla] = useEmblaCarousel({
+    align: "start",
+    loop: false,
+    slidesToScroll: 1,
+  });
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+  const [selectedSnap, setSelectedSnap] = useState(0);
+  const [snaps, setSnaps] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!embla) return;
+    const update = () => {
+      setCanPrev(embla.canScrollPrev());
+      setCanNext(embla.canScrollNext());
+      setSelectedSnap(embla.selectedScrollSnap());
+    };
+    setSnaps(embla.scrollSnapList());
+    update();
+    embla.on("select", update);
+    embla.on("reInit", () => { setSnaps(embla.scrollSnapList()); update(); });
+  }, [embla]);
+
+  const scrollPrev = useCallback(() => embla?.scrollPrev(), [embla]);
+  const scrollNext = useCallback(() => embla?.scrollNext(), [embla]);
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
-          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.mostBooked")}</h2>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
         </div>
         <Button asChild variant="ghost" className="hidden sm:inline-flex">
           <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
         </Button>
       </div>
-      <div className="grid auto-rows-fr grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-        {popular.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
+
+      <div className="relative px-8 sm:px-10">
+        <div ref={emblaRef} className="overflow-hidden">
+          <div className="flex gap-4 sm:gap-6">
+            {popular.map((s, i) => (
+              <div
+                key={s.id}
+                className="shrink-0 grow-0 basis-full sm:basis-1/2 lg:basis-1/4"
+                style={{ minWidth: 0 }}
+              >
+                <ServiceCard service={s} index={i} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={scrollPrev}
+          disabled={!canPrev}
+          aria-label="Previous services"
+          className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+          style={{ minWidth: 40, minHeight: 40 }}
+        >
+          <ChevronLeft className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+        </button>
+        <button
+          onClick={scrollNext}
+          disabled={!canNext}
+          aria-label="Next services"
+          className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+          style={{ minWidth: 40, minHeight: 40 }}
+        >
+          <ChevronRight className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+        </button>
+
+        {snaps.length > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-1.5">
+            {snaps.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => embla?.scrollTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === selectedSnap ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -194,22 +267,6 @@ function HowItWorks() {
             ))}
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function MostBooked() {
-  const { t } = useI18n();
-  const list = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(8, 12);
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <div className="mb-8">
-        <p className="text-sm font-semibold text-primary">{t("sec.trending")}</p>
-        <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t("sec.mostBooked")}</h2>
-      </div>
-      <div className="grid auto-rows-fr grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-        {list.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
       </div>
     </section>
   );

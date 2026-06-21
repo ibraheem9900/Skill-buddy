@@ -1,1 +1,2 @@
 - [TanStack Router file-based nesting](tanstack-route-nesting.md) — services.tsx must render <Outlet /> or child routes never mount; use services.index.tsx for list content
+- [i18n flat dict pattern](i18n-pattern.md) — all 5 locales (en/et/ru/lv/lt) live in one file; t() falls back to en then the raw key; sec.mostBooked kept for compat, sec.popularServices is the new heading key

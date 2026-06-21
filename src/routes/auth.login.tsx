@@ -3,8 +3,9 @@ import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Star } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Logo } from "@/components/logo";
 import { toast } from "sonner";
 
@@ -49,6 +50,45 @@ function Login() {
           </div>
         </div>
       </div>
+
+      <JoinAsProButton />
     </SiteShell>
+  );
+}
+
+function JoinAsProButton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.8, duration: 0.5, ease: "easeOut" }}
+      style={{ position: "fixed", bottom: 32, right: 32, zIndex: 50 }}
+    >
+      <motion.a
+        href="/auth/signup"
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        whileHover={{ scale: 1.08, boxShadow: "0 8px 32px rgba(45,122,95,0.55)" }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          background: "#2D7A5F",
+          color: "#fff",
+          fontWeight: 700,
+          fontSize: 14,
+          borderRadius: 50,
+          padding: "12px 22px",
+          boxShadow: "0 4px 20px rgba(45,122,95,0.4)",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+          cursor: "pointer",
+        }}
+      >
+        <Star className="h-4 w-4 fill-white" />
+        Join as a Pro →
+      </motion.a>
+    </motion.div>
   );
 }

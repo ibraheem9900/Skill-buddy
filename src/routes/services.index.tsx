@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, SlidersHorizontal, Star, X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Star, X, ArrowRight, ChevronLeft, ChevronRight, Check, ChevronsUpDown } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { z } from "zod";
@@ -11,8 +12,6 @@ import { ServiceCard } from "@/components/service-card";
 import { CATEGORIES, SERVICES } from "@/lib/data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useI18n } from "@/lib/i18n";
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
@@ -50,20 +49,37 @@ const MAIN_CATEGORY_ICONS: Record<string, string> = {
   "repair-custom": "Wrench",
 };
 
+type SortOption = "popular" | "price-asc" | "price-desc" | "rating";
+
 function ServicesPage() {
   const { t } = useI18n();
   const search = Route.useSearch();
   const [cat, setCat] = useState<string | undefined>(search.category);
   const [q, setQ] = useState(search.q ?? "");
-  const [sort, setSort] = useState<"popular" | "price-asc" | "price-desc" | "rating">(search.sort);
-  const [price, setPrice] = useState<[number, number]>([0, 1500]);
-  const [minRating, setMinRating] = useState(0);
+  const [sort, setSort] = useState<SortOption>(search.sort);
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const sortOptions: { value: SortOption; label: string }[] = [
+    { value: "popular", label: t("services.sortPopular") },
+    { value: "rating", label: t("services.sortRating") },
+    { value: "price-asc", label: t("services.sortPriceAsc") },
+    { value: "price-desc", label: t("services.sortPriceDesc") },
+  ];
 
   const filtered = useMemo(() => {
     let r = SERVICES.filter((s) => {
       if (cat && s.categorySlug !== cat) return false;
-      if (s.price < price[0] || s.price > price[1]) return false;
-      if (s.rating < minRating) return false;
       if (q && !s.title.toLowerCase().includes(q.toLowerCase()) && !s.description.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
@@ -72,13 +88,14 @@ function ServicesPage() {
     else if (sort === "rating") r = [...r].sort((a, b) => b.rating - a.rating);
     else r = [...r].sort((a, b) => b.reviewCount - a.reviewCount);
     return r;
-  }, [cat, q, sort, price, minRating]);
+  }, [cat, q, sort]);
 
   const activeCat = CATEGORIES.find((c) => c.slug === cat);
+  const currentSortLabel = sortOptions.find((o) => o.value === sort)?.label ?? sortOptions[0].label;
 
   return (
     <SiteShell>
-      {/* Page heading — FIRST */}
+      {/* Page heading */}
       <div className="border-b border-border bg-surface/30">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
@@ -113,90 +130,96 @@ function ServicesPage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("services.search")} className="h-12 pl-10" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("services.search")}
+                className="h-12 pl-10"
+              />
             </div>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="h-12 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="popular">{t("services.sortPopular")}</option>
-              <option value="rating">{t("services.sortRating")}</option>
-              <option value="price-asc">{t("services.sortPriceAsc")}</option>
-              <option value="price-desc">{t("services.sortPriceDesc")}</option>
-            </select>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="h-12 lg:hidden">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" /> {t("services.filters")}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-3xl p-0">
-                <FilterPanel
-                  price={price} setPrice={setPrice}
-                  minRating={minRating} setMinRating={setMinRating}
-                  onReset={() => { setPrice([0, 1500]); setMinRating(0); }}
-                />
-              </SheetContent>
-            </Sheet>
+
+            {/* Animated sort dropdown */}
+            <div ref={sortRef} className="relative">
+              <button
+                onClick={() => setSortOpen((o) => !o)}
+                className="flex h-12 min-w-[180px] items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm transition hover:bg-accent"
+              >
+                <span>{currentSortLabel}</span>
+                <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+
+              <AnimatePresence>
+                {sortOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                    transition={{
+                      enter: { duration: 0.2, ease: "easeOut" },
+                      exit: { duration: 0.15, ease: "easeIn" },
+                    }}
+                    className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-[12px] border border-border bg-card shadow-[0_8px_24px_rgba(0,0,0,0.12)] dark:bg-card"
+                  >
+                    {sortOptions.map((o) => (
+                      <button
+                        key={o.value}
+                        onClick={() => { setSort(o.value); setSortOpen(false); }}
+                        className="flex w-full items-center justify-between px-4 py-3 text-sm transition hover:bg-primary/8 dark:hover:bg-primary/10 text-left"
+                      >
+                        <span className={sort === o.value ? "font-semibold text-primary" : ""}>{o.label}</span>
+                        {sort === o.value && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[260px_1fr]">
-        {/* Desktop filter sidebar */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 rounded-2xl border border-border bg-card p-4">
-            <FilterPanel
-              embedded
-              price={price} setPrice={setPrice}
-              minRating={minRating} setMinRating={setMinRating}
-              onReset={() => { setPrice([0, 1500]); setMinRating(0); }}
-            />
-          </div>
-        </aside>
-
-        <div>
-          <div className="mb-5 flex flex-wrap items-center gap-3">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-mono font-bold text-foreground">{filtered.length}</span> {t("services.results")}
-            </p>
-            {activeCat && (
-              <button
-                onClick={() => setCat(undefined)}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-              >
-                {activeCat.name} <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-          {filtered.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-12 text-center">
-              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary">
-                <Search className="h-7 w-7" />
-              </div>
-              <h3 className="font-display text-xl font-bold">{t("services.noResults")}</h3>
-              <p className="mt-2 text-muted-foreground">{t("services.cantFind")}</p>
-              <div className="mt-5 flex justify-center gap-2">
-                <Button asChild variant="outline"><Link to="/contact">{t("services.contactUs")}</Link></Button>
-                <Button onClick={() => { setQ(""); setCat(undefined); setMinRating(0); setPrice([0, 1500]); }}>
-                  {t("common.reset")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
-              {filtered.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
-            </div>
+      {/* Results */}
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-mono font-bold text-foreground">{filtered.length}</span> {t("services.results")}
+          </p>
+          {activeCat && (
+            <button
+              onClick={() => setCat(undefined)}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+            >
+              {activeCat.name} <X className="h-3 w-3" />
+            </button>
           )}
+        </div>
 
-          <div className="mt-12 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center">
-            <h3 className="font-display text-2xl font-extrabold">{t("sec.requestCustom")}</h3>
-            <p className="mt-2 text-muted-foreground">{t("sec.requestCustomSub")}</p>
-            <Button asChild variant="outline" className="mt-5 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              <Link to="/contact">{t("common.requestQuote")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
-            </Button>
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card p-12 text-center">
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Search className="h-7 w-7" />
+            </div>
+            <h3 className="font-display text-xl font-bold">{t("services.noResults")}</h3>
+            <p className="mt-2 text-muted-foreground">{t("services.cantFind")}</p>
+            <div className="mt-5 flex justify-center gap-2">
+              <Button asChild variant="outline"><Link to="/contact">{t("services.contactUs")}</Link></Button>
+              <Button onClick={() => { setQ(""); setCat(undefined); }}>
+                {t("common.reset")}
+              </Button>
+            </div>
           </div>
+        ) : (
+          <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
+            {filtered.map((s, i) => <ServiceCard key={s.id} service={s} index={i} />)}
+          </div>
+        )}
+
+        <div className="mt-12 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center">
+          <h3 className="font-display text-2xl font-extrabold">{t("sec.requestCustom")}</h3>
+          <p className="mt-2 text-muted-foreground">{t("sec.requestCustomSub")}</p>
+          <Button asChild variant="outline" className="mt-5 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Link to="/contact">{t("common.requestQuote")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
+          </Button>
         </div>
       </div>
     </SiteShell>
@@ -212,61 +235,85 @@ function CategorySlider({
   active: string | undefined;
   onSelect: (slug: string) => void;
 }) {
-  const allCategories = [{ slug: "", name: "All", icon: "LayoutGrid" }, ...categories.map((c) => ({ ...c, icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" }))];
+  const allCategories = [
+    { slug: "", name: "All", icon: "LayoutGrid" },
+    ...categories.map((c) => ({ ...c, icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" })),
+  ];
   const [emblaRef, embla] = useEmblaCarousel({ align: "start", loop: false, dragFree: true });
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
+  const [selectedSnap, setSelectedSnap] = useState(0);
+  const [snaps, setSnaps] = useState<number[]>([]);
 
   useEffect(() => {
     if (!embla) return;
     const update = () => {
       setCanPrev(embla.canScrollPrev());
       setCanNext(embla.canScrollNext());
+      setSelectedSnap(embla.selectedScrollSnap());
     };
+    setSnaps(embla.scrollSnapList());
     update();
     embla.on("select", update);
     embla.on("scroll", update);
-    embla.on("reInit", update);
+    embla.on("reInit", () => { setSnaps(embla.scrollSnapList()); update(); });
   }, [embla]);
 
   const scrollPrev = useCallback(() => embla?.scrollPrev(), [embla]);
   const scrollNext = useCallback(() => embla?.scrollNext(), [embla]);
 
   return (
-    <div className="relative px-8 sm:px-10">
-      <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex gap-2 sm:gap-3">
-          {allCategories.map((c) => (
-            <div key={c.slug} className="shrink-0">
-              <CategoryPill
-                icon={c.icon}
-                name={c.name}
-                active={c.slug === "" ? !active : active === c.slug}
-                onClick={() => c.slug === "" ? onSelect("") : onSelect(c.slug)}
-              />
-            </div>
-          ))}
+    <div>
+      <div className="relative px-8 sm:px-10">
+        <div ref={emblaRef} className="overflow-hidden">
+          <div className="flex gap-2 sm:gap-3">
+            {allCategories.map((c) => (
+              <div key={c.slug} className="shrink-0">
+                <CategoryPill
+                  icon={c.icon}
+                  name={c.name}
+                  active={c.slug === "" ? !active : active === c.slug}
+                  onClick={() => c.slug === "" ? onSelect("") : onSelect(c.slug)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
+
+        <button
+          onClick={scrollPrev}
+          disabled={!canPrev}
+          aria-label="Previous categories"
+          className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+          style={{ minWidth: 40, minHeight: 40 }}
+        >
+          <ChevronLeft className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+        </button>
+        <button
+          onClick={scrollNext}
+          disabled={!canNext}
+          aria-label="Next categories"
+          className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
+          style={{ minWidth: 40, minHeight: 40 }}
+        >
+          <ChevronRight className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+        </button>
       </div>
 
-      <button
-        onClick={scrollPrev}
-        disabled={!canPrev}
-        aria-label="Previous categories"
-        className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40"
-        style={{ minWidth: 40, minHeight: 40 }}
-      >
-        <ChevronLeft className="h-4 w-4 text-primary" />
-      </button>
-      <button
-        onClick={scrollNext}
-        disabled={!canNext}
-        aria-label="Next categories"
-        className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40"
-        style={{ minWidth: 40, minHeight: 40 }}
-      >
-        <ChevronRight className="h-4 w-4 text-primary" />
-      </button>
+      {snaps.length > 1 && (
+        <div className="mt-5 flex items-center justify-center gap-1.5">
+          {snaps.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => embla?.scrollTo(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === selectedSnap ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -287,60 +334,5 @@ function CategoryPill({ icon, name, active, onClick }: { icon: string; name: str
         {name}
       </span>
     </button>
-  );
-}
-
-function FilterPanel({
-  price, setPrice, minRating, setMinRating, onReset, embedded,
-}: {
-  price: [number, number];
-  setPrice: (v: [number, number]) => void;
-  minRating: number;
-  setMinRating: (n: number) => void;
-  onReset: () => void;
-  embedded?: boolean;
-}) {
-  const { t } = useI18n();
-  return (
-    <div className={`flex flex-col ${embedded ? "" : "max-h-[80vh]"}`}>
-      {!embedded && <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted-foreground/30" />}
-      <div className={`flex-1 space-y-6 ${embedded ? "" : "overflow-y-auto p-6"}`}>
-        <h3 className="font-display text-lg font-bold">{t("services.filters")}</h3>
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <label className="text-sm font-semibold">{t("services.priceRange")}</label>
-            <span className="font-mono text-sm font-bold text-primary">€{price[0]} — €{price[1]}</span>
-          </div>
-          <Slider
-            min={0} max={1500} step={10}
-            value={price}
-            onValueChange={(v) => setPrice([v[0], v[1]] as [number, number])}
-            className="[&_[role=slider]]:h-6 [&_[role=slider]]:w-6"
-          />
-        </div>
-        <div>
-          <label className="mb-3 block text-sm font-semibold">{t("services.minRating")}</label>
-          <div className="grid grid-cols-4 gap-2">
-            {[0, 4, 4.5, 4.8].map((r) => (
-              <button
-                key={r}
-                onClick={() => setMinRating(r)}
-                className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition ${
-                  minRating === r
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:bg-accent"
-                }`}
-              >
-                <Star className="h-3 w-3 fill-current" />{r === 0 ? t("services.any") : `${r}+`}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className={`grid grid-cols-2 gap-3 ${embedded ? "pt-4" : "sticky bottom-0 border-t border-border bg-card p-4"}`}>
-        <Button variant="outline" onClick={onReset}>{t("common.reset")}</Button>
-        <Button>{t("common.apply")}</Button>
-      </div>
-    </div>
   );
 }
