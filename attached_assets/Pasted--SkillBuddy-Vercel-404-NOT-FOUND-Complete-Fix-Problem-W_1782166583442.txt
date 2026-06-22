@@ -1,0 +1,117 @@
+# SkillBuddy — Vercel 404 NOT_FOUND Complete Fix
+
+## Problem
+Website deployed on Vercel but showing 404: NOT_FOUND after build.
+This means Vercel cannot find the output directory or the routing is broken.
+
+## Step 1 — Run build locally first and check what folder is created
+
+Run this in the Replit shell:
+```bash
+bun run build
+```
+
+Then check what output folder was actually created:
+```bash
+ls -la
+ls -la .output/ 2>/dev/null || echo "No .output folder"
+ls -la dist/ 2>/dev/null || echo "No dist folder"  
+ls -la output/ 2>/dev/null || echo "No output folder"
+ls -la .vercel/ 2>/dev/null || echo "No .vercel folder"
+```
+
+Tell me exactly which folder exists after build completes.
+
+## Step 2 — Fix vercel.json based on what folder exists
+
+**If `.output` folder exists** (TanStack Start / Nitro):
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".output/public",
+  "framework": null
+}
+```
+
+**If `.vercel/output` folder exists** (Nitro Vercel preset):
+```json
+{
+  "buildCommand": "bun run build", 
+  "installCommand": "bun install",
+  "framework": null
+}
+```
+(No outputDirectory needed — Nitro handles it automatically)
+
+**If `dist` folder exists**:
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install", 
+  "outputDirectory": "dist",
+  "framework": null
+}
+```
+
+## Step 3 — Fix app.config.ts to use Vercel preset
+
+Open `app.config.ts` and make sure it looks like this:
+
+```typescript
+import { defineConfig } from '@tanstack/start/config'
+
+export default defineConfig({
+  server: {
+    preset: 'vercel',
+  },
+  routers: {
+    public: {
+      dir: './public',
+    },
+  },
+})
+```
+
+## Step 4 — Fix package.json scripts
+
+Make sure `package.json` has exactly these scripts:
+```json
+{
+  "scripts": {
+    "dev": "vinxi dev --port 5000",
+    "build": "vinxi build",
+    "start": "node .output/server/index.mjs"
+  }
+}
+```
+
+Do NOT have `tsr generate &&` before `vinxi build` — just `vinxi build` alone.
+
+## Step 5 — Delete old vercel.json and recreate
+
+Delete the existing `vercel.json` completely, then create a fresh one with ONLY these contents (nothing else):
+
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "framework": null
+}
+```
+
+Leave `outputDirectory` OUT entirely — let Nitro's Vercel preset handle it automatically via `.vercel/output`.
+
+## Step 6 — Commit everything and redeploy
+
+```bash
+git add .
+git commit -m "fix: vercel deployment config"
+git push origin main
+```
+
+Then go to Vercel Dashboard and click Redeploy.
+
+## Step 7 — If still failing, check Vercel Build Logs
+
+Go to Vercel → Deployments → click the failed deployment → click "Build Logs" tab → scroll to the BOTTOM of the logs and paste the last 20 lines here so we can see the exact error.
