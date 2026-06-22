@@ -235,9 +235,10 @@ function CategorySlider({
   active: string | undefined;
   onSelect: (slug: string) => void;
 }) {
+  const { t } = useI18n();
   const allCategories = [
-    { slug: "", name: "All", icon: "LayoutGrid" },
-    ...categories.map((c) => ({ ...c, icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" })),
+    { slug: "", name: t("services.allLabel"), icon: "LayoutGrid" },
+    ...categories.map((c) => ({ ...c, name: t("cat." + c.slug.replace(/-/g, "_")), icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" })),
   ];
   const [emblaRef, embla] = useEmblaCarousel({ align: "start", loop: false, dragFree: true });
   const [canPrev, setCanPrev] = useState(false);

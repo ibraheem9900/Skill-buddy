@@ -30,7 +30,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
           <Badge className="absolute left-3 top-3 bg-background/85 text-foreground backdrop-blur" variant="secondary">
-            {service.category}
+            {t("cat." + service.categorySlug.replace(/-/g, "_"))}
           </Badge>
           <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-elegant">
@@ -40,7 +40,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         </div>
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-1 font-semibold">{service.title}</h3>
+            <h3 className="line-clamp-1 font-semibold">{t(service.titleKey) !== service.titleKey ? t(service.titleKey) : service.title}</h3>
             <div className="flex shrink-0 items-center gap-1 text-sm">
               <Star className="h-3.5 w-3.5 fill-warning text-warning" />
               <span className="font-medium">{service.rating}</span>

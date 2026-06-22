@@ -114,10 +114,10 @@ function SpecialOffers() {
               <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
                 {t("sec.limited")}
               </span>
-              <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight text-white">{o.title}</h3>
-              <p className="mt-2 text-sm text-white/90">{o.subtitle}</p>
+              <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight text-white">{t(o.titleKey)}</h3>
+              <p className="mt-2 text-sm text-white/90">{t(o.subKey)}</p>
               <button className="mt-auto self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
-                {o.cta}
+                {t(o.ctaKey)}
               </button>
             </div>
           ))}
