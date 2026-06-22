@@ -1,16 +1,27 @@
 /**
- * Vercel Build Output API v3 generator for SkillBuddy.
+ * Vercel Build Output API v3 for SkillBuddy.
  *
- * Flow:
- *  1. Run `vite build`  →  dist/client/ (static)  +  dist/server/ (SSR fetch handler)
- *  2. Copy dist/client/ → .vercel/output/static/
- *  3. Copy dist/server/ → .vercel/output/functions/ssr.func/
- *  4. Write a Node.js adapter that wraps the Web Fetch API handler
- *  5. Write .vc-config.json (Node.js 20 runtime)
- *  6. Write routing config.json (filesystem first, then SSR for everything else)
+ * Problem solved here:
+ *   dist/server/server.js uses dynamic import("./assets/server-*.js")
+ *   which fails in Vercel's function environment because Vercel tries to
+ *   bundle/trace the function and the dynamic import with a hashed path
+ *   confuses the bundler.
  *
- * Vercel automatically detects .vercel/output/ after the build command runs.
- * No outputDirectory in vercel.json is needed.
+ * Solution:
+ *   Use esbuild to pre-bundle EVERYTHING into one self-contained
+ *   ssr-bundle.mjs with zero dynamic imports, then wrap it in a tiny
+ *   Node.js (req, res) adapter.
+ *
+ * Output:
+ *   .vercel/output/
+ *     config.json                   ← routing: filesystem then /ssr
+ *     static/                       ← dist/client contents (assets, images)
+ *     functions/
+ *       ssr.func/
+ *         ssr-bundle.mjs            ← esbuild bundle of entire server
+ *         index.mjs                 ← Node.js (req,res) → fetch adapter
+ *         package.json              ← { "type": "module" }
+ *         .vc-config.json           ← { runtime: "nodejs20.x" }
  */
 
 import { cpSync, mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
@@ -25,11 +36,11 @@ if (existsSync(VERCEL_OUT)) {
   console.log("🗑  Cleaned .vercel/output");
 }
 
-// ── 1. Build ─────────────────────────────────────────────────────────────────
+// ── 1. Vite build ────────────────────────────────────────────────────────────
 console.log("\n📦 Running vite build...\n");
 execSync("vite build", { stdio: "inherit" });
 
-// ── 2. Create directory structure ───────────────────────────────────────────
+// ── 2. Directory structure ───────────────────────────────────────────────────
 mkdirSync(`${VERCEL_OUT}/static`, { recursive: true });
 mkdirSync(FUNC_DIR, { recursive: true });
 console.log("\n📁 Created .vercel/output structure");
@@ -38,25 +49,53 @@ console.log("\n📁 Created .vercel/output structure");
 cpSync("dist/client", `${VERCEL_OUT}/static`, { recursive: true });
 console.log("✓  Copied dist/client → .vercel/output/static");
 
-// ── 4. SSR server bundle ─────────────────────────────────────────────────────
-cpSync("dist/server", FUNC_DIR, { recursive: true });
-console.log("✓  Copied dist/server → ssr.func/");
+// ── 4. Bundle server with esbuild ────────────────────────────────────────────
+//
+// This step is the critical fix:
+//   dist/server/server.js has  import("./assets/server-[hash].js")
+//   esbuild resolves ALL local imports statically and merges them into
+//   one file — no dynamic imports survive at runtime.
+//
+// --external:node:*   keeps Node.js built-ins (node:path etc.) as-is
+// --platform=node     enables Node.js globals (Buffer, process, etc.)
+// --format=esm        outputs ES modules (matches our function's package.json)
+// --target=node20     allows top-level await and native ESM
+//
+console.log("\n⚙️  Bundling SSR server with esbuild...");
+execSync(
+  [
+    "node_modules/.bin/esbuild dist/server/server.js",
+    `--bundle`,
+    `--outfile=${FUNC_DIR}/ssr-bundle.mjs`,
+    `--format=esm`,
+    `--target=node20`,
+    `--platform=node`,
+    `--external:node:*`,
+    `--log-level=warning`,
+  ].join(" "),
+  { stdio: "inherit" }
+);
+console.log("✓  Bundled → ssr.func/ssr-bundle.mjs");
 
-// ── 5. Node.js adapter entry ─────────────────────────────────────────────────
+// ── 5. Node.js adapter ───────────────────────────────────────────────────────
 //
-// dist/server/server.js exports:
-//   export default { async fetch(request, env, ctx) { … } }
-//
-// Vercel Node.js functions receive (req, res) — this adapter bridges the gap.
+// The bundled server exports { fetch(request, env, ctx) }.
+// Vercel Node.js functions receive (req, res).
+// This adapter bridges the two.
 //
 writeFileSync(
   `${FUNC_DIR}/index.mjs`,
-  `import server from "./server.js";
+  `import server from "./ssr-bundle.mjs";
 
 export default async function handler(req, res) {
-  const proto = (req.headers["x-forwarded-proto"] ?? "https").split(",")[0].trim();
-  const host  = req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost";
-  const url   = new URL(req.url, \`\${proto}://\${host}\`);
+  const proto = (req.headers["x-forwarded-proto"] ?? "https")
+    .split(",")[0]
+    .trim();
+  const host =
+    req.headers["x-forwarded-host"] ??
+    req.headers.host ??
+    "localhost";
+  const url = new URL(req.url, proto + "://" + host);
 
   const headers = new Headers();
   for (const [k, v] of Object.entries(req.headers)) {
@@ -66,18 +105,17 @@ export default async function handler(req, res) {
   }
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
-  const webReq  = new Request(url.toString(), {
-    method:  req.method,
+  const webReq = new Request(url.toString(), {
+    method: req.method,
     headers,
-    body:    hasBody ? req : null,
-    duplex:  hasBody ? "half" : undefined,
+    ...(hasBody ? { body: req, duplex: "half" } : {}),
   });
 
   let webRes;
   try {
     webRes = await server.fetch(webReq);
   } catch (err) {
-    console.error("[ssr] fetch error:", err);
+    console.error("[ssr] unhandled error:", err);
     res.statusCode = 500;
     res.setHeader("content-type", "text/plain");
     res.end("Internal Server Error");
@@ -93,10 +131,10 @@ export default async function handler(req, res) {
 );
 console.log("✓  Written ssr.func/index.mjs (Node.js adapter)");
 
-// Mark function dir as ESM so Node 20 resolves .js imports correctly
+// ── 6. ESM marker ────────────────────────────────────────────────────────────
 writeFileSync(`${FUNC_DIR}/package.json`, JSON.stringify({ type: "module" }));
 
-// ── 6. Function config (.vc-config.json) ─────────────────────────────────────
+// ── 7. Vercel function config ─────────────────────────────────────────────────
 writeFileSync(
   `${FUNC_DIR}/.vc-config.json`,
   JSON.stringify(
@@ -112,21 +150,16 @@ writeFileSync(
 );
 console.log("✓  Written ssr.func/.vc-config.json");
 
-// ── 7. Vercel routing (config.json) ──────────────────────────────────────────
-//
-// Order matters:
-//  a) Serve static files from .vercel/output/static/ (handle: filesystem)
-//  b) Route everything else to the SSR serverless function
-//
+// ── 8. Vercel routing ─────────────────────────────────────────────────────────
 writeFileSync(
   `${VERCEL_OUT}/config.json`,
   JSON.stringify(
     {
       version: 3,
       routes: [
-        // Let Vercel serve any file that exists in static/ directly
+        // Serve existing static files (JS, CSS, images) directly
         { handle: "filesystem" },
-        // Fallback: all other requests → SSR function
+        // All other requests go to SSR
         { src: "/(.*)", dest: "/ssr" },
       ],
     },

@@ -1,0 +1,214 @@
+# SkillBuddy — Vercel 500 Server Error Complete Fix
+
+## Current Error
+```
+Failed to load resource: the server responded with a status of 500
+"This page didn't load — Something went wrong on our end"
+```
+Site: skill-buddy-nine.vercel.app
+
+## This is a Runtime Error — Server is crashing after deployment
+
+---
+
+## Fix 1 — Switch to Static Export (Most Reliable Fix)
+
+Since this project has NO backend, NO database, NO API routes — all data is hardcoded TypeScript files — the best solution is to export as a static site instead of SSR.
+
+### Update `app.config.ts`:
+```typescript
+import { defineConfig } from '@tanstack/start/config'
+
+export default defineConfig({
+  server: {
+    preset: 'static',
+  },
+})
+```
+
+### Update `vercel.json`:
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": "dist",
+  "framework": null
+}
+```
+
+### Update `package.json` build script:
+```json
+{
+  "scripts": {
+    "dev": "vinxi dev --port 5000",
+    "build": "vinxi build",
+    "start": "bun run dev"
+  }
+}
+```
+
+---
+
+## Fix 2 — If Static Export Doesn't Work, Use Node preset
+
+### Update `app.config.ts`:
+```typescript
+import { defineConfig } from '@tanstack/start/config'
+
+export default defineConfig({
+  server: {
+    preset: 'node-server',
+  },
+})
+```
+
+### Update `vercel.json`:
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".output/public",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+---
+
+## Fix 3 — Check and Fix ALL Environment Variables
+
+Any missing environment variable causes a 500 crash on Vercel.
+
+Go to Vercel Dashboard → Project → Settings → Environment Variables and add:
+
+```
+NODE_ENV = production
+VITE_APP_URL = https://skill-buddy-nine.vercel.app
+```
+
+If you use EmailJS for careers form, also add:
+```
+VITE_EMAILJS_SERVICE_ID = your_service_id
+VITE_EMAILJS_TEMPLATE_ID = your_template_id
+VITE_EMAILJS_PUBLIC_KEY = your_public_key
+```
+
+---
+
+## Fix 4 — Remove All Server-Side Only Code
+
+Since this project is frontend-only, make sure NO file uses:
+- `fs` (Node filesystem)
+- `process.env` without `VITE_` prefix
+- Any import that only works on Node.js server
+- `window` or `document` accessed at module level (not inside useEffect)
+
+Search entire codebase for these and remove or replace with client-safe alternatives.
+
+---
+
+## Fix 5 — Add Error Boundary to Root Layout
+
+In `src/routes/__root.tsx`, add error component:
+
+```typescript
+import { createRootRoute, Outlet } from '@tanstack/react-router'
+
+export const Route = createRootRoute({
+  component: RootComponent,
+  errorComponent: ({ error }) => (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h1>Something went wrong</h1>
+      <pre>{String(error)}</pre>
+    </div>
+  ),
+})
+
+function RootComponent() {
+  return <Outlet />
+}
+```
+
+---
+
+## Fix 6 — Final vercel.json (Complete Version)
+
+Replace entire `vercel.json` with:
+
+```json
+{
+  "version": 2,
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "outputDirectory": ".output/public",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Fix 7 — Check i18n Translation Files
+
+The language translation system (i18next) commonly causes 500 errors on Vercel if translation JSON files are not in the correct location.
+
+Make sure:
+- All translation files (`en.json`, `et.json`, `ru.json`, `lv.json`, `lt.json`) are inside the `public/locales/` folder
+- i18next is configured to load from `/locales/{{lng}}/translation.json`
+- Files are committed to GitHub (not gitignored)
+
+Correct folder structure:
+```
+public/
+  locales/
+    en/
+      translation.json
+    et/
+      translation.json
+    ru/
+      translation.json
+    lv/
+      translation.json
+    lt/
+      translation.json
+```
+
+---
+
+## Final Steps
+
+1. Apply Fix 1 first (static preset) — run `bun run build` in Replit shell
+2. Make sure build completes with ZERO errors
+3. Commit and push:
+```bash
+git add .
+git commit -m "fix: resolve vercel 500 error - static export"
+git push origin main
+```
+4. Vercel will auto-redeploy
+5. If still 500: go to Vercel Dashboard → Logs tab → copy the exact error and show it
+
+## Most Likely Root Cause
+The 500 is most likely caused by:
+- Wrong Nitro preset (vercel preset crashing at runtime)
+- i18n translation files not found at runtime
+- `window` or `document` accessed during SSR before browser is ready
+- Missing environment variable being accessed at startup
+
+Fix 1 (switching to static export) eliminates SSR completely and is the safest option since there is no real backend in this project.
