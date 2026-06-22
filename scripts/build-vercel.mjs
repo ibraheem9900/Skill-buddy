@@ -105,10 +105,19 @@ export default async function handler(req, res) {
   }
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
+  let bodyBuf;
+  if (hasBody) {
+    bodyBuf = await new Promise((resolve) => {
+      const chunks = [];
+      req.on("data", (c) => chunks.push(c));
+      req.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+  }
+
   const webReq = new Request(url.toString(), {
     method: req.method,
     headers,
-    ...(hasBody ? { body: req, duplex: "half" } : {}),
+    ...(bodyBuf && bodyBuf.length > 0 ? { body: bodyBuf } : {}),
   });
 
   let webRes;
@@ -142,7 +151,7 @@ writeFileSync(
       runtime: "nodejs20.x",
       handler: "index.mjs",
       launcherType: "Nodejs",
-      shouldAddHelpers: true,
+      shouldAddHelpers: false,
     },
     null,
     2
