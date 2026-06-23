@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/lib/supabase-browser";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/register/skillbuddy")({
   head: () => ({
@@ -102,6 +103,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 function ProviderRegisterPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -143,43 +145,43 @@ function ProviderRegisterPage() {
 
   const validateStep1 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.username.trim()) errs.username = "Username is required";
-    else if (form.username.length < 3) errs.username = "Username must be at least 3 characters";
-    if (!form.email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Invalid email address";
-    if (!form.password) errs.password = "Password is required";
-    else if (form.password.length < 8) errs.password = "Password must be at least 8 characters";
+    if (!form.username.trim()) errs.username = t("auth.validation.required");
+    else if (form.username.length < 3) errs.username = t("auth.validation.usernameMinLength");
+    if (!form.email.trim()) errs.email = t("auth.validation.required");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = t("auth.validation.invalidEmail");
+    if (!form.password) errs.password = t("auth.validation.required");
+    else if (form.password.length < 8) errs.password = t("auth.validation.passwordMinLength");
     else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password))
-      errs.password = "Password must include uppercase, lowercase, and number";
+      errs.password = t("auth.validation.passwordRequirements");
     if (form.password !== form.confirmPassword)
-      errs.confirmPassword = "Passwords do not match";
+      errs.confirmPassword = t("auth.validation.passwordMismatch");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const validateStep2 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.fullName.trim()) errs.fullName = "Full name is required";
-    if (!form.county) errs.county = "County is required";
-    if (!form.city.trim()) errs.city = "City is required";
-    if (!form.postalCode.trim()) errs.postalCode = "Postal code is required";
-    if (!form.streetAddress.trim()) errs.streetAddress = "Street address is required";
+    if (!form.fullName.trim()) errs.fullName = t("auth.validation.required");
+    if (!form.county) errs.county = t("auth.validation.required");
+    if (!form.city.trim()) errs.city = t("auth.validation.required");
+    if (!form.postalCode.trim()) errs.postalCode = t("auth.validation.required");
+    if (!form.streetAddress.trim()) errs.streetAddress = t("auth.validation.required");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const validateStep3 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.primarySkill) errs.primarySkill = "Primary skill is required";
+    if (!form.primarySkill) errs.primarySkill = t("auth.validation.required");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const validateStep4 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.residencePermitFront) errs.residencePermitFront = "Front of residence permit is required";
-    if (!form.residencePermitBack) errs.residencePermitBack = "Back of residence permit is required";
-    if (!form.phone.trim()) errs.phone = "Phone number is required";
+    if (!form.residencePermitFront) errs.residencePermitFront = t("auth.validation.required");
+    if (!form.residencePermitBack) errs.residencePermitBack = t("auth.validation.required");
+    if (!form.phone.trim()) errs.phone = t("auth.validation.required");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -207,7 +209,7 @@ function ProviderRegisterPage() {
     }
 
     setOtpSent(true);
-    toast.success("Verification code sent to your email");
+    toast.success(t("register.step1.otpSent"));
     setResendCountdown(60);
     const interval = setInterval(() => {
       setResendCountdown((c) => {
@@ -222,7 +224,7 @@ function ProviderRegisterPage() {
 
   const handleVerifyOtp = async () => {
     if (!otp || otp.length !== 6) {
-      toast.error("Please enter the 6-digit code");
+      toast.error(t("auth.validation.otpRequired"));
       return;
     }
 
@@ -265,7 +267,7 @@ function ProviderRegisterPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast.error("Session expired. Please start over.");
+        toast.error(t("register.step4.sessionExpired"));
         navigate({ to: "/register" });
         return;
       }
@@ -361,10 +363,10 @@ function ProviderRegisterPage() {
         return;
       }
 
-      toast.success("Provider account created successfully!");
+      toast.success(t("register.step4.successProvider"));
       navigate({ to: "/auth/login" });
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(t("register.step4.errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -376,7 +378,7 @@ function ProviderRegisterPage() {
     ref: React.RefObject<HTMLInputElement>
   ) => {
     if (file.size > 5 * 1024 * 1024) {
-      setErrors((e) => ({ ...e, [key]: "File must be under 5MB" }));
+      setErrors((e) => ({ ...e, [key]: t("auth.validation.fileSize") }));
       return;
     }
     setErrors((e) => ({ ...e, [key]: undefined }));
@@ -397,7 +399,7 @@ function ProviderRegisterPage() {
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to role selection
+          {t("register.backToRole")}
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-lg sm:p-8">
@@ -473,6 +475,7 @@ function ProviderRegisterPage() {
 }
 
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
+  const { t } = useI18n();
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between">
@@ -504,10 +507,10 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
         ))}
       </div>
       <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-        <span>Account</span>
-        <span>Profile</span>
-        <span>Skills</span>
-        <span>Verification</span>
+        <span>{t("register.step.account")}</span>
+        <span>{t("register.step.profile")}</span>
+        <span>{t("register.step.skills")}</span>
+        <span>{t("register.step.verification")}</span>
       </div>
     </div>
   );
@@ -542,23 +545,24 @@ function Step1Form({
   onOtpChange: (v: string) => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
     >
-      <h2 className="text-2xl font-bold">Create your provider account</h2>
+      <h2 className="text-2xl font-bold">{t("register.step1.titleProvider")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("register.haveAccount")}{" "}
         <Link to="/auth/login" className="text-primary hover:underline">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
 
       <div className="mt-6 space-y-4">
         <div>
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{t("register.step1.username")}</Label>
           <div className="relative mt-1.5">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -575,7 +579,7 @@ function Step1Form({
         </div>
 
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("register.step1.email")}</Label>
           <div className="relative mt-1.5">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -593,7 +597,7 @@ function Step1Form({
         </div>
 
         <div>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("register.step1.password")}</Label>
           <div className="relative mt-1.5">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -618,7 +622,7 @@ function Step1Form({
         </div>
 
         <div>
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Label htmlFor="confirmPassword">{t("register.step1.confirmPassword")}</Label>
           <div className="relative mt-1.5">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -644,9 +648,9 @@ function Step1Form({
 
         {otpSent && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <Label htmlFor="otp">Verification Code</Label>
+            <Label htmlFor="otp">{t("register.step1.otpLabel")}</Label>
             <p className="mt-1 text-xs text-muted-foreground">
-              We sent a 6-digit code to {form.email}
+              {t("register.step1.resendCode")} {form.email}
             </p>
             <Input
               id="otp"
@@ -662,7 +666,7 @@ function Step1Form({
               onClick={() => {}}
               className="mt-2 text-xs text-primary disabled:opacity-50"
             >
-              {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend code"}
+              {resendCountdown > 0 ? `${t("register.step1.resendIn")} ${resendCountdown}s` : t("register.step1.resendCode")}
             </button>
           </div>
         )}
@@ -677,12 +681,12 @@ function Step1Form({
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : otpSent ? (
             <>
-              Verify &amp; Continue
+              {t("register.step1.verifyContinue")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           ) : (
             <>
-              Continue
+              {t("common.continue")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}
@@ -690,7 +694,7 @@ function Step1Form({
 
         <div className="relative my-6 flex items-center gap-2 text-xs text-muted-foreground">
           <div className="h-px flex-1 bg-border" />
-          or continue with
+          {t("common.orContinueWith")}
           <div className="h-px flex-1 bg-border" />
         </div>
 
@@ -724,20 +728,21 @@ function Step2Form({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
     >
-      <h2 className="text-2xl font-bold">Complete your profile</h2>
+      <h2 className="text-2xl font-bold">{t("register.step2.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Tell us a bit more about yourself
+        {t("register.step2.subtitle")}
       </p>
 
       <div className="mt-6 space-y-4">
         <div>
-          <Label>Profile Picture (Optional)</Label>
+          <Label>{t("register.step2.avatarLabel")}</Label>
           <div className="mt-2 flex items-center gap-4">
             <div
               onClick={() => avatarRef.current?.click()}
@@ -754,9 +759,9 @@ function Step2Form({
               )}
             </div>
             <div className="text-sm text-muted-foreground">
-              Click to upload
+              {t("register.step2.avatarClick")}
               <br />
-              <span className="text-xs">JPG, PNG. Max 5MB</span>
+              <span className="text-xs">{t("register.step2.avatarHint")}</span>
             </div>
             <input
               ref={avatarRef}
@@ -772,7 +777,7 @@ function Step2Form({
         </div>
 
         <div>
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">{t("register.step2.fullName")}</Label>
           <div className="relative mt-1.5">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -790,24 +795,24 @@ function Step2Form({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="country">Country</Label>
+            <Label htmlFor="country">{t("register.step2.country")}</Label>
             <Select value={form.country} onValueChange={(v) => onUpdate("country", v)}>
               <SelectTrigger className="mt-1.5 h-11">
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder={t("register.step2.selectCountry")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Estonia">Estonia</SelectItem>
-                <SelectItem value="Latvia">Latvia</SelectItem>
-                <SelectItem value="Lithuania">Lithuania</SelectItem>
-                <SelectItem value="Finland">Finland</SelectItem>
+                <SelectItem value="Estonia">{t("country.estonia")}</SelectItem>
+                <SelectItem value="Latvia">{t("country.latvia")}</SelectItem>
+                <SelectItem value="Lithuania">{t("country.lithuania")}</SelectItem>
+                <SelectItem value="Finland">{t("country.finland")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="county">County</Label>
+            <Label htmlFor="county">{t("register.step2.county")}</Label>
             <Select value={form.county} onValueChange={(v) => onUpdate("county", v)}>
               <SelectTrigger className={`mt-1.5 h-11 ${errors.county ? "border-red-500" : ""}`}>
-                <SelectValue placeholder="Select county" />
+                <SelectValue placeholder={t("register.step2.selectCounty")} />
               </SelectTrigger>
               <SelectContent>
                 {ESTONIAN_COUNTIES.map((c) => (
@@ -825,7 +830,7 @@ function Step2Form({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="city">{t("register.step2.city")}</Label>
             <div className="relative mt-1.5">
               <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -839,7 +844,7 @@ function Step2Form({
             {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city}</p>}
           </div>
           <div>
-            <Label htmlFor="postalCode">Postal Code</Label>
+            <Label htmlFor="postalCode">{t("register.step2.postalCode")}</Label>
             <Input
               id="postalCode"
               value={form.postalCode}
@@ -855,7 +860,7 @@ function Step2Form({
 
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2">
-            <Label htmlFor="streetAddress">Street Address</Label>
+            <Label htmlFor="streetAddress">{t("register.step2.streetAddress")}</Label>
             <div className="relative mt-1.5">
               <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -871,7 +876,7 @@ function Step2Form({
             )}
           </div>
           <div>
-            <Label htmlFor="houseNumber">House No.</Label>
+            <Label htmlFor="houseNumber">{t("register.step2.houseNumber")}</Label>
             <Input
               id="houseNumber"
               value={form.houseNumber}
@@ -885,10 +890,10 @@ function Step2Form({
         <div className="mt-6 flex gap-3">
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t("common.back")}
           </Button>
           <Button type="button" onClick={onNext} className="flex-1 bg-[#2D7A5F] hover:bg-[#236B4F]">
-            Continue
+            {t("common.continue")}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -920,32 +925,33 @@ function Step3Form({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
     >
-      <h2 className="text-2xl font-bold">Your Skills</h2>
+      <h2 className="text-2xl font-bold">{t("register.step3.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Select your primary skill and upload certifications
+        {t("register.step3.subtitle")}
       </p>
 
       <div className="mt-6 space-y-4">
         <div>
-          <Label>Primary Skill</Label>
+          <Label>{t("register.step3.primarySkill")}</Label>
           <div className="relative mt-1.5">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={skillSearch}
               onChange={(e) => onSkillSearchChange(e.target.value)}
-              placeholder="Search skills..."
+              placeholder={t("register.step3.searchSkills")}
               className="h-11 pl-10"
             />
           </div>
           <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-border p-2">
             {filteredSkills.length === 0 ? (
-              <p className="p-2 text-sm text-muted-foreground">No skills found</p>
+              <p className="p-2 text-sm text-muted-foreground">{t("register.step3.noSkills")}</p>
             ) : (
               filteredSkills.map((skill) => (
                 <button
@@ -970,13 +976,13 @@ function Step3Form({
         </div>
 
         <div>
-          <Label>Secondary Skill (Optional)</Label>
+          <Label>{t("register.step3.secondarySkill")}</Label>
           <Select
             value={form.secondarySkill}
             onValueChange={(v) => onUpdate("secondarySkill", v)}
           >
             <SelectTrigger className="mt-1.5 h-11">
-              <SelectValue placeholder="Select a secondary skill" />
+              <SelectValue placeholder={t("register.step3.selectSecondary")} />
             </SelectTrigger>
             <SelectContent>
               {SKILLS.filter((s) => s.id !== form.primarySkill).map((s) => (
@@ -989,7 +995,7 @@ function Step3Form({
         </div>
 
         <div>
-          <Label>Certification (Optional)</Label>
+          <Label>{t("register.step3.certification")}</Label>
           <div
             onClick={() => certRef.current?.click()}
             className="mt-1.5 flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:border-[#2D7A5F]"
@@ -1012,7 +1018,7 @@ function Step3Form({
               <>
                 <Upload className="h-5 w-5 text-muted-foreground" />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Upload certification (PDF, JPG)
+                  {t("register.step3.certUpload")}
                 </p>
               </>
             )}
@@ -1032,10 +1038,10 @@ function Step3Form({
         <div className="mt-6 flex gap-3">
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t("common.back")}
           </Button>
           <Button type="button" onClick={onNext} className="flex-1 bg-[#2D7A5F] hover:bg-[#236B4F]">
-            Continue
+            {t("common.continue")}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -1065,23 +1071,24 @@ function Step4Form({
   onSubmit: () => void;
   onBack: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
     >
-      <h2 className="text-2xl font-bold">Verify your identity</h2>
+      <h2 className="text-2xl font-bold">{t("register.step4.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload your documents for verification
+        {t("register.step4.subtitle")}
       </p>
 
       <div className="mt-6 space-y-6">
         <div>
-          <Label>Residence Permit</Label>
+          <Label>{t("register.step4.residencePermit")}</Label>
           <div className="mt-3 grid grid-cols-2 gap-4">
             <div>
-              <p className="mb-2 text-xs text-muted-foreground">Front Side</p>
+              <p className="mb-2 text-xs text-muted-foreground">{t("register.step4.frontSide")}</p>
               <div
                 onClick={() => frontDocRef.current?.click()}
                 className={`flex h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed ${
@@ -1108,7 +1115,7 @@ function Step4Form({
                 ) : (
                   <>
                     <Upload className="h-6 w-6 text-muted-foreground" />
-                    <p className="mt-2 text-xs text-muted-foreground">Front</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{t("register.step4.front")}</p>
                   </>
                 )}
               </div>
@@ -1124,7 +1131,7 @@ function Step4Form({
               />
             </div>
             <div>
-              <p className="mb-2 text-xs text-muted-foreground">Back Side</p>
+              <p className="mb-2 text-xs text-muted-foreground">{t("register.step4.backSide")}</p>
               <div
                 onClick={() => backDocRef.current?.click()}
                 className={`flex h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed ${
@@ -1151,7 +1158,7 @@ function Step4Form({
                 ) : (
                   <>
                     <Upload className="h-6 w-6 text-muted-foreground" />
-                    <p className="mt-2 text-xs text-muted-foreground">Back</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{t("register.step4.back")}</p>
                   </>
                 )}
               </div>
@@ -1178,9 +1185,9 @@ function Step4Form({
           <div className="flex items-start gap-3">
             <QrCode className="h-5 w-5 text-[#2D7A5F]" />
             <div>
-              <p className="font-medium">Face Verification</p>
+              <p className="font-medium">{t("register.step4.faceVerify")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Scan this QR code with the SkillBuddy mobile app to complete face verification
+                {t("register.step4.faceVerifyDesc")}
               </p>
             </div>
           </div>
@@ -1194,7 +1201,7 @@ function Step4Form({
         </div>
 
         <div>
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone">{t("register.step4.phone")}</Label>
           <div className="relative mt-1.5">
             <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -1214,7 +1221,7 @@ function Step4Form({
         <div className="flex gap-3">
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t("common.back")}
           </Button>
           <Button
             type="button"
@@ -1227,7 +1234,7 @@ function Step4Form({
             ) : (
               <>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Complete Registration
+                {t("register.step4.submit")}
               </>
             )}
           </Button>

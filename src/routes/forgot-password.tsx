@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-browser";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/forgot-password")({
 });
 
 function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -32,12 +34,12 @@ function ForgotPasswordPage() {
     setError("");
 
     if (!email.trim()) {
-      setError("Email is required");
+      setError(t("auth.validation.emailRequired"));
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address");
+      setError(t("auth.validation.emailInvalid"));
       return;
     }
 
@@ -70,25 +72,25 @@ function ForgotPasswordPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold">Check your email</h1>
+              <h1 className="text-2xl font-bold">{t("auth.forgot.checkEmail")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                We sent a password reset link to
+                {t("auth.forgot.emailSentTo")}
               </p>
               <p className="font-medium text-foreground">{email}</p>
               <Button asChild className="mt-6 w-full">
-                <Link to="/auth/login">Back to Login</Link>
+                <Link to="/auth/login">{t("auth.signin")}</Link>
               </Button>
             </div>
           ) : (
             <>
-              <h1 className="text-2xl font-bold">Forgot your password?</h1>
+              <h1 className="text-2xl font-bold">{t("auth.forgot.title")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Enter your email address and we'll send you a link to reset your password.
+                {t("auth.forgot.subtitle")}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("auth.email")}</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -114,7 +116,7 @@ function ForgotPasswordPage() {
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    "Send Reset Link"
+                    t("auth.forgot.sendReset")
                   )}
                 </Button>
               </form>
@@ -125,7 +127,7 @@ function ForgotPasswordPage() {
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back to login
+                  {t("auth.forgot.backToLogin")}
                 </Link>
               </div>
             </>

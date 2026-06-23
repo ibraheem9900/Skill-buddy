@@ -3,6 +3,7 @@ import { SiteShell } from "@/components/site-shell";
 import { motion } from "framer-motion";
 import { Search, Star, ArrowRight, Wrench } from "lucide-react";
 import { z } from "zod";
+import { useI18n } from "@/lib/i18n";
 
 const roleSelectSearchSchema = z.object({
   role: z.enum(["client", "provider"]).optional(),
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/register/")({
 function RegisterRoleSelect() {
   const search = useSearch({ from: "/register/" });
   const preselectedRole = search.role;
+  const { t } = useI18n();
 
   return (
     <SiteShell>
@@ -33,44 +35,46 @@ function RegisterRoleSelect() {
           className="text-center"
         >
           <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
-            How do you want to use SkillBuddy?
+            {t("register.role.title")}
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Choose your path to get started
+            {t("register.role.subtitle")}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           <RoleCard
-            title="I'm looking for services"
-            subtitle="Find and book skilled professionals"
+            title={t("register.role.clientTitle")}
+            subtitle={t("register.role.clientSubtitle")}
             icon={<Search className="h-8 w-8" />}
-            description="Browse services, compare providers, and book appointments with verified SkillBuddies."
+            description={t("register.role.clientDesc")}
             href="/register/seeker"
             features={[
-              "Browse 55+ service categories",
-              "Read verified reviews",
-              "Book instantly",
-              "Secure payments",
+              t("register.role.clientFeature1"),
+              t("register.role.clientFeature2"),
+              t("register.role.clientFeature3"),
+              t("register.role.clientFeature4"),
             ]}
             delay={0.1}
             featured={preselectedRole === "client"}
+            t={t}
           />
           <RoleCard
-            title="I want to offer services"
-            subtitle="Join as a SkillBuddy Provider"
+            title={t("register.role.providerTitle")}
+            subtitle={t("register.role.providerSubtitle")}
             icon={<Star className="h-8 w-8 fill-current" />}
-            description="Showcase your skills, connect with clients, and build your business on SkillBuddy."
+            description={t("register.role.providerDesc")}
             href="/register/skillbuddy"
             features={[
-              "Set your own rates",
-              "Flexible schedule",
-              "Reach thousands of clients",
-              "Get paid securely",
+              t("register.role.providerFeature1"),
+              t("register.role.providerFeature2"),
+              t("register.role.providerFeature3"),
+              t("register.role.providerFeature4"),
             ]}
             delay={0.2}
             featured={preselectedRole === "provider"}
             variant="provider"
+            t={t}
           />
         </div>
 
@@ -80,9 +84,9 @@ function RegisterRoleSelect() {
           transition={{ delay: 0.5 }}
           className="mt-8 text-center text-sm text-muted-foreground"
         >
-          Already have an account?{" "}
+          {t("register.role.haveAccount")}{" "}
           <Link to="/auth/login" className="text-primary hover:underline">
-            Sign in
+            {t("auth.signin")}
           </Link>
         </motion.p>
       </div>
@@ -100,6 +104,7 @@ interface RoleCardProps {
   delay: number;
   featured?: boolean;
   variant?: "client" | "provider";
+  t: (k: string) => string;
 }
 
 function RoleCard({
@@ -112,6 +117,7 @@ function RoleCard({
   delay,
   featured,
   variant = "client",
+  t,
 }: RoleCardProps) {
   const isProvider = variant === "provider";
 
@@ -131,7 +137,7 @@ function RoleCard({
       >
         {featured && (
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-            Selected
+            {t("register.role.selected")}
           </span>
         )}
 
@@ -171,7 +177,7 @@ function RoleCard({
             isProvider ? "text-[#2D7A5F]" : "text-primary"
           }`}
         >
-          Get started
+          {t("register.role.getStarted")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </div>
       </Link>

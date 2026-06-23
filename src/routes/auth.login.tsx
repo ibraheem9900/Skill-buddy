@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-browser";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/auth/login")({
 
 function Login() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,9 +36,9 @@ function Login() {
 
   const validate = (): boolean => {
     const errs: typeof errors = {};
-    if (!email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Invalid email address";
-    if (!password) errs.password = "Password is required";
+    if (!email.trim()) errs.email = t("auth.validation.emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = t("auth.validation.emailInvalid");
+    if (!password) errs.password = t("auth.validation.passwordRequired");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -102,23 +104,23 @@ function Login() {
         <div className="hidden lg:block">
           <Logo />
           <h1 className="mt-8 font-display text-4xl font-extrabold leading-tight">
-            Welcome back to SkillBuddy
+            {t("auth.login.title")}
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Sign in to access your dashboard, manage bookings, and connect with skilled professionals.
+            {t("auth.login.subtitle")}
           </p>
           <ul className="mt-8 space-y-3 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Access your personalized dashboard
+              {t("auth.login.feature1")}
             </li>
             <li className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Manage your bookings and messages
+              {t("auth.login.feature2")}
             </li>
             <li className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Save your favorite providers
+              {t("auth.login.feature3")}
             </li>
           </ul>
         </div>
@@ -128,17 +130,17 @@ function Login() {
             <Logo />
           </div>
 
-          <h2 className="text-2xl font-extrabold">Sign in</h2>
+          <h2 className="text-2xl font-extrabold">{t("auth.signin")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            New here?{" "}
+            {t("auth.login.newHere")}{" "}
             <Link to="/register" className="text-primary hover:underline">
-              Create an account
+              {t("auth.login.createAccount")}
             </Link>
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <div className="relative mt-1.5">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -160,12 +162,12 @@ function Login() {
 
             <div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Link
                   to="/forgot-password"
                   className="text-xs text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t("auth.login.forgotPassword")}
                 </Link>
               </div>
               <div className="relative mt-1.5">
@@ -178,7 +180,7 @@ function Login() {
                     setPassword(e.target.value);
                     setErrors((err) => ({ ...err, password: undefined }));
                   }}
-                  placeholder="Your password"
+                  placeholder={`${t("auth.password")}`}
                   className={`h-11 pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
                 />
                 <button
@@ -199,7 +201,7 @@ function Login() {
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
               />
-              <span className="text-muted-foreground">Remember me</span>
+              <span className="text-muted-foreground">{t("auth.login.rememberMe")}</span>
             </label>
 
             <Button
@@ -210,14 +212,14 @@ function Login() {
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Sign in"
+                t("auth.signin")
               )}
             </Button>
           </form>
 
           <div className="my-5 flex items-center gap-2 text-xs text-muted-foreground">
             <div className="h-px flex-1 bg-border" />
-            or continue with
+            {t("common.orContinueWith")}
             <div className="h-px flex-1 bg-border" />
           </div>
 
