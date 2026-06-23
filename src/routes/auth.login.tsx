@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader as Loader2, Mail, Lock } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { toast } from "sonner";

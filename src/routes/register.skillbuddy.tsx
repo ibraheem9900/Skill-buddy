@@ -3,26 +3,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Upload,
-  X,
-  Loader2,
-  Eye,
-  EyeOff,
-  User,
-  Mail,
-  Lock,
-  MapPin,
-  Phone,
-  Building,
-  QrCode,
-  Wrench,
-  Search,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleCheck as CheckCircle2, Upload, X, Loader as Loader2, Eye, EyeOff, User, Mail, Lock, MapPin, Phone, Building, QrCode, Wrench, Search } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

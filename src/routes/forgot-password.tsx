@@ -3,7 +3,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail, Loader as Loader2, CircleCheck as CheckCircle2 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
