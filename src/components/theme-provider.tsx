@@ -4,13 +4,10 @@ type Theme = "dark" | "light";
 const ThemeCtx = createContext<{ theme: Theme; toggle: () => void }>({ theme: "dark", toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
-
-  useEffect(() => {
-    const stored = (typeof window !== "undefined" && localStorage.getItem("sb-theme")) as Theme | null;
-    const initial: Theme = stored ?? "dark";
-    setTheme(initial);
-  }, []);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    return (localStorage.getItem("sb-theme") as Theme) ?? "dark";
+  });
 
   useEffect(() => {
     const root = document.documentElement;
