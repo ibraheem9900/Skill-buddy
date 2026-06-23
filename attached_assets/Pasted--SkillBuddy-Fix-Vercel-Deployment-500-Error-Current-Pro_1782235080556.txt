@@ -1,0 +1,131 @@
+# SkillBuddy — Fix Vercel Deployment (500 Error)
+
+## Current Problem
+Website shows "This page didn't load — 500 error" on skill-buddy-nine.vercel.app
+
+## What I Need You To Do
+
+### Step 1 — Read the current config files
+Read and show me the contents of:
+- `vercel.json`
+- `app.config.ts`
+- `package.json` (scripts section only)
+
+### Step 2 — Run the build and check output
+Run this in shell:
+```bash
+bun run build 2>&1 | tail -50
+```
+Then check what folder was created:
+```bash
+ls -la | grep -E "dist|output|\.output|\.vercel"
+ls -la .output/ 2>/dev/null
+ls -la .vercel/ 2>/dev/null
+ls -la dist/ 2>/dev/null
+```
+
+### Step 3 — Fix based on what you find
+
+**Replace `vercel.json` with this:**
+```json
+{
+  "version": 2,
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "framework": null
+}
+```
+(Do NOT add outputDirectory — let Nitro handle it automatically)
+
+**Replace `app.config.ts` with this:**
+```typescript
+import { defineConfig } from '@tanstack/start/config'
+
+export default defineConfig({
+  server: {
+    preset: 'vercel',
+  },
+})
+```
+
+**Make sure `package.json` scripts look like this:**
+```json
+"scripts": {
+  "dev": "vinxi dev --port 5000",
+  "build": "vinxi build",
+  "start": "node .output/server/index.mjs"
+}
+```
+
+### Step 4 — Fix SSR crashes (window/document errors)
+
+Search entire codebase for any code that uses `window`, `document`, or `localStorage` OUTSIDE of:
+- `useEffect` hooks
+- Event handlers
+- Functions that only run in browser
+
+Any such code will crash the Vercel server. Fix by wrapping in:
+```typescript
+if (typeof window !== 'undefined') {
+  // your code here
+}
+```
+
+Or move inside `useEffect`:
+```typescript
+useEffect(() => {
+  // window/document/localStorage code here
+}, [])
+```
+
+### Step 5 — Fix i18n translation files location
+
+Make sure ALL translation JSON files are inside the `public` folder:
+```
+public/
+  locales/
+    en/
+      translation.json
+    et/
+      translation.json
+    ru/
+      translation.json
+    lv/
+      translation.json
+    lt/
+      translation.json
+```
+
+If they are anywhere else (like `src/locales/`), move them to `public/locales/`.
+
+Update i18next config to load from:
+```typescript
+backend: {
+  loadPath: '/locales/{{lng}}/translation.json',
+}
+```
+
+### Step 6 — Run build again and confirm zero errors
+```bash
+bun run build
+```
+Build must complete with NO errors before deploying.
+
+### Step 7 — Push to GitHub
+```bash
+git add .
+git commit -m "fix: vercel 500 error - SSR and config fixes"
+git push origin main
+```
+
+### Step 8 — Verify on Vercel
+After push, Vercel will auto-redeploy. Check skill-buddy-nine.vercel.app — it should load correctly.
+
+## If Still Failing After All Above
+
+Go to Vercel Dashboard → Deployments → latest deploy → click "Logs" tab → scroll to bottom → find the line that starts with "Error:" and show it to me. That exact error message tells us the root cause.
+
+## Important Notes
+- This project has NO database and NO real backend — all data is hardcoded TypeScript files
+- The ONLY reason for 500 error is either: wrong config, SSR crash (window/document), or missing translation files
+- Do NOT add any new features — only fix the deployment issue
