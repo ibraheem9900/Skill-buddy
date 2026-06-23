@@ -24,7 +24,7 @@
  *         .vc-config.json           ← { runtime: "nodejs20.x" }
  */
 
-import { cpSync, mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
+import { cpSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from "fs";
 import { execSync } from "child_process";
 
 const VERCEL_OUT = ".vercel/output";
@@ -37,8 +37,10 @@ if (existsSync(VERCEL_OUT)) {
 }
 
 // ── 1. Vite build ────────────────────────────────────────────────────────────
+// Use explicit path so this works when called directly with `node script.mjs`
+// (i.e. node_modules/.bin is not always in PATH on Vercel's build environment)
 console.log("\n📦 Running vite build...\n");
-execSync("vite build", { stdio: "inherit" });
+execSync("node_modules/.bin/vite build", { stdio: "inherit" });
 
 // ── 2. Directory structure ───────────────────────────────────────────────────
 mkdirSync(`${VERCEL_OUT}/static`, { recursive: true });
@@ -75,7 +77,17 @@ execSync(
   ].join(" "),
   { stdio: "inherit" }
 );
-console.log("✓  Bundled → ssr.func/ssr-bundle.mjs");
+
+// ── Inject createRequire polyfill ─────────────────────────────────────────────
+// Node.js 20 ESM does NOT define `require` (unlike Bun which polyfills it).
+// Any bundled CJS dependency calling require() would throw at runtime on Vercel.
+// Prepending this line makes require() available inside the ESM bundle.
+const requirePolyfill =
+  `import { createRequire } from "node:module";\n` +
+  `const require = createRequire(import.meta.url);\n\n`;
+const bundlePath = `${FUNC_DIR}/ssr-bundle.mjs`;
+writeFileSync(bundlePath, requirePolyfill + readFileSync(bundlePath, "utf-8"));
+console.log("✓  Bundled + require-polyfill → ssr.func/ssr-bundle.mjs");
 
 // ── 5. Node.js adapter ───────────────────────────────────────────────────────
 //
