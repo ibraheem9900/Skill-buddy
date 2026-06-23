@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Moon, Star, Sun, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { useTheme } from "@/components/theme-provider";
@@ -60,6 +60,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-2 pl-2">
             <Button asChild variant="ghost" size="sm"><Link to="/auth/login">{t("nav.login")}</Link></Button>
             <Button asChild size="sm" className="shadow-elegant"><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
+            <Button asChild size="sm" className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F] hover:shadow-lg">
+              <Link to="/register" search={{ role: "provider" }}>
+                <Star className="h-4 w-4 fill-white" />
+                <User className="h-3.5 w-3.5" />
+                <span>Become a SkillBuddy</span>
+              </Link>
+            </Button>
           </div>
           <Sheet>
             <SheetTrigger asChild>
@@ -78,6 +85,13 @@ export function Navbar() {
                 <div className="mt-4 grid gap-2">
                   <Button asChild variant="outline"><Link to="/auth/login">{t("nav.login")}</Link></Button>
                   <Button asChild><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
+                  <Button asChild className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F]">
+                    <Link to="/register" search={{ role: "provider" }}>
+                      <Star className="h-4 w-4 fill-white" />
+                      <User className="h-3.5 w-3.5" />
+                      <span>Become a SkillBuddy</span>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </SheetContent>

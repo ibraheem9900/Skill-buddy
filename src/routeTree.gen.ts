@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as JobsRouteImport } from './routes/jobs'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqsRouteImport } from './routes/faqs'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -26,8 +29,11 @@ import { Route as BecomeAProviderRouteImport } from './routes/become-a-provider'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as RegisterIndexRouteImport } from './routes/register.index'
 import { Route as CareersIndexRouteImport } from './routes/careers.index'
 import { Route as ServicesIdRouteImport } from './routes/services.$id'
+import { Route as RegisterSkillbuddyRouteImport } from './routes/register.skillbuddy'
+import { Route as RegisterSeekerRouteImport } from './routes/register.seeker'
 import { Route as ProvidersIdRouteImport } from './routes/providers.$id'
 import { Route as CareersIdRouteImport } from './routes/careers.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -48,6 +54,16 @@ const ServicesRoute = ServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -61,6 +77,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const JobsRoute = JobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqsRoute = FaqsRouteImport.update({
@@ -118,6 +139,11 @@ const ServicesIndexRoute = ServicesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ServicesRoute,
 } as any)
+const RegisterIndexRoute = RegisterIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RegisterRoute,
+} as any)
 const CareersIndexRoute = CareersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -127,6 +153,16 @@ const ServicesIdRoute = ServicesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ServicesRoute,
+} as any)
+const RegisterSkillbuddyRoute = RegisterSkillbuddyRouteImport.update({
+  id: '/skillbuddy',
+  path: '/skillbuddy',
+  getParentRoute: () => RegisterRoute,
+} as any)
+const RegisterSeekerRoute = RegisterSeekerRouteImport.update({
+  id: '/seeker',
+  path: '/seeker',
+  getParentRoute: () => RegisterRoute,
 } as any)
 const ProvidersIdRoute = ProvidersIdRouteImport.update({
   id: '/providers/$id',
@@ -160,9 +196,12 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/services': typeof ServicesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -170,8 +209,11 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
+  '/register/seeker': typeof RegisterSeekerRoute
+  '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers/': typeof CareersIndexRoute
+  '/register/': typeof RegisterIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -184,17 +226,22 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
+  '/register/seeker': typeof RegisterSeekerRoute
+  '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers': typeof CareersIndexRoute
+  '/register': typeof RegisterIndexRoute
   '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
@@ -209,9 +256,12 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/jobs': typeof JobsRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/services': typeof ServicesRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -219,8 +269,11 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
   '/providers/$id': typeof ProvidersIdRoute
+  '/register/seeker': typeof RegisterSeekerRoute
+  '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers/': typeof CareersIndexRoute
+  '/register/': typeof RegisterIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -236,9 +289,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faqs'
+    | '/forgot-password'
     | '/jobs'
     | '/notifications'
     | '/privacy'
+    | '/register'
+    | '/reset-password'
     | '/services'
     | '/sitemap.xml'
     | '/terms'
@@ -246,8 +302,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/careers/$id'
     | '/providers/$id'
+    | '/register/seeker'
+    | '/register/skillbuddy'
     | '/services/$id'
     | '/careers/'
+    | '/register/'
     | '/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -260,17 +319,22 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faqs'
+    | '/forgot-password'
     | '/jobs'
     | '/notifications'
     | '/privacy'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
     | '/auth/login'
     | '/auth/signup'
     | '/careers/$id'
     | '/providers/$id'
+    | '/register/seeker'
+    | '/register/skillbuddy'
     | '/services/$id'
     | '/careers'
+    | '/register'
     | '/services'
   id:
     | '__root__'
@@ -284,9 +348,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/explore'
     | '/faqs'
+    | '/forgot-password'
     | '/jobs'
     | '/notifications'
     | '/privacy'
+    | '/register'
+    | '/reset-password'
     | '/services'
     | '/sitemap.xml'
     | '/terms'
@@ -294,8 +361,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/careers/$id'
     | '/providers/$id'
+    | '/register/seeker'
+    | '/register/skillbuddy'
     | '/services/$id'
     | '/careers/'
+    | '/register/'
     | '/services/'
   fileRoutesById: FileRoutesById
 }
@@ -310,9 +380,12 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
   FaqsRoute: typeof FaqsRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   JobsRoute: typeof JobsRoute
   NotificationsRoute: typeof NotificationsRoute
   PrivacyRoute: typeof PrivacyRoute
+  RegisterRoute: typeof RegisterRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ServicesRoute: typeof ServicesRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
@@ -344,6 +417,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -363,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/jobs'
       fullPath: '/jobs'
       preLoaderRoute: typeof JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faqs': {
@@ -442,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesIndexRouteImport
       parentRoute: typeof ServicesRoute
     }
+    '/register/': {
+      id: '/register/'
+      path: '/'
+      fullPath: '/register/'
+      preLoaderRoute: typeof RegisterIndexRouteImport
+      parentRoute: typeof RegisterRoute
+    }
     '/careers/': {
       id: '/careers/'
       path: '/'
@@ -455,6 +556,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/$id'
       preLoaderRoute: typeof ServicesIdRouteImport
       parentRoute: typeof ServicesRoute
+    }
+    '/register/skillbuddy': {
+      id: '/register/skillbuddy'
+      path: '/skillbuddy'
+      fullPath: '/register/skillbuddy'
+      preLoaderRoute: typeof RegisterSkillbuddyRouteImport
+      parentRoute: typeof RegisterRoute
+    }
+    '/register/seeker': {
+      id: '/register/seeker'
+      path: '/seeker'
+      fullPath: '/register/seeker'
+      preLoaderRoute: typeof RegisterSeekerRouteImport
+      parentRoute: typeof RegisterRoute
     }
     '/providers/$id': {
       id: '/providers/$id'
@@ -500,6 +615,22 @@ const CareersRouteChildren: CareersRouteChildren = {
 const CareersRouteWithChildren =
   CareersRoute._addFileChildren(CareersRouteChildren)
 
+interface RegisterRouteChildren {
+  RegisterSeekerRoute: typeof RegisterSeekerRoute
+  RegisterSkillbuddyRoute: typeof RegisterSkillbuddyRoute
+  RegisterIndexRoute: typeof RegisterIndexRoute
+}
+
+const RegisterRouteChildren: RegisterRouteChildren = {
+  RegisterSeekerRoute: RegisterSeekerRoute,
+  RegisterSkillbuddyRoute: RegisterSkillbuddyRoute,
+  RegisterIndexRoute: RegisterIndexRoute,
+}
+
+const RegisterRouteWithChildren = RegisterRoute._addFileChildren(
+  RegisterRouteChildren,
+)
+
 interface ServicesRouteChildren {
   ServicesIdRoute: typeof ServicesIdRoute
   ServicesIndexRoute: typeof ServicesIndexRoute
@@ -525,9 +656,12 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
   FaqsRoute: FaqsRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   JobsRoute: JobsRoute,
   NotificationsRoute: NotificationsRoute,
   PrivacyRoute: PrivacyRoute,
+  RegisterRoute: RegisterRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   ServicesRoute: ServicesRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
