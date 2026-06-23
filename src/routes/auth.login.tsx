@@ -12,6 +12,7 @@ import { Logo } from "@/components/logo";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-browser";
 import { useI18n } from "@/lib/i18n";
+import { useLoader } from "@/context/LoaderContext";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/auth/login")({
 function Login() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { showLoader, hideLoader } = useLoader();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -48,6 +50,7 @@ function Login() {
     if (!validate()) return;
 
     setLoading(true);
+    showLoader();
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -57,6 +60,7 @@ function Login() {
     setLoading(false);
 
     if (error) {
+      hideLoader();
       toast.error(error.message);
       return;
     }
@@ -78,12 +82,14 @@ function Login() {
         navigate({ to: "/client/dashboard" });
       }
     } else {
+      hideLoader();
       navigate({ to: "/" });
     }
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
     setOAuthLoading(provider);
+    showLoader();
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -93,6 +99,7 @@ function Login() {
     });
 
     if (error) {
+      hideLoader();
       toast.error(error.message);
       setOAuthLoading(null);
     }

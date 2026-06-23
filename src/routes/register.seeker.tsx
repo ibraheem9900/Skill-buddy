@@ -160,11 +160,41 @@ function ClientRegisterPage() {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      if (error.message.includes("already registered")) {
+        toast.error("This email is already registered. Please login instead.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
 
     setOtpSent(true);
+    toast.success(t("register.step1.otpSent"));
+    setResendCountdown(60);
+    const interval = setInterval(() => {
+      setResendCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: form.email,
+    });
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success(t("register.step1.otpSent"));
     setResendCountdown(60);
     const interval = setInterval(() => {
@@ -343,6 +373,7 @@ function ClientRegisterPage() {
                 onUpdate={update}
                 onOtpChange={setOtp}
                 onNext={handleNextStep}
+                onResendOtp={handleResendOtp}
               />
             )}
             {step === 2 && (
@@ -433,6 +464,7 @@ function Step1Form({
   onUpdate,
   onOtpChange,
   onNext,
+  onResendOtp,
 }: {
   form: FormData;
   errors: FormErrors;
@@ -447,6 +479,7 @@ function Step1Form({
   onUpdate: (key: keyof FormData, value: string) => void;
   onOtpChange: (v: string) => void;
   onNext: () => void;
+  onResendOtp: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -566,11 +599,14 @@ function Step1Form({
             <button
               type="button"
               disabled={resendCountdown > 0}
-              onClick={() => {}}
+              onClick={onResendOtp}
               className="mt-2 text-xs text-primary disabled:opacity-50"
             >
               {resendCountdown > 0 ? `${t("register.step1.resendIn")} ${resendCountdown}s` : t("register.step1.resendCode")}
             </button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Didn't receive the email? Check your spam or junk folder.
+            </p>
           </div>
         )}
 

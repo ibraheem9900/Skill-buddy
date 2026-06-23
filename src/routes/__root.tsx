@@ -15,6 +15,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { SkillBuddyLoader } from "@/components/skillbuddy-loader";
+import { LoaderProvider } from "@/context/LoaderContext";
+import { NavigationLoader } from "@/components/NavigationLoader";
 
 function NotFoundComponent() {
   return (
@@ -117,14 +119,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <ThemeProvider>
-          <Suspense fallback={<SkillBuddyLoader />}>
-            <Outlet />
-          </Suspense>
-          <Toaster richColors position="top-right" />
-        </ThemeProvider>
-      </I18nProvider>
+      <LoaderProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <SkillBuddyLoader />
+            <NavigationLoader />
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
+            <Toaster richColors position="top-right" />
+          </ThemeProvider>
+        </I18nProvider>
+      </LoaderProvider>
     </QueryClientProvider>
   );
 }

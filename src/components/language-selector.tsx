@@ -2,10 +2,18 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LOCALES, useI18n } from "@/lib/i18n";
 import { ChevronDown } from "lucide-react";
+import { useLoader } from "@/context/LoaderContext";
 
 export function LanguageSelector() {
   const { locale, setLocale } = useI18n();
+  const { showLoaderFor } = useLoader();
   const current = LOCALES.find((l) => l.code === locale)!;
+
+  const handleLanguageChange = async (code: typeof locale) => {
+    setLocale(code);
+    await showLoaderFor(500);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -19,7 +27,7 @@ export function LanguageSelector() {
         {LOCALES.map((l) => (
           <DropdownMenuItem
             key={l.code}
-            onClick={() => setLocale(l.code)}
+            onClick={() => handleLanguageChange(l.code)}
             className={`gap-2 ${l.code === locale ? "bg-accent text-accent-foreground" : ""}`}
           >
             <span className="text-base">{l.flag}</span>
