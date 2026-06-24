@@ -1,3 +1,4 @@
 - [TanStack Router file-based nesting](tanstack-route-nesting.md) — services.tsx must render <Outlet /> or child routes never mount; use services.index.tsx for list content
 - [i18n flat dict pattern](i18n-pattern.md) — all 5 locales (en/et/ru/lv/lt) live in one file; t() falls back to en then the raw key; sec.mostBooked kept for compat, sec.popularServices is the new heading key
 - [Vercel ESM createRequire fix](vercel-esm-require.md) — Node.js 20 ESM has no require(); Bun silently polyfills it masking the bug locally; must prepend createRequire polyfill to ssr-bundle.mjs
+- [Homepage snap-scroll architecture](homepage-snap-arch.md) — homepage bypasses SiteShell entirely; uses position:fixed snap container + separate fixed Navbar wrapper with motion slide-in; body overflow hidden on mount; wheel events intercepted on container for card-deck sections
