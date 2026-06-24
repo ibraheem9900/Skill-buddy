@@ -50,8 +50,14 @@ function Home() {
   useEffect(() => { activeSectionRef.current = activeSection; }, [activeSection]);
 
   useEffect(() => {
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    document.body.style.height = "100vh";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+    };
   }, []);
 
   useEffect(() => {
@@ -109,10 +115,25 @@ function Home() {
         {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
       </AnimatePresence>
 
+      <motion.div
+        className="fixed top-0 inset-x-0 z-40"
+        initial={{ y: -60, opacity: 0 }}
+        animate={introComplete ? { y: 0, opacity: 1 } : { y: -60, opacity: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <Navbar />
+      </motion.div>
+
       <div
         ref={containerRef}
-        className="fixed inset-0 z-10 overflow-y-scroll"
-        style={{ scrollSnapType: "y mandatory", scrollbarWidth: "none" }}
+        style={{
+          height: "100vh",
+          overflowY: "scroll",
+          scrollSnapType: "y mandatory",
+          scrollbarWidth: "none",
+          position: "relative",
+          zIndex: 10,
+        }}
       >
         <style>{`::-webkit-scrollbar{display:none}`}</style>
 
@@ -141,15 +162,6 @@ function Home() {
           </div>
         ))}
       </div>
-
-      <motion.div
-        className="fixed top-0 inset-x-0 z-40"
-        initial={{ y: -60, opacity: 0 }}
-        animate={introComplete ? { y: 0, opacity: 1 } : { y: -60, opacity: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Navbar />
-      </motion.div>
     </>
   );
 }
