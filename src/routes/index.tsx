@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence, useInView, useMotionValue } from "framer-motion";
+import { motion, useInView, useMotionValue } from "framer-motion";
 import { Search, Sparkles, Star, ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen, Shield, Ban, ThumbsUp, Heart, Quote, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,70 +25,47 @@ function Home() {
 
   return (
     <>
-      <AnimatePresence>
-        {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
-      </AnimatePresence>
-      {introComplete && <ScrollSnapHomepage />}
+      {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
+      {introComplete && <AnimatedHomepage />}
     </>
   );
 }
 
-function ScrollSnapHomepage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState(0);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const scrollY = container.scrollTop;
-      const sectionHeight = window.innerHeight;
-      const newSection = Math.round(scrollY / sectionHeight);
-      if (newSection !== activeSection) {
-        setActiveSection(newSection);
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [activeSection]);
-
+function AnimatedHomepage() {
   return (
     <div
-      ref={containerRef}
-      className="h-screen w-full overflow-y-auto scroll-smooth"
+      className="h-screen w-full overflow-y-auto"
       style={{ scrollSnapType: "y mandatory" }}
     >
-      <Section0 activeSection={activeSection} />
-      <Section1Hero activeSection={activeSection} />
-      <Section2PostJob activeSection={activeSection} />
-      <Section3Categories activeSection={activeSection} />
-      <Section4SpecialOffers activeSection={activeSection} />
-      <Section5PopularServices activeSection={activeSection} />
-      <Section6HowItWorks activeSection={activeSection} />
-      <Section7Features activeSection={activeSection} />
-      <Section8StarReward activeSection={activeSection} />
-      <Section9GrowingTogether activeSection={activeSection} />
-      <Section10Testimonials activeSection={activeSection} />
-      <Section11Footer activeSection={activeSection} />
+      <HeroSection />
+      <PostJobSection />
+      <CategoriesSection />
+      <SpecialOffersSection />
+      <PopularServicesSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <StarRewardSection />
+      <VisionSection />
+      <TestimonialsSection />
+      <FooterSection />
     </div>
   );
 }
 
-function sectionSnapClass(active: boolean): string {
-  return `h-screen w-full flex-shrink-0 ${active ? "" : ""}`;
+function useScrollReveal(threshold = 0.3) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: threshold, once: false });
+  return { ref, isInView };
 }
 
-function Section0({ activeSection }: { activeSection: number }) {
+function HeroSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 0)} scroll-snap-align-start gradient-hero relative overflow-hidden`}
+      className="h-screen w-full scroll-snap-align-start gradient-hero relative overflow-hidden"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-glow/5" />
@@ -112,6 +89,14 @@ function Section0({ activeSection }: { activeSection: number }) {
             highlightWord={t("hero.titleB")}
             active={isInView}
           />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground"
+          >
+            {t("hero.subtitle")}
+          </motion.p>
         </motion.div>
       </div>
       <ScrollHint active={isInView} />
@@ -168,15 +153,14 @@ function ScrollHint({ active }: { active: boolean }) {
   );
 }
 
-function Section1Hero({ activeSection }: { activeSection: number }) {
+function PostJobSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 1)} scroll-snap-align-start relative overflow-hidden bg-background`}
+      className="h-screen w-full scroll-snap-align-start bg-background"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 sm:px-6">
@@ -234,24 +218,23 @@ function Section1Hero({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section2Categories({ activeSection }: { activeSection: number }) {
+function CategoriesSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   const categories = [
-    { emoji: "🏠", name: t("cat.cleaning"), jobs: 128 },
-    { emoji: "🔧", name: t("cat.repair"), jobs: 94 },
-    { emoji: "📚", name: t("cat.tutoring"), jobs: 67 },
-    { emoji: "🚚", name: t("cat.moving"), jobs: 45 },
-    { emoji: "💻", name: t("cat.tech"), jobs: 89 },
-    { emoji: "🎨", name: t("cat.design"), jobs: 53 },
+    { emoji: "🏠", name: t("cat.cleaning") },
+    { emoji: "🔧", name: t("cat.repair") },
+    { emoji: "📚", name: t("cat.tutoring") },
+    { emoji: "🚚", name: t("cat.moving") },
+    { emoji: "💻", name: t("cat.tech") },
+    { emoji: "🎨", name: t("cat.design") },
   ];
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 2)} scroll-snap-align-start bg-surface/30`}
+      className="h-screen w-full scroll-snap-align-start bg-surface/30"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -276,7 +259,6 @@ function Section2Categories({ activeSection }: { activeSection: number }) {
             >
               <span className="text-4xl">{cat.emoji}</span>
               <h3 className="mt-3 text-sm font-semibold">{cat.name}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{cat.jobs} jobs</p>
             </motion.div>
           ))}
         </div>
@@ -285,10 +267,9 @@ function Section2Categories({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
+function SpecialOffersSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
   const [revealed, setRevealed] = useState(0);
 
   useEffect(() => {
@@ -296,12 +277,13 @@ function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
       const timer = setTimeout(() => setRevealed((r) => Math.min(r + 1, OFFERS.length)), 400);
       return () => clearTimeout(timer);
     }
+    if (!isInView) setRevealed(0);
   }, [isInView, revealed]);
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 3)} scroll-snap-align-start bg-background`}
+      className="h-screen w-full scroll-snap-align-start bg-background"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -309,19 +291,19 @@ function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
           initial={{ y: 30, opacity: 0 }}
           animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
           <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
         </motion.div>
-        <div className="relative h-80 sm:h-96">
+        <div className="relative h-64 sm:h-80">
           {OFFERS.map((o, i) => {
             const isRevealed = i < revealed;
             const stackOffset = i * 12;
             return (
               <motion.div
                 key={o.id}
-                initial={{ x: 150, opacity: 0, rotate: 5 }}
+                initial={{ x: 300, opacity: 0, rotate: 5 }}
                 animate={
                   isRevealed
                     ? { x: stackOffset, y: stackOffset * 0.5, opacity: 1, rotate: 0, scale: 1 - i * 0.02 }
@@ -329,7 +311,7 @@ function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
                 }
                 transition={{ duration: 0.5, type: "spring", stiffness: 80 }}
                 whileHover={{ y: -10, scale: 1.03 }}
-                className={`absolute left-0 top-0 min-h-[220px] w-full max-w-md rounded-3xl bg-gradient-to-br ${o.accent} p-6 text-white shadow-elegant sm:max-w-lg`}
+                className={`absolute left-0 top-0 min-h-[180px] w-full max-w-md rounded-3xl bg-gradient-to-br ${o.accent} p-6 text-white shadow-elegant sm:max-w-lg`}
                 style={{ zIndex: OFFERS.length - i }}
               >
                 <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
@@ -350,17 +332,16 @@ function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section4PopularServices({ activeSection }: { activeSection: number }) {
+function PopularServicesSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 6);
   const y = useMotionValue(0);
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 4)} scroll-snap-align-start bg-surface/30`}
+      className="h-screen w-full scroll-snap-align-start bg-surface/30"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -376,8 +357,8 @@ function Section4PopularServices({ activeSection }: { activeSection: number }) {
         <motion.div
           drag="y"
           style={{ y }}
-          dragConstraints={{ top: -300, bottom: 0 }}
-          className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card/50 p-4"
+          dragConstraints={{ top: -200, bottom: 0 }}
+          className="relative flex max-h-[60vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card/50 p-4"
         >
           {popular.map((s, i) => (
             <motion.div
@@ -402,24 +383,22 @@ function Section4PopularServices({ activeSection }: { activeSection: number }) {
             </motion.div>
           ))}
         </motion.div>
-        <p className="mt-4 text-center text-sm text-muted-foreground">{t("sec.dragToScroll") || "Drag to scroll"}</p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-4 text-center text-sm text-muted-foreground"
+        >
+          {t("sec.dragToScroll")}
+        </motion.p>
       </div>
     </section>
   );
 }
 
-function Section5HowItWorks({ activeSection }: { activeSection: number }) {
+function HowItWorksSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
-  const [pathLength, setPathLength] = useState(0);
-
-  useEffect(() => {
-    if (isInView) {
-      const timer = setTimeout(() => setPathLength(1), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isInView]);
+  const { ref, isInView } = useScrollReveal();
 
   const steps = [
     { icon: BookOpen, key: "1" },
@@ -432,7 +411,7 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 5)} scroll-snap-align-start bg-background`}
+      className="h-screen w-full scroll-snap-align-start bg-background"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -440,13 +419,13 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
           initial={{ y: 30, opacity: 0 }}
           animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="mx-auto mb-12 max-w-2xl text-center"
+          className="mx-auto mb-10 max-w-2xl text-center"
         >
           <p className="text-sm font-semibold text-primary">{t("sec.howItWorks")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.howTitle")}</h2>
         </motion.div>
         <div className="relative">
-          <svg className="absolute left-0 right-0 top-7 hidden h-px w-full lg:block" viewBox="0 0 1200 0" preserveAspectRatio="none">
+          <svg className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px w-full lg:block" viewBox="0 0 1200 0" preserveAspectRatio="none">
             <motion.path
               d="M 0 0 L 1200 0"
               fill="none"
@@ -454,7 +433,7 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
               strokeWidth="2"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={isInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
             />
             <defs>
               <linearGradient id="steps-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -465,15 +444,15 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
               </linearGradient>
             </defs>
           </svg>
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="grid gap-4 lg:grid-cols-5">
             {steps.map((s, i) => (
               <motion.div
                 key={s.key}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-                transition={{ delay: 0.3 + i * 0.15, duration: 0.4, type: "spring", stiffness: 150 }}
+                transition={{ delay: 0.4 + i * 0.12, duration: 0.4, type: "spring", stiffness: 150 }}
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="relative rounded-2xl border border-border bg-card p-5 text-center shadow-card"
+                className="relative rounded-2xl border border-border bg-card p-4 text-center shadow-card"
               >
                 <motion.div
                   whileHover={{ rotate: [0, -8, 8, 0], scale: 1.08 }}
@@ -484,13 +463,13 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={isInView ? { scale: 1 } : { scale: 0 }}
-                    transition={{ delay: 0.5 + i * 0.15, type: "spring", stiffness: 200 }}
+                    transition={{ delay: 0.5 + i * 0.12, type: "spring", stiffness: 200 }}
                     className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-background font-mono text-xs font-bold text-primary ring-2 ring-primary"
                   >
                     {i + 1}
                   </motion.span>
                 </motion.div>
-                <h3 className="font-display text-base font-bold">{t(`step.${s.key}.title`)}</h3>
+                <h3 className="font-display text-sm font-bold">{t(`step.${s.key}.title`)}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{t(`step.${s.key}.desc`)}</p>
               </motion.div>
             ))}
@@ -501,10 +480,9 @@ function Section5HowItWorks({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section6Features({ activeSection }: { activeSection: number }) {
+function FeaturesSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
   const [revealed, setRevealed] = useState(0);
 
   const features = [
@@ -519,12 +497,13 @@ function Section6Features({ activeSection }: { activeSection: number }) {
       const timer = setTimeout(() => setRevealed((r) => Math.min(r + 1, features.length)), 350);
       return () => clearTimeout(timer);
     }
+    if (!isInView) setRevealed(0);
   }, [isInView, revealed, features.length]);
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 6)} scroll-snap-align-start bg-[#0D1117]`}
+      className="h-screen w-full scroll-snap-align-start bg-[#0D1117]"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -537,29 +516,29 @@ function Section6Features({ activeSection }: { activeSection: number }) {
           <p className="text-sm font-semibold text-primary">{t("sec.special.badge")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold text-white sm:text-4xl">{t("sec.special.title")}</h2>
         </motion.div>
-        <div className="relative h-72">
+        <div className="relative h-[50vh]">
           {features.map((f, i) => {
             const isRevealed = i < revealed;
             const offset = i * 15;
             return (
               <motion.div
                 key={i}
-                initial={{ y: 50, x: i * 30, opacity: 0, rotate: -3 }}
+                initial={{ y: 80, x: i * 40, opacity: 0, rotate: -3 }}
                 animate={
                   isRevealed
-                    ? { y: offset, x: i * 20, opacity: 1, rotate: 0, scale: 1 - i * 0.02 }
-                    : { y: 100, x: i * 50, opacity: 0, rotate: -5 }
+                    ? { y: offset, x: i * 30, opacity: 1, rotate: 0, scale: 1 - i * 0.02 }
+                    : { y: 120, x: i * 60, opacity: 0, rotate: -5 }
                 }
-                transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
-                whileHover={{ y: -15 + offset, scale: 1.03 }}
+                transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+                whileHover={{ y: -12 + offset, scale: 1.03 }}
                 className="absolute left-0 top-0 w-full max-w-sm rounded-2xl border-2 border-[#2D7A5F]/30 bg-[#161B22] p-6 sm:max-w-md"
                 style={{ zIndex: features.length - i }}
               >
-                <div className="mb-4 inline-flex rounded-xl bg-[#2D7A5F]/10 p-3 text-[#4CAF84]">
-                  <f.icon className="h-8 w-8" />
+                <div className="mb-3 inline-flex rounded-xl bg-[#2D7A5F]/10 p-3 text-[#4CAF84]">
+                  <f.icon className="h-7 w-7" />
                 </div>
-                <h3 className="text-xl font-bold text-white">{f.title}</h3>
-                <p className="mt-2 text-[#8B949E]">{f.desc}</p>
+                <h3 className="text-lg font-bold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm text-[#8B949E]">{f.desc}</p>
               </motion.div>
             );
           })}
@@ -569,10 +548,9 @@ function Section6Features({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section7StarReward({ activeSection }: { activeSection: number }) {
+function StarRewardSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   const stars = [
     { level: 1, benefits: [t("sec.star.benefit1")] },
@@ -583,7 +561,7 @@ function Section7StarReward({ activeSection }: { activeSection: number }) {
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 7)} scroll-snap-align-start border-y border-border bg-surface/30`}
+      className="h-screen w-full scroll-snap-align-start border-y border-border bg-surface/30"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -647,10 +625,9 @@ function Section7StarReward({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section8GrowingTogether({ activeSection }: { activeSection: number }) {
+function VisionSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   const pillars = [
     { title: t("sec.vision.pillar1Title"), desc: t("sec.vision.pillar1Desc") },
@@ -661,7 +638,7 @@ function Section8GrowingTogether({ activeSection }: { activeSection: number }) {
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 8)} scroll-snap-align-start bg-background`}
+      className="h-screen w-full scroll-snap-align-start bg-background"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -714,15 +691,14 @@ function Section8GrowingTogether({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section9Testimonials({ activeSection }: { activeSection: number }) {
+function TestimonialsSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 9)} scroll-snap-align-start bg-surface/30`}
+      className="h-screen w-full scroll-snap-align-start bg-surface/30"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -772,15 +748,14 @@ function Section9Testimonials({ activeSection }: { activeSection: number }) {
   );
 }
 
-function Section11Footer({ activeSection }: { activeSection: number }) {
+function FooterSection() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.5 });
+  const { ref, isInView } = useScrollReveal();
 
   return (
     <section
       ref={ref}
-      className={`${sectionSnapClass(activeSection === 10)} scroll-snap-align-start border-t border-border bg-card`}
+      className="h-screen w-full scroll-snap-align-start border-t border-border bg-card"
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
@@ -792,9 +767,7 @@ function Section11Footer({ activeSection }: { activeSection: number }) {
         >
           <div className="lg:col-span-2">
             <h3 className="font-display text-2xl font-bold">SkillBuddy</h3>
-            <p className="mt-3 max-w-sm text-muted-foreground">
-              {t("footer.description") || "Your trusted platform for finding skilled professionals across the Baltics."}
-            </p>
+            <p className="mt-3 max-w-sm text-muted-foreground">{t("footer.description")}</p>
             <div className="mt-4 flex gap-3">
               {["twitter", "linkedin", "facebook"].map((social) => (
                 <motion.a
@@ -811,19 +784,19 @@ function Section11Footer({ activeSection }: { activeSection: number }) {
             </div>
           </div>
           <div>
-            <h4 className="font-semibold">{t("footer.company") || "Company"}</h4>
+            <h4 className="font-semibold">{t("footer.company")}</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/about" className="hover:text-foreground">{t("footer.about") || "About"}</Link></li>
-              <li><Link to="/careers" className="hover:text-foreground">{t("footer.careers") || "Careers"}</Link></li>
-              <li><Link to="/contact" className="hover:text-foreground">{t("footer.contact") || "Contact"}</Link></li>
+              <li><Link to="/about" className="hover:text-foreground">{t("footer.about")}</Link></li>
+              <li><Link to="/careers" className="hover:text-foreground">{t("footer.careers")}</Link></li>
+              <li><Link to="/contact" className="hover:text-foreground">{t("footer.contact")}</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold">{t("footer.support") || "Support"}</h4>
+            <h4 className="font-semibold">{t("footer.support")}</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/help" className="hover:text-foreground">{t("footer.help") || "Help Center"}</Link></li>
-              <li><Link to="/privacy" className="hover:text-foreground">{t("footer.privacy") || "Privacy"}</Link></li>
-              <li><Link to="/terms" className="hover:text-foreground">{t("footer.terms") || "Terms"}</Link></li>
+              <li><Link to="/help" className="hover:text-foreground">{t("footer.help")}</Link></li>
+              <li><Link to="/privacy" className="hover:text-foreground">{t("footer.privacy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">{t("footer.terms")}</Link></li>
             </ul>
           </div>
         </motion.div>
@@ -833,7 +806,7 @@ function Section11Footer({ activeSection }: { activeSection: number }) {
           transition={{ delay: 0.4 }}
           className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground"
         >
-          {t("footer.copyright") || `© ${new Date().getFullYear()} SkillBuddy. All rights reserved.`}
+          {t("footer.copyright")}
         </motion.div>
       </div>
     </section>

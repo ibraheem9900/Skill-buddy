@@ -1,109 +1,148 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import waveImage from "@/assets/Untitled_design.png";
-import ballsImage from "@/assets/Untitled_design_(1).png";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 
 interface LogoIntroProps {
   onComplete: () => void;
 }
 
 export function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [phase, setPhase] = useState<"wave" | "balls" | "text" | "shrink">("wave");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isComplete, setIsComplete] = useState(false);
   const hasPlayedRef = useRef(false);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Transform scroll progress to animation phases
+  const curveProgress = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
+  const ballsProgress = useTransform(scrollYProgress, [0.5, 0.8], [0, 1]);
+  const fadeOutProgress = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
+
   useEffect(() => {
-    if (hasPlayedRef.current) return;
-    hasPlayedRef.current = true;
-
-    const timeline = [
-      { phase: "wave" as const, delay: 500 },
-      { phase: "balls" as const, delay: 700 },
-      { phase: "text" as const, delay: 600 },
-      { phase: "shrink" as const, delay: 1200 },
-    ];
-
-    let elapsed = 0;
-    const timeouts: NodeJS.Timeout[] = [];
-
-    timeline.forEach(({ phase: p, delay }) => {
-      elapsed += delay;
-      timeouts.push(
-        setTimeout(() => setPhase(p), elapsed)
-      );
+    const unsubscribe = scrollYProgress.on("change", (latest) => {
+      if (latest >= 1 && !hasPlayedRef.current) {
+        hasPlayedRef.current = true;
+        setIsComplete(true);
+        setTimeout(onComplete, 400);
+      }
     });
-
-    const totalDuration = elapsed + 800;
-    timeouts.push(setTimeout(onComplete, totalDuration));
-
-    return () => timeouts.forEach(clearTimeout);
-  }, [onComplete]);
-
-  const letters = "SkillBuddy".split("");
+    return () => unsubscribe();
+  }, [scrollYProgress, onComplete]);
 
   return (
-    <AnimatePresence>
+    <div
+      ref={containerRef}
+      className="relative h-[200vh] w-full"
+      style={{ scrollSnapAlign: "start" }}
+    >
       <motion.div
-        className="fixed inset-0 z-[100000] flex items-center justify-center bg-background"
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4 }}
+        className="sticky top-0 flex h-screen w-full items-center justify-center bg-background"
+        style={{ opacity: useTransform(fadeOutProgress, (v) => 1 - v) }}
       >
-        <motion.div
-          className="relative flex flex-col items-center"
-          initial={{ scale: 1 }}
-          animate={phase === "shrink" ? {
-            scale: 0.3,
-            y: -window.innerHeight / 2 + 50
-          } : {}}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-        >
-          <div className="relative mb-4 h-32 w-48 sm:h-40 sm:w-60">
-            <motion.img
-              src={waveImage}
-              alt=""
-              className="absolute inset-0 h-full w-full object-contain"
-              initial={{ opacity: 0, x: -60, scale: 0.8 }}
-              animate={
-                phase === "wave" || phase === "balls" || phase === "text" || phase === "shrink"
-                  ? { opacity: 1, x: 0, scale: 1 }
-                  : { opacity: 0, x: -60, scale: 0.8 }
-              }
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            />
-            {(phase === "balls" || phase === "text" || phase === "shrink") && (
-              <motion.img
-                src={ballsImage}
-                alt=""
-                className="absolute inset-0 h-full w-full object-contain"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15, duration: 0.5, type: "spring", stiffness: 200 }}
-              />
-            )}
-          </div>
+        <div className="relative flex flex-col items-center">
+          <svg
+            width="240"
+            height="140"
+            viewBox="0 0 240 140"
+            className="mb-6"
+          >
+            <defs>
+              <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="var(--color-primary)" />
+                <stop offset="100%" stopColor="var(--color-primary-glow, var(--color-primary))" />
+              </linearGradient>
+            </defs>
 
-          {(phase === "text" || phase === "shrink") && (
-            <div className="flex">
-              {letters.map((letter, i) => (
-                <motion.span
-                  key={i}
-                  className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: i * 0.05,
-                    duration: 0.3,
-                  }}
-                >
-                  {letter}
-                </motion.span>
-              ))}
-            </div>
-          )}
-        </motion.div>
+            {/* The curve path - drawn by scroll */}
+            <motion.path
+              d="M 30 100 Q 120 20 210 100"
+              fill="none"
+              stroke="url(#curveGradient)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              style={{
+                pathLength: curveProgress,
+                opacity: 1,
+              }}
+            />
+
+            {/* Left ball - appears from left side when curve is ~50% done */}
+            <motion.circle
+              cx="38"
+              cy="88"
+              r="16"
+              fill="var(--color-primary)"
+              style={{
+                x: useTransform(ballsProgress, (v) => (1 - v) * -100),
+                opacity: ballsProgress,
+                scale: useTransform(ballsProgress, (v) => 0.5 + v * 0.5),
+              }}
+              transition={{ type: "spring", stiffness: 100 }}
+            />
+
+            {/* Right ball - appears from right side when curve is ~50% done */}
+            <motion.circle
+              cx="202"
+              cy="88"
+              r="16"
+              fill="var(--color-primary-glow, var(--color-primary))"
+              style={{
+                x: useTransform(ballsProgress, (v) => (1 - v) * 100),
+                opacity: ballsProgress,
+                scale: useTransform(ballsProgress, (v) => 0.5 + v * 0.5),
+              }}
+              transition={{ type: "spring", stiffness: 100 }}
+            />
+          </svg>
+
+          {/* Text appears when balls are in place */}
+          <motion.div
+            className="flex overflow-hidden"
+            style={{
+              opacity: useTransform(ballsProgress, [0.3, 1], [0, 1]),
+              y: useTransform(ballsProgress, [0.3, 1], [20, 0]),
+            }}
+          >
+            {"SkillBuddy".split("").map((letter, i) => (
+              <motion.span
+                key={i}
+                className="font-display text-5xl font-extrabold tracking-tight text-foreground"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.04, duration: 0.25 }}
+              >
+                {letter}
+              </motion.span>
+            ))}
+          </motion.div>
+
+          {/* Scroll indicator */}
+          <motion.div
+            className="absolute bottom-[-80px] flex flex-col items-center gap-2"
+            style={{
+              opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
+            }}
+          >
+            <span className="text-sm font-medium text-muted-foreground">Scroll to explore</span>
+            <motion.div
+              className="h-10 w-6 rounded-full border-2 border-muted-foreground/40 p-1"
+              animate={{ y: [0, 4, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <motion.div
+                className="h-2 w-2 rounded-full bg-primary"
+                animate={{ y: [0, 16, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </div>
   );
 }
 
