@@ -1,0 +1,403 @@
+Implement a complete homepage animation system for SkillBuddy. This is a scroll-driven, one-section-at-a-time experience. Read every instruction carefully and implement exactly as described.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORE PRINCIPLE — ONE SECTION AT A TIME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Only ONE section is fully visible at any time
+- As user scrolls DOWN: current section fades/slides out UP, next section animates IN from below
+- As user scrolls UP: current section fades/slides out DOWN, previous section animates IN from above
+- This is NOT a normal scrolling page — it is a FULL-SCREEN SNAP SCROLL experience
+- Each section takes 100vh (full viewport height)
+- Use scroll snapping: scroll-snap-type: y mandatory on the container
+- Each section: scroll-snap-align: start
+- When a section is active: opacity 1, transform none
+- When a section is leaving (scroll down): opacity fades to 0, y moves to -80px (slides up and out)
+- When a section is leaving (scroll up): opacity fades to 0, y moves to +80px (slides down and out)
+- Use Framer Motion and IntersectionObserver or useScroll to detect active section
+- Active section index tracked in React state
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NAVBAR ANIMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- On page load: navbar slides down from y: -60 to y: 0, opacity 0 to 1
+- Duration: 600ms, delay: after intro animation completes
+- Ease: [0.22, 1, 0.36, 1]
+- Nav links stagger in one by one: each link fades in with y: -10 to 0, stagger 80ms
+- Logo in navbar: already placed there after intro animation
+- On scroll: navbar stays fixed at top, always visible above sections
+- Navbar background: blur backdrop when scrolled (backdropFilter: blur(12px))
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 0 — LOGO INTRO (Full screen, plays once per session)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This is a full-screen intro overlay that plays ONCE when user first visits (sessionStorage check).
+After intro completes, it fades away and Section 1 (Hero) becomes visible.
+
+USE THE ACTUAL LOGO ASSETS from the project:
+- Find the wave/curve SVG or PNG in the project assets folder
+- Find the two green dot/ball images in the project assets folder
+- Use these EXACT assets — do not draw new shapes
+
+SEQUENCE (user does NOT scroll during intro — it plays automatically):
+
+Step 1 — Empty screen (0ms):
+- Full viewport overlay, background matches current theme
+- Nothing visible
+
+Step 2 — Wave/curve draws in (0ms to 1000ms):
+- The wave asset appears centered in viewport (120px wide)
+- Animation: clipPath from inset(0 100% 0 0) to inset(0 0% 0 0) — draws left to right
+- Simultaneously: scale 0.8 to 1
+- Duration: 1000ms, ease: cubic-bezier(0.4, 0, 0.2, 1)
+
+Step 3 — Ball 1 appears (1000ms to 1400ms):
+- First green dot appears on the LEFT peak of the wave
+- Animation: scale 0 to 1.3 to 1, opacity 0 to 1
+- Spring: stiffness 400, damping 15
+
+Step 4 — Ball 2 appears (1300ms to 1700ms):
+- Second green dot appears on the RIGHT peak of the wave
+- Same spring animation as Ball 1
+- 300ms delay after Ball 1
+
+Step 5 — "SkillBuddy" text appears (1700ms to 2200ms):
+- Text fades and slides up: y 20 to 0, opacity 0 to 1
+- Font: Sora Bold, 32px, color #2D7A5F
+- Duration: 500ms
+
+Step 6 — Logo group moves to navbar (2200ms to 2800ms):
+- The wave + both balls + text together animate to navbar top-left position
+- scale 1 to 0.35, x to -42vw, y to -43vh
+- Duration: 600ms, ease: [0.76, 0, 0.24, 1]
+
+Step 7 — Overlay fades out (2800ms to 3200ms):
+- Intro overlay opacity 1 to 0, duration 400ms
+- Hero section becomes visible
+- sessionStorage.setItem('sb_intro', 'done') — never plays again this session
+
+Initial states for intro elements:
+- wave: clipPath inset(0 100% 0 0), scale 0.8, opacity 0
+- ball1: scale 0, opacity 0
+- ball2: scale 0, opacity 0
+- text: y 20, opacity 0
+- overlay: opacity 1, zIndex 9999
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — HERO (Full screen snap section)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: "Expert Help, Anytime, Anywhere" heading + search bar + CTA buttons
+
+When this section becomes ACTIVE (user arrives here):
+- Heading text: each WORD animates individually
+  From: opacity 0, y 30, filter blur(4px)
+  To: opacity 1, y 0, filter blur(0)
+  Stagger: 80ms per word, duration: 600ms each
+
+- Search bar: slides up after last word (40ms delay)
+  From: opacity 0, y 20, scale 0.97
+  To: opacity 1, y 0, scale 1
+  Duration: 500ms
+
+- CTA buttons: fade in together 200ms after search bar
+  From: opacity 0, y 15
+  To: opacity 1, y 0
+  Duration: 400ms
+
+When this section LEAVES (user scrolls down):
+- Entire section: opacity 1 to 0, y 0 to -80px
+- Duration: 500ms, ease: easeIn
+- NEXT section starts animating in as this one fades out (overlap 200ms)
+
+When user scrolls UP back to this section:
+- Reverse: opacity 0 to 1, y 80px to 0
+- Duration: 600ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — "Post a job..." TEXT + SEARCH BAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Text "Post a job, get bids, choose the best — your trusted help is one click away." + Search bar
+
+When ACTIVE:
+- Text pops up: y 50 to 0, opacity 0 to 1, scale 0.95 to 1
+  Duration: 700ms, ease: [0.22, 1, 0.36, 1]
+- Search bar pops in 200ms after text:
+  From: y 30, opacity 0, scale 0.9
+  To: y 0, opacity 1, scale 1
+  Duration: 500ms, spring stiffness 300, damping 20
+
+When LEAVES (scroll down):
+- opacity 0, y -80, duration 400ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — SERVICE CATEGORIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Category cards grid + "View All" button
+
+When ACTIVE:
+- Section heading: x -40 to 0, opacity 0 to 1, duration 600ms
+- Category cards pop up one by one with stagger:
+  From: opacity 0, y 50, scale 0.88
+  To: opacity 1, y 0, scale 1
+  Stagger: 70ms per card, duration: 550ms
+  Ease: backOut (slight overshoot — cards "pop" into place)
+- "View All" button: fades in last, y 20 to 0, opacity 0 to 1
+
+"View All" button functionality: keep exactly as it currently works (do not change its navigation/behavior)
+
+When LEAVES (scroll down):
+- All cards: stagger OUT in reverse (last card first)
+  opacity 0, y -40, scale 0.9, stagger 40ms
+  Duration: 350ms each
+
+When LEAVES (scroll up):
+- All cards: stagger OUT downward
+  opacity 0, y 40, stagger 40ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — SPECIAL OFFERS (3 stacked cards)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: 3 offer cards. Cards are STACKED on top of each other like a deck.
+Only the TOP card is fully visible. As user scrolls within this section, cards lift one by one.
+
+LAYOUT:
+- All 3 cards stacked in center, each card slightly offset:
+  Card 3 (bottom): scale 0.88, y +32px, z-index 1
+  Card 2 (middle): scale 0.94, y +16px, z-index 2
+  Card 1 (top):    scale 1.00, y 0px,   z-index 3
+
+When section becomes ACTIVE:
+- Stack slides up from below: y 100 to 0, opacity 0 to 1, duration 700ms
+- Cards maintain their stacked positions (offset from each other)
+
+Within this section, user scrolls (or swipes) to reveal cards:
+- On first scroll within section: Card 1 lifts UP and exits (y: -120, opacity 0, rotate -5deg)
+  Duration: 500ms, ease: [0.76, 0, 0.24, 1]
+  Simultaneously: Card 2 moves to Card 1's position, Card 3 moves to Card 2's position
+- On second scroll: Card 2 exits same way, Card 3 comes to front
+- On third scroll: section transitions to next section
+
+When LEAVES:
+- Entire stack: opacity 0, y -80, duration 400ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — POPULAR SERVICES (8 cards, vertical drag/swipe carousel)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: 8 service cards in a VERTICAL DRAG CAROUSEL (like the screenshot provided).
+
+CARD DESIGN:
+- Each card: ROUND/CIRCULAR shape (border-radius: 50% or large pill — like the screenshot)
+- Cards stack vertically, user can drag up/down to see more
+- Only 2-3 cards visible at a time
+- Cards have image, service name, brief info
+
+CAROUSEL BEHAVIOR:
+- Cards are draggable vertically using Framer Motion drag
+- dragConstraints: limit drag to card container height
+- As user drags UP: next card slides in from below
+- As user drags DOWN: previous card slides in from above
+- Active card: scale 1, full opacity
+- Adjacent cards: scale 0.92, opacity 0.7 (partially visible behind active card)
+- Card behind active: scale 0.85, opacity 0.5
+- Snap to nearest card on drag release (use dragElastic and onDragEnd to snap)
+
+First card animation when section becomes ACTIVE:
+- Card 1: pops in from below — y 80 to 0, opacity 0 to 1, scale 0.8 to 1
+  Spring: stiffness 300, damping 25
+- Then user drags to see remaining 7 cards
+
+Card open behavior:
+- Tapping/clicking a card opens it — keep EXACTLY the same behavior as currently implemented
+- Do NOT change what happens when a card is opened
+
+When section LEAVES:
+- Cards: opacity 0, scale 0.8, y -60, duration 400ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — FROM IDEA TO DONE IN 5 STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: 5 steps with icons, titles, descriptions + connecting dashed line
+
+When ACTIVE:
+
+Section heading:
+- opacity 0, y 30 to opacity 1, y 0, duration 600ms
+
+Connecting dashed SVG line between steps:
+- strokeDashoffset: total_length to 0
+- Duration: 1200ms, delay 300ms after section enters
+- Color: #2D7A5F, strokeWidth 2, strokeDasharray: "6 4"
+
+Each step (pop in one by one):
+Step 1: delay 200ms
+Step 2: delay 400ms
+Step 3: delay 600ms
+Step 4: delay 800ms
+Step 5: delay 1000ms
+
+Each step animation:
+- Circle: scale 0 to 1, opacity 0 to 1, spring stiffness 350, damping 20
+- Icon inside circle: rotate 0 to 360 (spins once), duration 500ms
+- Title (150ms after circle): opacity 0, y 15 to opacity 1, y 0, duration 400ms
+- Description (250ms after circle): opacity 0, y 10 to opacity 1, y 0, duration 400ms
+
+When LEAVES:
+- Steps fade out in reverse order (step 5 first)
+- opacity 0, y -30, stagger 60ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7 — WHAT MAKES US SPECIAL (Stacked cards reveal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Feature cards showing what makes SkillBuddy special.
+
+STACK BEHAVIOR (like Section 4 Special Offers):
+- Cards are stacked on top of each other like a deck
+- User scrolls within section to reveal each card one by one
+- Each card lifts off the top of the stack and exits when user scrolls
+- Card beneath takes its place
+- After last card revealed: section transitions to next section
+
+When ACTIVE:
+- Stack slides up: y 80 to 0, opacity 0 to 1, duration 700ms
+
+Card exit animation (when scrolled away):
+- Top card: y -100, opacity 0, rotate -3deg, duration 500ms
+- Cards below shift up to fill position
+- Ease: [0.76, 0, 0.24, 1]
+
+Icon in each card:
+- scale 0, rotate -30 to scale 1, rotate 0
+- Spring stiffness 300, damping 18
+- Triggers 100ms after card becomes top card
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8 — SKILLBUDDY STAR REWARD (Glowing, continuous animations)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Star reward section. This section must look UNIQUE and premium with continuous glow animations.
+
+CONTINUOUS ANIMATIONS (never stop, loop forever):
+- 3 gold stars: each star continuously pulses with a glow
+  Star glow: boxShadow animates between "0 0 8px #FFD700" and "0 0 24px #FFD700, 0 0 40px #FFB300"
+  Duration: 1.5s per star, each star offset by 500ms from previous
+  Scale pulse: 1 to 1.15 to 1, synchronized with glow
+- Stars rotate slowly: rotate 0 to 5 to -5 to 0, repeat infinity, duration 3s, ease easeInOut
+- Background of section: subtle animated gradient that shifts slowly
+  e.g. green to teal to green, very slow (8s loop), opacity 0.15 overlay
+- Floating particles: 6-8 small golden dots floating upward slowly, loop infinity
+  Each particle: y 0 to -30, opacity 0 to 1 to 0, random x drift, duration 2-3s, random delays
+
+When section becomes ACTIVE:
+- "EXCLUSIVE PERK" badge: scale 0, rotate -10 to scale 1, rotate 0
+  Spring stiffness 400, damping 20, delay 100ms
+- Heading: opacity 0, y 30 to opacity 1, y 0, duration 600ms, delay 200ms
+- Main card: opacity 0, y 50, scale 0.93 to opacity 1, y 0, scale 1
+  Duration 700ms, delay 300ms, ease [0.22, 1, 0.36, 1]
+- Stars appear one by one: delay 500ms, 750ms, 1000ms
+  Scale 0 to 1, opacity 0 to 1, spring stiffness 500, damping 15
+  Then continuous glow starts immediately after each star appears
+- 3 step cards below: opacity 0, y 40 to opacity 1, y 0, stagger 120ms, delay 400ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9 — GROWING TOGETHER, SUCCEEDING TOGETHER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Vision/growth section with pillar cards and CTA button.
+
+CONTINUOUS ANIMATIONS (loop forever while section is active):
+- Numbers/stats count up continuously (if any stats exist) and gently pulse
+- Pillar cards: subtle floating animation — y 0 to -8 to 0, each with different timing
+  Card 1: duration 3s, delay 0ms
+  Card 2: duration 3.5s, delay 500ms
+  Card 3: duration 4s, delay 1000ms
+- Background: slow moving gradient or subtle particle effect
+
+When ACTIVE:
+- "VISION 2030" or section label: opacity 0, y -20 to opacity 1, y 0, duration 400ms
+- Heading words: each word separately
+  opacity 0, y 40, filter blur(4px) to opacity 1, y 0, blur(0)
+  Stagger 60ms per word, duration 500ms
+- Large statement text (each LINE reveals with wipe):
+  clipPath: inset(0 100% 0 0) to inset(0 0% 0 0)
+  Stagger 200ms per line, duration 700ms
+- Green underline: scaleX 0 to 1, transformOrigin left, duration 400ms after last line
+- Pillar card borders grow first:
+  scaleY 0 to 1, transformOrigin top, duration 400ms, stagger 150ms
+  Then card content: opacity 0, x -20 to opacity 1, x 0, 100ms after border
+- CTA "Join Our Team" button: comes in LARGE and prominent
+  opacity 0, y 20, scale 0.9 to opacity 1, y 0, scale 1
+  Duration 500ms, delay 500ms after pillars
+  Then CONTINUOUS pulse: scale 1 to 1.03 to 1, 2.5s loop, ease easeInOut
+  Button glow: boxShadow pulses gently with brand color #2D7A5F
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10 — WHAT PEOPLE ARE SAYING (Testimonials)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Content: Testimonial cards
+
+When ACTIVE:
+- Section heading: opacity 0, y 30 to opacity 1, y 0, duration 600ms
+- Testimonial cards flicker up one by one (very smooth, premium feel):
+  From: opacity 0, scale 0.88, y 40
+  To: opacity 1, scale 1, y 0
+  Stagger: 150ms per card, duration 600ms each
+  Ease: [0.22, 1, 0.36, 1]
+- Cards have continuous subtle float: y 0 to -5 to 0, duration 4s, repeat infinity
+  Each card offset by 800ms from previous
+
+When LEAVES:
+- Cards flicker out in reverse — opacity 0, scale 0.9, y -30
+  Stagger 80ms, duration 300ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11 — FOOTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+When ACTIVE:
+- Footer slides up: y 40 to 0, opacity 0 to 1, duration 600ms
+- Footer columns stagger in: opacity 0, y 30 to opacity 1, y 0
+  Stagger: 80ms per column, duration 400ms
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOVER EFFECTS ON ALL CARDS (apply everywhere)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Every card across the entire site:
+- whileHover: y -6, scale 1.02, transition duration 0.2s ease easeOut
+- whileTap: scale 0.98
+- Category icon inside card on hover: rotate [0, -10, 10, 0], duration 0.4s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCROLL UP — REVERSE ANIMATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+When user scrolls UP from any section to the previous section:
+- Current section exits DOWNWARD: opacity 0, y +80px, duration 400ms
+- Previous section enters from ABOVE: opacity 0, y -60px to opacity 1, y 0
+- All stagger animations play in REVERSE order when entering from above
+  (e.g. last card first, working backwards)
+- This applies to ALL sections — every section must have both enter-from-below and enter-from-above states
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION TECHNICAL NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Use Framer Motion for ALL animations (already installed)
+- Use scroll-snap-type: y mandatory on the outer scroll container
+- Use scroll-snap-align: start on each section
+- Track active section index in React state
+- Use useInView or IntersectionObserver to detect which section is active
+- Only animate section that is ENTERING — do not re-animate sections already passed
+- viewport={{ once: false }} so animations replay when user scrolls back up
+- Standard ease for all entrances: [0.22, 1, 0.36, 1] (expo ease out)
+- Only use transform and opacity in animations — NEVER animate width, height, top, left
+- Mobile: reduce all y values by 50% (use 40px where desktop uses 80px)
+- Performance: use will-change: transform on animated elements
+- Do NOT use width or height in keyframe animations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT BREAK:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change any existing colors, fonts, or brand styles
+- Do NOT change any navigation functionality
+- Do NOT change what happens when cards/services are clicked/opened
+- Do NOT change the "View All" button behavior
+- Do NOT change the authentication system
+- Do NOT change the language system
+- Do NOT change the theme toggle
+- Do NOT remove any existing content
+- Only ADD animations on top of what already exists
+- After implementation: zero console errors, all existing features work exactly as before
