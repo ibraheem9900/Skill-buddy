@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Sparkles, ArrowRight, Star, ClipboardList, Gavel, UserCheck, CheckCircle2, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Sparkles, ArrowRight, Star, ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { ServiceCard } from "@/components/service-card";
 import { CategoriesSlider } from "@/components/categories-slider";
 import { SERVICES, TESTIMONIALS, OFFERS } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
+import { LogoIntro, useLogoIntro } from "@/components/logo-intro";
+import { WhatMakesUsSpecial, StarReward, OurVision } from "@/components/home-sections";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,15 +26,27 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { showIntro, introComplete, handleIntroComplete } = useLogoIntro();
+
   return (
-    <SiteShell>
-      <Hero />
-      <CategoriesSection />
-      <SpecialOffers />
-      <PopularServices />
-      <HowItWorks />
-      <Testimonials />
-    </SiteShell>
+    <>
+      <AnimatePresence>
+        {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
+      </AnimatePresence>
+      {introComplete && (
+        <SiteShell>
+          <Hero />
+          <CategoriesSection />
+          <SpecialOffers />
+          <PopularServices />
+          <HowItWorks />
+          <WhatMakesUsSpecial />
+          <StarReward />
+          <OurVision />
+          <Testimonials />
+        </SiteShell>
+      )}
+    </>
   );
 }
 
@@ -81,7 +95,13 @@ function CategoriesSection() {
   const { t } = useI18n();
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-      <div className="mb-8 flex items-end justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8 flex items-end justify-between gap-4"
+      >
         <div>
           <p className="text-sm font-semibold text-primary">{t("sec.browse")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.categories")}</h2>
@@ -89,8 +109,15 @@ function CategoriesSection() {
         <Button asChild variant="ghost" className="hidden sm:inline-flex">
           <Link to="/categories">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
         </Button>
-      </div>
-      <CategoriesSlider />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <CategoriesSlider />
+      </motion.div>
     </section>
   );
 }
@@ -100,14 +127,24 @@ function SpecialOffers() {
   return (
     <section className="border-y border-border bg-surface/30 py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
           <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
-        </div>
+        </motion.div>
         <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:gap-6">
-          {OFFERS.map((o) => (
-            <div
+          {OFFERS.map((o, i) => (
+            <motion.div
               key={o.id}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
               className={`relative flex min-h-[260px] min-w-[300px] flex-1 flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${o.accent} p-6 text-white shadow-elegant sm:min-w-[340px]`}
             >
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
@@ -119,7 +156,7 @@ function SpecialOffers() {
               <button className="mt-auto self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
                 {t(o.ctaKey)}
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -159,7 +196,13 @@ function PopularServices() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <div className="mb-8 flex items-end justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8 flex items-end justify-between gap-4"
+      >
         <div>
           <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
@@ -167,7 +210,7 @@ function PopularServices() {
         <Button asChild variant="ghost" className="hidden sm:inline-flex">
           <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
         </Button>
-      </div>
+      </motion.div>
 
       <div className="relative px-8 sm:px-10">
         <div ref={emblaRef} className="overflow-hidden">
@@ -234,10 +277,16 @@ function HowItWorks() {
   return (
     <section className="border-y border-border bg-surface/30 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto mb-12 max-w-2xl text-center"
+        >
           <p className="text-sm font-semibold text-primary">{t("sec.howItWorks")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.howTitle")}</h2>
-        </div>
+        </motion.div>
         <div className="relative">
           <div className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent lg:block" />
           <div className="grid gap-6 lg:grid-cols-5">
@@ -276,10 +325,16 @@ function Testimonials() {
   const { t } = useI18n();
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <div className="mx-auto mb-12 max-w-2xl text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.5 }}
+        className="mx-auto mb-12 max-w-2xl text-center"
+      >
         <p className="text-sm font-semibold text-primary">{t("sec.loved")}</p>
         <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
-      </div>
+      </motion.div>
       <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
         {TESTIMONIALS.map((tt, i) => (
           <motion.div
