@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import waveImage from "@/assets/Untitled_design.png";
+import ballsImage from "@/assets/Untitled_design_(1).png";
 
 interface LogoIntroProps {
   onComplete: () => void;
 }
 
 export function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [phase, setPhase] = useState<"line" | "balls" | "text" | "shrink">("line");
+  const [phase, setPhase] = useState<"wave" | "balls" | "text" | "shrink">("wave");
   const hasPlayedRef = useRef(false);
 
   useEffect(() => {
@@ -16,8 +18,8 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
     hasPlayedRef.current = true;
 
     const timeline = [
-      { phase: "line" as const, delay: 400 },
-      { phase: "balls" as const, delay: 800 },
+      { phase: "wave" as const, delay: 500 },
+      { phase: "balls" as const, delay: 700 },
       { phase: "text" as const, delay: 600 },
       { phase: "shrink" as const, delay: 1200 },
     ];
@@ -56,56 +58,37 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
           } : {}}
           transition={{ duration: 0.6, ease: "easeInOut" }}
         >
-          <svg
-            width="180"
-            height="120"
-            viewBox="0 0 180 120"
-            className="mb-4"
-          >
-            <motion.path
-              d="M 20 80 Q 90 20 160 80"
-              fill="none"
-              stroke="var(--color-primary)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 1 }}
+          <div className="relative mb-4 h-32 w-48 sm:h-40 sm:w-60">
+            <motion.img
+              src={waveImage}
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain"
+              initial={{ opacity: 0, x: -60, scale: 0.8 }}
               animate={
-                phase === "line" || phase === "balls" || phase === "text" || phase === "shrink"
-                  ? { pathLength: 1 }
-                  : {}
+                phase === "wave" || phase === "balls" || phase === "text" || phase === "shrink"
+                  ? { opacity: 1, x: 0, scale: 1 }
+                  : { opacity: 0, x: -60, scale: 0.8 }
               }
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
             />
             {(phase === "balls" || phase === "text" || phase === "shrink") && (
-              <>
-                <motion.circle
-                  cx="30"
-                  cy="68"
-                  r="14"
-                  fill="var(--color-primary)"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.4, type: "spring" }}
-                />
-                <motion.circle
-                  cx="150"
-                  cy="68"
-                  r="14"
-                  fill="var(--color-primary-glow)"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.4, type: "spring" }}
-                />
-              </>
+              <motion.img
+                src={ballsImage}
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15, duration: 0.5, type: "spring", stiffness: 200 }}
+              />
             )}
-          </svg>
+          </div>
 
           {(phase === "text" || phase === "shrink") && (
             <div className="flex">
               {letters.map((letter, i) => (
                 <motion.span
                   key={i}
-                  className="font-display text-4xl font-extrabold tracking-tight text-foreground"
+                  className="font-display text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{

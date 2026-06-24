@@ -1,17 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, Sparkles, ArrowRight, Star, ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
-import { SiteShell } from "@/components/site-shell";
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence, useInView, useMotionValue } from "framer-motion";
+import { Search, Sparkles, Star, ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen, Shield, Ban, ThumbsUp, Heart, Quote, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ServiceCard } from "@/components/service-card";
-import { CategoriesSlider } from "@/components/categories-slider";
 import { SERVICES, TESTIMONIALS, OFFERS } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
 import { LogoIntro, useLogoIntro } from "@/components/logo-intro";
-import { WhatMakesUsSpecial, StarReward, OurVision } from "@/components/home-sections";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,129 +28,255 @@ function Home() {
       <AnimatePresence>
         {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
       </AnimatePresence>
-      {introComplete && (
-        <SiteShell>
-          <Hero />
-          <CategoriesSection />
-          <SpecialOffers />
-          <PopularServices />
-          <HowItWorks />
-          <WhatMakesUsSpecial />
-          <StarReward />
-          <OurVision />
-          <Testimonials />
-        </SiteShell>
-      )}
+      {introComplete && <ScrollSnapHomepage />}
     </>
   );
 }
 
-function Hero() {
-  const { t } = useI18n();
-  return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 gradient-hero opacity-90" />
-      <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-3xl text-center"
-        >
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1 text-xs font-medium text-foreground/80 backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" /> {t("hero.badge")}
-          </div>
-          <h1 className="font-display text-5xl font-extrabold leading-[1.05] sm:text-6xl md:text-7xl">
-            {t("hero.titleA")} <span className="text-gradient">{t("hero.titleB")}</span> {t("hero.titleC")}
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">{t("hero.subtitle")}</p>
+function ScrollSnapHomepage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState(0);
 
-          <motion.form
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            onSubmit={(e) => e.preventDefault()}
-            className="mx-auto mt-8 flex max-w-2xl items-stretch gap-2 rounded-2xl border border-border bg-card p-2 shadow-elegant"
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollY = container.scrollTop;
+      const sectionHeight = window.innerHeight;
+      const newSection = Math.round(scrollY / sectionHeight);
+      if (newSection !== activeSection) {
+        setActiveSection(newSection);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [activeSection]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-screen w-full overflow-y-auto scroll-smooth"
+      style={{ scrollSnapType: "y mandatory" }}
+    >
+      <Section0 activeSection={activeSection} />
+      <Section1Hero activeSection={activeSection} />
+      <Section2PostJob activeSection={activeSection} />
+      <Section3Categories activeSection={activeSection} />
+      <Section4SpecialOffers activeSection={activeSection} />
+      <Section5PopularServices activeSection={activeSection} />
+      <Section6HowItWorks activeSection={activeSection} />
+      <Section7Features activeSection={activeSection} />
+      <Section8StarReward activeSection={activeSection} />
+      <Section9GrowingTogether activeSection={activeSection} />
+      <Section10Testimonials activeSection={activeSection} />
+      <Section11Footer activeSection={activeSection} />
+    </div>
+  );
+}
+
+function sectionSnapClass(active: boolean): string {
+  return `h-screen w-full flex-shrink-0 ${active ? "" : ""}`;
+}
+
+function Section0({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 0)} scroll-snap-align-start gradient-hero relative overflow-hidden`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-glow/5" />
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 sm:px-6">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.9, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+            transition={{ delay: 0.2 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-2 text-sm font-medium text-foreground/80 backdrop-blur"
           >
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input placeholder={t("hero.searchPlaceholder")} className="h-12 border-0 bg-transparent pl-10 focus-visible:ring-0" />
-            </div>
-            <Button asChild size="lg" className="h-12 px-6 shadow-elegant">
-              <Link to="/services">{t("common.search")}</Link>
-            </Button>
-          </motion.form>
+            <Sparkles className="h-4 w-4 text-primary" /> {t("hero.badge")}
+          </motion.div>
+          <WordByWordText
+            text={`${t("hero.titleA")} ${t("hero.titleB")} ${t("hero.titleC")}`}
+            highlightWord={t("hero.titleB")}
+            active={isInView}
+          />
+        </motion.div>
+      </div>
+      <ScrollHint active={isInView} />
+    </section>
+  );
+}
+
+function WordByWordText({ text, highlightWord, active }: { text: string; highlightWord: string; active: boolean }) {
+  const words = text.split(" ");
+
+  return (
+    <h1 className="font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl lg:text-7xl">
+      {words.map((word, i) => {
+        const isHighlight = word === highlightWord;
+        return (
+          <motion.span
+            key={i}
+            className={`inline-block ${isHighlight ? "text-gradient" : ""} mr-3`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ delay: i * 0.12 + 0.3, duration: 0.5, ease: "easeOut" }}
+          >
+            {word}
+          </motion.span>
+        );
+      })}
+    </h1>
+  );
+}
+
+function ScrollHint({ active }: { active: boolean }) {
+  return (
+    <motion.div
+      className="absolute bottom-8 left-1/2 -translate-x-1/2"
+      initial={{ opacity: 0, y: -10 }}
+      animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+      transition={{ delay: 1.5 }}
+    >
+      <motion.div
+        animate={{ y: [0, 8, 0] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        className="flex flex-col items-center gap-2 text-muted-foreground"
+      >
+        <span className="text-xs font-medium">Scroll</span>
+        <div className="h-8 w-5 rounded-full border-2 border-muted-foreground/40 p-1">
+          <motion.div
+            className="h-1.5 w-1.5 rounded-full bg-primary"
+            animate={{ y: [0, 12, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function Section1Hero({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 1)} scroll-snap-align-start relative overflow-hidden bg-background`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 sm:px-6">
+        <motion.h2
+          initial={{ y: 40, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 40, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-6 text-center font-display text-3xl font-extrabold sm:text-4xl"
+        >
+          {t("sec.postJob")}
+        </motion.h2>
+        <motion.p
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
+          className="mb-8 text-center text-lg text-muted-foreground"
+        >
+          {t("sec.postJobDesc")}
+        </motion.p>
+        <motion.form
+          initial={{ scale: 0.8, opacity: 0, y: 30 }}
+          animate={isInView ? { scale: 1, opacity: 1, y: 0 } : { scale: 0.8, opacity: 0, y: 30 }}
+          transition={{ delay: 0.3, duration: 0.6, type: "spring", stiffness: 100 }}
+          onSubmit={(e) => e.preventDefault()}
+          className="mx-auto flex w-full max-w-2xl items-stretch gap-2 rounded-2xl border border-border bg-card p-2 shadow-elegant"
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder={t("hero.searchPlaceholder")} className="h-12 border-0 bg-transparent pl-10 focus-visible:ring-0" />
+          </div>
+          <Button asChild size="lg" className="h-12 px-6 shadow-elegant">
+            <Link to="/services">{t("common.search")}</Link>
+          </Button>
+        </motion.form>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mt-6 flex flex-wrap justify-center gap-2"
+        >
+          {["Cleaning", "Repair", "Tutoring", "Moving"].map((tag, i) => (
+            <motion.span
+              key={tag}
+              initial={{ scale: 0 }}
+              animate={isInView ? { scale: 1 } : { scale: 0 }}
+              transition={{ delay: 0.7 + i * 0.1, type: "spring", stiffness: 200 }}
+              className="rounded-full border border-border bg-surface/50 px-3 py-1 text-sm text-muted-foreground"
+            >
+              {tag}
+            </motion.span>
+          ))}
         </motion.div>
       </div>
     </section>
   );
 }
 
-function CategoriesSection() {
+function Section2Categories({ activeSection }: { activeSection: number }) {
   const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  const categories = [
+    { emoji: "🏠", name: t("cat.cleaning"), jobs: 128 },
+    { emoji: "🔧", name: t("cat.repair"), jobs: 94 },
+    { emoji: "📚", name: t("cat.tutoring"), jobs: 67 },
+    { emoji: "🚚", name: t("cat.moving"), jobs: 45 },
+    { emoji: "💻", name: t("cat.tech"), jobs: 89 },
+    { emoji: "🎨", name: t("cat.design"), jobs: 53 },
+  ];
+
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8 flex items-end justify-between gap-4"
-      >
-        <div>
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 2)} scroll-snap-align-start bg-surface/30`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
           <p className="text-sm font-semibold text-primary">{t("sec.browse")}</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.categories")}</h2>
-        </div>
-        <Button asChild variant="ghost" className="hidden sm:inline-flex">
-          <Link to="/categories">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
-        </Button>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <CategoriesSlider />
-      </motion.div>
-    </section>
-  );
-}
-
-function SpecialOffers() {
-  const { t } = useI18n();
-  return (
-    <section className="border-y border-border bg-surface/30 py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
-          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
         </motion.div>
-        <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:gap-6">
-          {OFFERS.map((o, i) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {categories.map((cat, i) => (
             <motion.div
-              key={o.id}
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.15 }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={`relative flex min-h-[260px] min-w-[300px] flex-1 flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${o.accent} p-6 text-white shadow-elegant sm:min-w-[340px]`}
+              key={cat.name}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.4, type: "spring", stiffness: 120 }}
+              whileHover={{ y: -6, scale: 1.02 }}
+              className="cursor-pointer rounded-2xl border border-border bg-card p-5 text-center shadow-card transition-shadow hover:shadow-lg"
             >
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
-              <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
-                {t("sec.limited")}
-              </span>
-              <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight text-white">{t(o.titleKey)}</h3>
-              <p className="mt-2 text-sm text-white/90">{t(o.subKey)}</p>
-              <button className="mt-auto self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
-                {t(o.ctaKey)}
-              </button>
+              <span className="text-4xl">{cat.emoji}</span>
+              <h3 className="mt-3 text-sm font-semibold">{cat.name}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{cat.jobs} jobs</p>
             </motion.div>
           ))}
         </div>
@@ -164,109 +285,142 @@ function SpecialOffers() {
   );
 }
 
-function PopularServices() {
+function Section3SpecialOffers({ activeSection }: { activeSection: number }) {
   const { t } = useI18n();
-  const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
-
-  const [emblaRef, embla] = useEmblaCarousel({
-    align: "start",
-    loop: false,
-    slidesToScroll: 1,
-  });
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(true);
-  const [selectedSnap, setSelectedSnap] = useState(0);
-  const [snaps, setSnaps] = useState<number[]>([]);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+  const [revealed, setRevealed] = useState(0);
 
   useEffect(() => {
-    if (!embla) return;
-    const update = () => {
-      setCanPrev(embla.canScrollPrev());
-      setCanNext(embla.canScrollNext());
-      setSelectedSnap(embla.selectedScrollSnap());
-    };
-    setSnaps(embla.scrollSnapList());
-    update();
-    embla.on("select", update);
-    embla.on("reInit", () => { setSnaps(embla.scrollSnapList()); update(); });
-  }, [embla]);
-
-  const scrollPrev = useCallback(() => embla?.scrollPrev(), [embla]);
-  const scrollNext = useCallback(() => embla?.scrollNext(), [embla]);
+    if (isInView && revealed < OFFERS.length) {
+      const timer = setTimeout(() => setRevealed((r) => Math.min(r + 1, OFFERS.length)), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView, revealed]);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8 flex items-end justify-between gap-4"
-      >
-        <div>
-          <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
-          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
-        </div>
-        <Button asChild variant="ghost" className="hidden sm:inline-flex">
-          <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
-        </Button>
-      </motion.div>
-
-      <div className="relative px-8 sm:px-10">
-        <div ref={emblaRef} className="overflow-hidden">
-          <div className="flex gap-4 sm:gap-6">
-            {popular.map((s, i) => (
-              <div
-                key={s.id}
-                className="shrink-0 grow-0 basis-full sm:basis-1/2 lg:basis-1/4"
-                style={{ minWidth: 0 }}
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 3)} scroll-snap-align-start bg-background`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
+        </motion.div>
+        <div className="relative h-80 sm:h-96">
+          {OFFERS.map((o, i) => {
+            const isRevealed = i < revealed;
+            const stackOffset = i * 12;
+            return (
+              <motion.div
+                key={o.id}
+                initial={{ x: 150, opacity: 0, rotate: 5 }}
+                animate={
+                  isRevealed
+                    ? { x: stackOffset, y: stackOffset * 0.5, opacity: 1, rotate: 0, scale: 1 - i * 0.02 }
+                    : { x: 300, opacity: 0, rotate: 10 }
+                }
+                transition={{ duration: 0.5, type: "spring", stiffness: 80 }}
+                whileHover={{ y: -10, scale: 1.03 }}
+                className={`absolute left-0 top-0 min-h-[220px] w-full max-w-md rounded-3xl bg-gradient-to-br ${o.accent} p-6 text-white shadow-elegant sm:max-w-lg`}
+                style={{ zIndex: OFFERS.length - i }}
               >
-                <ServiceCard service={s} index={i} />
-              </div>
-            ))}
-          </div>
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
+                <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
+                  {t("sec.limited")}
+                </span>
+                <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight">{t(o.titleKey)}</h3>
+                <p className="mt-2 text-sm text-white/90">{t(o.subKey)}</p>
+                <button className="mt-4 self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
+                  {t(o.ctaKey)}
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
-
-        <button
-          onClick={scrollPrev}
-          disabled={!canPrev}
-          aria-label="Previous services"
-          className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
-          style={{ minWidth: 40, minHeight: 40 }}
-        >
-          <ChevronLeft className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
-        </button>
-        <button
-          onClick={scrollNext}
-          disabled={!canNext}
-          aria-label="Next services"
-          className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
-          style={{ minWidth: 40, minHeight: 40 }}
-        >
-          <ChevronRight className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
-        </button>
-
-        {snaps.length > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-1.5">
-            {snaps.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => embla?.scrollTo(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === selectedSnap ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
 }
 
-function HowItWorks() {
+function Section4PopularServices({ activeSection }: { activeSection: number }) {
   const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+  const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 6);
+  const y = useMotionValue(0);
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 4)} scroll-snap-align-start bg-surface/30`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
+        </motion.div>
+        <motion.div
+          drag="y"
+          style={{ y }}
+          dragConstraints={{ top: -300, bottom: 0 }}
+          className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card/50 p-4"
+        >
+          {popular.map((s, i) => (
+            <motion.div
+              key={s.id}
+              initial={{ x: -50, opacity: 0 }}
+              animate={isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.4 }}
+              whileHover={{ x: 8, scale: 1.01 }}
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-3 shadow-card"
+            >
+              <div className="h-14 w-14 overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary-glow/20">
+                <img src={s.image} alt={s.title} className="h-full w-full object-cover" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.provider}</p>
+              </div>
+              <div className="flex items-center gap-1 text-warning">
+                <Star className="h-4 w-4 fill-current" />
+                <span className="text-sm font-medium">{s.rating}</span>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+        <p className="mt-4 text-center text-sm text-muted-foreground">{t("sec.dragToScroll") || "Drag to scroll"}</p>
+      </div>
+    </section>
+  );
+}
+
+function Section5HowItWorks({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+  const [pathLength, setPathLength] = useState(0);
+
+  useEffect(() => {
+    if (isInView) {
+      const timer = setTimeout(() => setPathLength(1), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView]);
+
   const steps = [
     { icon: BookOpen, key: "1" },
     { icon: ClipboardList, key: "2" },
@@ -274,13 +428,17 @@ function HowItWorks() {
     { icon: UserCheck, key: "4" },
     { icon: CheckCircle2, key: "5" },
   ];
+
   return (
-    <section className="border-y border-border bg-surface/30 py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 5)} scroll-snap-align-start bg-background`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
           transition={{ duration: 0.5 }}
           className="mx-auto mb-12 max-w-2xl text-center"
         >
@@ -288,16 +446,33 @@ function HowItWorks() {
           <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.howTitle")}</h2>
         </motion.div>
         <div className="relative">
-          <div className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent lg:block" />
+          <svg className="absolute left-0 right-0 top-7 hidden h-px w-full lg:block" viewBox="0 0 1200 0" preserveAspectRatio="none">
+            <motion.path
+              d="M 0 0 L 1200 0"
+              fill="none"
+              stroke="url(#steps-gradient)"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={isInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+            />
+            <defs>
+              <linearGradient id="steps-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="transparent" />
+                <stop offset="20%" stopColor="var(--color-primary)" />
+                <stop offset="80%" stopColor="var(--color-primary)" />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+          </svg>
           <div className="grid gap-6 lg:grid-cols-5">
             {steps.map((s, i) => (
               <motion.div
                 key={s.key}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.5 }}
-                whileHover={{ y: -4 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+                transition={{ delay: 0.3 + i * 0.15, duration: 0.4, type: "spring", stiffness: 150 }}
+                whileHover={{ y: -6, scale: 1.02 }}
                 className="relative rounded-2xl border border-border bg-card p-5 text-center shadow-card"
               >
                 <motion.div
@@ -306,9 +481,14 @@ function HowItWorks() {
                   className="relative mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant"
                 >
                   <s.icon className="h-6 w-6" />
-                  <span className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-background font-mono text-xs font-bold text-primary ring-2 ring-primary">
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={isInView ? { scale: 1 } : { scale: 0 }}
+                    transition={{ delay: 0.5 + i * 0.15, type: "spring", stiffness: 200 }}
+                    className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-background font-mono text-xs font-bold text-primary ring-2 ring-primary"
+                  >
                     {i + 1}
-                  </span>
+                  </motion.span>
                 </motion.div>
                 <h3 className="font-display text-base font-bold">{t(`step.${s.key}.title`)}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{t(`step.${s.key}.desc`)}</p>
@@ -321,43 +501,340 @@ function HowItWorks() {
   );
 }
 
-function Testimonials() {
+function Section6Features({ activeSection }: { activeSection: number }) {
   const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+  const [revealed, setRevealed] = useState(0);
+
+  const features = [
+    { icon: Shield, title: t("sec.special.verifiedTitle"), desc: t("sec.special.verifiedDesc") },
+    { icon: Ban, title: t("sec.special.noHiddenTitle"), desc: t("sec.special.noHiddenDesc") },
+    { icon: ThumbsUp, title: t("sec.special.satisfactionTitle"), desc: t("sec.special.satisfactionDesc") },
+    { icon: Heart, title: t("sec.special.trustTitle"), desc: t("sec.special.trustDesc") },
+  ];
+
+  useEffect(() => {
+    if (isInView && revealed < features.length) {
+      const timer = setTimeout(() => setRevealed((r) => Math.min(r + 1, features.length)), 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView, revealed, features.length]);
+
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.5 }}
-        className="mx-auto mb-12 max-w-2xl text-center"
-      >
-        <p className="text-sm font-semibold text-primary">{t("sec.loved")}</p>
-        <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
-      </motion.div>
-      <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {TESTIMONIALS.map((tt, i) => (
-          <motion.div
-            key={tt.id}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.08 }}
-            className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-card"
-          >
-            <div className="flex gap-0.5 text-warning">
-              {Array.from({ length: tt.rating }).map((_, j) => <Star key={j} className="h-4 w-4 fill-current" />)}
-            </div>
-            <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/90">"{tt.text}"</p>
-            <div className="mt-4 flex items-center gap-3">
-              <img src={tt.avatar} alt={tt.name} className="h-10 w-10 rounded-full" />
-              <div>
-                <div className="text-sm font-semibold">{tt.name}</div>
-                <div className="text-xs text-muted-foreground">{tt.role}</div>
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 6)} scroll-snap-align-start bg-[#0D1117]`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8 text-center"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.special.badge")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold text-white sm:text-4xl">{t("sec.special.title")}</h2>
+        </motion.div>
+        <div className="relative h-72">
+          {features.map((f, i) => {
+            const isRevealed = i < revealed;
+            const offset = i * 15;
+            return (
+              <motion.div
+                key={i}
+                initial={{ y: 50, x: i * 30, opacity: 0, rotate: -3 }}
+                animate={
+                  isRevealed
+                    ? { y: offset, x: i * 20, opacity: 1, rotate: 0, scale: 1 - i * 0.02 }
+                    : { y: 100, x: i * 50, opacity: 0, rotate: -5 }
+                }
+                transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
+                whileHover={{ y: -15 + offset, scale: 1.03 }}
+                className="absolute left-0 top-0 w-full max-w-sm rounded-2xl border-2 border-[#2D7A5F]/30 bg-[#161B22] p-6 sm:max-w-md"
+                style={{ zIndex: features.length - i }}
+              >
+                <div className="mb-4 inline-flex rounded-xl bg-[#2D7A5F]/10 p-3 text-[#4CAF84]">
+                  <f.icon className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold text-white">{f.title}</h3>
+                <p className="mt-2 text-[#8B949E]">{f.desc}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Section7StarReward({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  const stars = [
+    { level: 1, benefits: [t("sec.star.benefit1")] },
+    { level: 2, benefits: [t("sec.star.benefit2")] },
+    { level: 3, benefits: [t("sec.star.benefit3")] },
+  ];
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 7)} scroll-snap-align-start border-y border-border bg-surface/30`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto mb-8 max-w-2xl text-center"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.star.badge")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.star.title")}</h2>
+        </motion.div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {stars.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ y: 50, opacity: 0 }}
+              animate={isInView ? { y: 0, opacity: 1 } : { y: 50, opacity: 0 }}
+              transition={{ delay: i * 0.15, duration: 0.5 }}
+              whileHover={{ y: -6, scale: 1.02 }}
+              className={`relative overflow-hidden rounded-2xl border-2 p-6 ${
+                i === 2
+                  ? "border-[#FCD34D] bg-gradient-to-br from-[#FCD34D]/10 to-transparent dark:border-[#F59E0B]"
+                  : "border-border bg-card"
+              }`}
+            >
+              <div className="mb-4 flex items-center gap-1">
+                {Array.from({ length: s.level }).map((_, j) => (
+                  <motion.div
+                    key={j}
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                    transition={{ delay: i * 0.15 + j * 0.1, type: "spring", stiffness: 200 }}
+                    className={i === 2 ? "text-[#FCD34D] dark:text-[#F59E0B]" : "text-primary"}
+                  >
+                    <Star className="h-8 w-8 fill-current" />
+                  </motion.div>
+                ))}
               </div>
+              <h3 className="text-xl font-bold">{t(`sec.star.level${s.level}`)}</h3>
+              <ul className="mt-4 space-y-2">
+                {s.benefits.map((b, j) => (
+                  <li key={j} className="flex items-center gap-2 text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              {i === 2 && (
+                <motion.div
+                  className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[#FCD34D]/20 blur-3xl dark:bg-[#F59E0B]/20"
+                  animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Section8GrowingTogether({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  const pillars = [
+    { title: t("sec.vision.pillar1Title"), desc: t("sec.vision.pillar1Desc") },
+    { title: t("sec.vision.pillar2Title"), desc: t("sec.vision.pillar2Desc") },
+    { title: t("sec.vision.pillar3Title"), desc: t("sec.vision.pillar3Desc") },
+  ];
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 8)} scroll-snap-align-start bg-background`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto mb-8 max-w-2xl text-center"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.vision.badge")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.vision.title")}</h2>
+        </motion.div>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {pillars.map((p, i) => (
+            <motion.div
+              key={i}
+              initial={{ y: 60, opacity: 0 }}
+              animate={isInView ? { y: 0, opacity: 1 } : { y: 60, opacity: 0 }}
+              transition={{ delay: i * 0.2, duration: 0.6, type: "spring", stiffness: 80 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="relative rounded-2xl border border-border bg-card p-8 shadow-card"
+            >
+              <motion.div
+                className="absolute left-0 top-8 h-20 w-1 rounded-full bg-primary"
+                animate={{ scaleY: [1, 1.1, 1] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
+              />
+              <motion.div
+                className="mb-4 h-1 w-12 rounded-full bg-gradient-to-r from-primary to-primary-glow"
+                animate={{ width: ["48px", "72px", "48px"] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <h3 className="text-xl font-bold">{p.title}</h3>
+              <p className="mt-3 text-muted-foreground">{p.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ delay: 0.8 }}
+          className="mt-10 text-center"
+        >
+          <Button asChild size="lg" className="shadow-elegant">
+            <Link to="/careers">{t("sec.vision.cta")}</Link>
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Section9Testimonials({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 9)} scroll-snap-align-start bg-surface/30`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto mb-8 max-w-2xl text-center"
+        >
+          <p className="text-sm font-semibold text-primary">{t("sec.loved")}</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
+        </motion.div>
+        <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {TESTIMONIALS.map((tt, i) => (
+            <motion.div
+              key={tt.id}
+              initial={{ y: 30, opacity: 0 }}
+              animate={isInView ? { y: 0, opacity: 1 } : { y: 30, opacity: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.4 }}
+              whileHover={{ y: -6, scale: 1.02 }}
+              className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-card"
+            >
+              <motion.div
+                animate={{ y: [-2, 2, -2] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+              >
+                <Quote className="mb-2 h-6 w-6 text-primary/30" />
+                <div className="flex gap-0.5 text-warning">
+                  {Array.from({ length: tt.rating }).map((_, j) => (
+                    <Star key={j} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/90">"{tt.text}"</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <img src={tt.avatar} alt={tt.name} className="h-10 w-10 rounded-full" />
+                  <div>
+                    <div className="text-sm font-semibold">{tt.name}</div>
+                    <div className="text-xs text-muted-foreground">{tt.role}</div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Section11Footer({ activeSection }: { activeSection: number }) {
+  const { t } = useI18n();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { amount: 0.5 });
+
+  return (
+    <section
+      ref={ref}
+      className={`${sectionSnapClass(activeSection === 10)} scroll-snap-align-start border-t border-border bg-card`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={isInView ? { y: 0, opacity: 1 } : { y: -50, opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="grid gap-8 lg:grid-cols-4"
+        >
+          <div className="lg:col-span-2">
+            <h3 className="font-display text-2xl font-bold">SkillBuddy</h3>
+            <p className="mt-3 max-w-sm text-muted-foreground">
+              {t("footer.description") || "Your trusted platform for finding skilled professionals across the Baltics."}
+            </p>
+            <div className="mt-4 flex gap-3">
+              {["twitter", "linkedin", "facebook"].map((social) => (
+                <motion.a
+                  key={social}
+                  href={`https://${social}.com`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface transition hover:bg-primary hover:text-primary-foreground"
+                >
+                  <ArrowUpRight className="h-4 w-4" />
+                </motion.a>
+              ))}
             </div>
-          </motion.div>
-        ))}
+          </div>
+          <div>
+            <h4 className="font-semibold">{t("footer.company") || "Company"}</h4>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/about" className="hover:text-foreground">{t("footer.about") || "About"}</Link></li>
+              <li><Link to="/careers" className="hover:text-foreground">{t("footer.careers") || "Careers"}</Link></li>
+              <li><Link to="/contact" className="hover:text-foreground">{t("footer.contact") || "Contact"}</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold">{t("footer.support") || "Support"}</h4>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/help" className="hover:text-foreground">{t("footer.help") || "Help Center"}</Link></li>
+              <li><Link to="/privacy" className="hover:text-foreground">{t("footer.privacy") || "Privacy"}</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">{t("footer.terms") || "Terms"}</Link></li>
+            </ul>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground"
+        >
+          {t("footer.copyright") || `© ${new Date().getFullYear()} SkillBuddy. All rights reserved.`}
+        </motion.div>
       </div>
     </section>
   );

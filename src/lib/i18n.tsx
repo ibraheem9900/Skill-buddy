@@ -333,6 +333,21 @@ const en: Dict = {
   "sec.vision.pillar3Title": "Become a Leader",
   "sec.vision.pillar3Desc": "Rise through the ranks, earn recognition, and help shape the future of our community.",
   "sec.vision.cta": "Join Our Team",
+  // Homepage scroll-snap sections
+  "sec.postJob": "Find the Help You Need",
+  "sec.postJobDesc": "Describe your task and let verified professionals come to you with competitive bids.",
+  "sec.dragToScroll": "Drag to scroll",
+  // Category short names
+  "cat.cleaning": "Cleaning",
+  "cat.repair": "Repairs",
+  "cat.tutoring": "Tutoring",
+  "cat.moving": "Moving",
+  "cat.tech": "Tech",
+  "cat.design": "Design",
+  // Footer
+  "footer.description": "Your trusted platform for finding skilled professionals across the Baltics.",
+  "footer.help": "Help Center",
+  "footer.copyright": "© 2025 SkillBuddy. All rights reserved.",
 };
 
 const et: Dict = {
@@ -629,6 +644,18 @@ const et: Dict = {
   "sec.vision.pillar3Title": "Saage liidriks",
   "sec.vision.pillar3Desc": "Tõuse auastmeid, teeni tunnustust ja aita kujundada meie kogukonna tulevikku.",
   "sec.vision.cta": "Liitu meie meeskonnaga",
+  "sec.postJob": "Leia abi mida vajad",
+  "sec.postJobDesc": "Kirjelda oma ülesannet ja lase kontrollitud spetsialistidel pakkuda konkurentsivõimelisi hinnapakkumisi.",
+  "sec.dragToScroll": "Lohista kerimiseks",
+  "cat.cleaning": "Puhastus",
+  "cat.repair": "Remont",
+  "cat.tutoring": "Repetiitor",
+  "cat.moving": "Kolimine",
+  "cat.tech": "Tehnika",
+  "cat.design": "Disain",
+  "footer.description": "Sinu usaldusväärne platvorm oskuslike spetsialistide leidmiseks Baltikumis.",
+  "footer.help": "Abikeskus",
+  "footer.copyright": "© 2025 SkillBuddy. Kõik õigused kaitstud.",
 };
 
 const ru: Dict = {
@@ -925,6 +952,18 @@ const ru: Dict = {
   "sec.vision.pillar3Title": "Стань лидером",
   "sec.vision.pillar3Desc": "Поднимайся по ступеням, получай признание и формируй будущее сообщества.",
   "sec.vision.cta": "Присоединяйся к команде",
+  "sec.postJob": "Найди помощь, которая тебе нужна",
+  "sec.postJobDesc": "Опиши задачу и позволь проверенным специалистам предложить конкурентные цены.",
+  "sec.dragToScroll": "Перетащите для прокрутки",
+  "cat.cleaning": "Уборка",
+  "cat.repair": "Ремонт",
+  "cat.tutoring": "Репетитор",
+  "cat.moving": "Переезд",
+  "cat.tech": "Тех",
+  "cat.design": "Дизайн",
+  "footer.description": "Ваша надёжная платформа для поиска квалифицированных специалистов в Прибалтике.",
+  "footer.help": "Справочный центр",
+  "footer.copyright": "© 2025 SkillBuddy. Все права защищены.",
 };
 
 const lv: Dict = {
@@ -1221,6 +1260,18 @@ const lv: Dict = {
   "sec.vision.pillar3Title": "Kļūsti par līderi",
   "sec.vision.pillar3Desc": "Kāp augstāk, pelni atzinību un palīdzi veidot mūsu kopienas nākotni.",
   "sec.vision.cta": "Pievienojies mūsu komandai",
+  "sec.postJob": "Atrodi palīdzību, ko vajag",
+  "sec.postJobDesc": "Apraksti uzdevumu un ļauj pārbaudītiem speciālistiem piedāvāt konkurētspējīgas cenas.",
+  "sec.dragToScroll": "Velc ritināšanai",
+  "cat.cleaning": "Uzkopšana",
+  "cat.repair": "Remonts",
+  "cat.tutoring": "Repetitors",
+  "cat.moving": "Pārvākšanās",
+  "cat.tech": "Tehnika",
+  "cat.design": "Dizains",
+  "footer.description": "Jūsu uzticama platforma kvalificētu speciālistu atrašanai Baltijā.",
+  "footer.help": "Palīdzības centrs",
+  "footer.copyright": "© 2025 SkillBuddy. Visas tiesības aizsargātas.",
 };
 
 const lt: Dict = {
@@ -1517,6 +1568,18 @@ const lt: Dict = {
   "sec.vision.pillar3Title": "Tapk lyderiu",
   "sec.vision.pillar3Desc": "Kilk laiptais, užsidirbk pripažinimo ir padėk formuoti mūsų bendruomenės ateitį.",
   "sec.vision.cta": "Prisijunk prie mūsų komandos",
+  "sec.postJob": "Rask pagalbą, kurios reikia",
+  "sec.postJobDesc": "Apibūdink užduotį ir leisk patikrintiems specialistams pasiūlyti konkurencingas kainas.",
+  "sec.dragToScroll": "Temk slinkimui",
+  "cat.cleaning": "Valymas",
+  "cat.repair": "Remontas",
+  "cat.tutoring": "Repetitorius",
+  "cat.moving": "Kraustymasis",
+  "cat.tech": "Technika",
+  "cat.design": "Dizainas",
+  "footer.description": "Jūsų patikima platforma kvalifikuotiems specialistams rasti Baltijos šalyse.",
+  "footer.help": "Pagalbos centras",
+  "footer.copyright": "© 2025 SkillBuddy. Visos teisės saugomos.",
 };
 
 const dicts: Record<Locale, Dict> = { en, et, ru, lv, lt };
