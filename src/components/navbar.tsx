@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@tanstack/react-router";
 import { Menu, Moon, Star, Sun, User } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,22 +23,8 @@ export function Navbar() {
 
   return (
     <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        zIndex: 9999,
-        height: 64,
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        transition: "background 0.3s ease, border-color 0.3s ease",
-      }}
-      className={
-        theme === "dark"
-          ? "bg-[rgba(18,18,18,0.85)] border-b border-[rgba(255,255,255,0.08)]"
-          : "bg-[rgba(255,255,255,0.85)] border-b border-[rgba(0,0,0,0.08)]"
-      }
+      className="fixed top-0 left-0 w-full z-[9999] h-16 bg-white/85 dark:bg-[#121212]/85 border-b border-black/[0.08] dark:border-white/[0.08] transition-colors duration-300"
+      style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center"><Logo /></Link>
@@ -50,8 +34,7 @@ export function Navbar() {
             <Link
               key={n.to}
               to={n.to}
-              style={{ color: theme === "dark" ? "#ffffff" : "#111111" }}
-              className="rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-accent hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-[#111111] dark:text-[#ffffff] transition hover:bg-accent"
               activeProps={{ className: "text-primary" }}
               activeOptions={{ exact: n.to === "/" }}
             >

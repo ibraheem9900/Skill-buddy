@@ -47,11 +47,7 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
       >
         <motion.div
           className="relative flex flex-col items-center gap-4"
-          animate={
-            isShrink
-              ? { scale: 0.28, y: typeof window !== "undefined" ? -window.innerHeight / 2 + 48 : -300 }
-              : { scale: 1, y: 0 }
-          }
+          animate={isShrink ? { scale: 0.28, y: -300 } : { scale: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.76, 0, 0.24, 1] }}
         >
           <div className="relative flex h-28 w-44 items-center justify-center">
