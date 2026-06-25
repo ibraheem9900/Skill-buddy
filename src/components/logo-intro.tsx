@@ -2,106 +2,65 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import logoLight from "@/assets/skillbuddy-logo-dark.png";
+import logoWhite from "@/assets/skillbuddy-logo-white.png";
 
 interface LogoIntroProps {
   onComplete: () => void;
 }
 
 export function LogoIntro({ onComplete }: LogoIntroProps) {
-  const [phase, setPhase] = useState<"wave" | "balls" | "text" | "shrink">("wave");
+  const [phase, setPhase] = useState<"show" | "exit">("show");
   const hasPlayedRef = useRef(false);
 
   useEffect(() => {
     if (hasPlayedRef.current) return;
     hasPlayedRef.current = true;
 
-    const timeline: { phase: "wave" | "balls" | "text" | "shrink"; delay: number }[] = [
-      { phase: "wave", delay: 0 },
-      { phase: "balls", delay: 700 },
-      { phase: "text", delay: 600 },
-      { phase: "shrink", delay: 900 },
-    ];
+    const t1 = setTimeout(() => setPhase("exit"), 1200);
+    const t2 = setTimeout(onComplete, 1900);
 
-    let elapsed = 0;
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-
-    timeline.forEach(({ phase: p, delay }) => {
-      elapsed += delay;
-      timeouts.push(setTimeout(() => setPhase(p), elapsed));
-    });
-
-    timeouts.push(setTimeout(onComplete, elapsed + 900));
-
-    return () => timeouts.forEach(clearTimeout);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onComplete]);
-
-  const letters = "SkillBuddy".split("");
-  const isShrink = phase === "shrink";
 
   return (
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-[100000] flex items-center justify-center bg-background"
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.45, ease: "easeInOut" }}
-      >
+      {phase !== "exit" || true ? (
         <motion.div
-          className="relative flex flex-col items-center gap-4"
-          animate={isShrink ? { scale: 0.28, y: -300 } : { scale: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: [0.76, 0, 0.24, 1] }}
+          key="loading-screen"
+          className="fixed inset-0 z-[100000] flex items-center justify-center bg-background"
+          initial={{ opacity: 1 }}
+          animate={phase === "exit" ? { opacity: 0 } : { opacity: 1 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          onAnimationComplete={() => {
+            if (phase === "exit") onComplete();
+          }}
         >
-          <div className="relative flex h-28 w-44 items-center justify-center">
-            <motion.img
-              src="/intro-wave.png"
-              alt=""
-              className="absolute inset-0 h-full w-full object-contain"
-              initial={{ opacity: 0, scale: 0.4 }}
-              animate={
-                phase === "wave" || phase === "balls" || phase === "text" || phase === "shrink"
-                  ? { opacity: 1, scale: 1 }
-                  : { opacity: 0, scale: 0.4 }
-              }
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            />
-
-            <motion.img
-              src="/intro-balls.png"
-              alt=""
-              className="absolute inset-0 h-full w-full object-contain"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={
-                phase === "balls" || phase === "text" || phase === "shrink"
-                  ? { opacity: 1, scale: 1 }
-                  : { opacity: 0, scale: 0 }
-              }
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], type: "spring", stiffness: 400, damping: 22 }}
-            />
-          </div>
-
-          <AnimatePresence>
-            {(phase === "text" || phase === "shrink") && (
-              <motion.div
-                className="flex"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {letters.map((letter, i) => (
-                  <motion.span
-                    key={i}
-                    className="font-display text-4xl font-extrabold tracking-tight text-foreground"
-                    initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: i * 0.045, duration: 0.3, ease: "easeOut" }}
-                  >
-                    {letter}
-                  </motion.span>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={
+              phase === "exit"
+                ? { opacity: 0, y: -60 }
+                : { opacity: 1, y: 0 }
+            }
+            transition={
+              phase === "exit"
+                ? { duration: 0.45, ease: [0.76, 0, 0.24, 1] }
+                : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }
+            }
+          >
+            <picture>
+              <source srcSet={logoWhite} media="(prefers-color-scheme: dark)" />
+              <img
+                src={logoLight}
+                alt="SkillBuddy"
+                className="h-14 w-auto object-contain dark:[content:var(--logo-white)] dark:brightness-0 dark:invert"
+                style={{ height: 56, width: "auto" }}
+              />
+            </picture>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      ) : null}
     </AnimatePresence>
   );
 }
