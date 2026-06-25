@@ -1,0 +1,136 @@
+Fix the following specific issues across the SkillBuddy web app. Do NOT change anything that is already working correctly. Only fix what is listed below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 1 — NAVBAR OVERLAP (Most Critical)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Navbar is overlapping page content everywhere — headings go behind navbar, hamburger menu opens behind navbar on mobile.
+
+FIX:
+- Navbar: position fixed, top 0, left 0, width 100%, z-index 9999, height 64px
+- Every page that has a fixed navbar must have padding-top: 64px on the main content wrapper so content starts BELOW the navbar
+- On the Services page: the "Services" heading and category filter bar must start below the navbar — add paddingTop: 80px to the page container
+- On ALL pages: scan every route/page component and ensure the top-level content div has paddingTop of at least 64px (navbar height)
+- Mobile hamburger menu: when open, the dropdown menu must appear BELOW the navbar, not behind it
+  - The mobile menu panel: position fixed, top 64px, left 0, width 100%, z-index 9998 (one below navbar)
+  - Menu must NOT overlap the navbar — it slides down from below the navbar
+- After fix: zero overlap between navbar and any page content on desktop or mobile
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 2 — MOBILE APP SECTION (Screenshots + Heading + Buttons)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Section heading not showing, app store buttons not showing, screenshots misplaced, front camera area too large, black screen flash between screenshot transitions.
+
+FIX — HEADING:
+- The section heading text must be fully visible on both desktop and mobile
+- Check if heading has opacity: 0 or is hidden — make it visible
+- Desktop: heading on left side, phone mockup on right side (two-column layout)
+- Mobile: heading on top, phone mockup below (stacked single column)
+- Heading font: large, bold, brand color or dark text depending on theme
+
+FIX — APP STORE BUTTONS:
+- Google Play and App Store download buttons must be visible below the heading
+- If they have display:none or opacity:0 — remove it and make them visible
+- Style: rounded pill buttons, proper store logos/icons, side by side on desktop, stacked or side by side on mobile
+
+FIX — PHONE MOCKUP SCREENSHOTS:
+- Screenshots inside the phone frame must be properly positioned and sized
+- They must fit inside the phone frame — not overflow or be misaligned
+- The front camera (notch/punch-hole) area is too large — reduce its size:
+  width: 60px max, height: 20px max, centered at top of phone frame
+- Screenshots must transition smoothly one to another:
+  NO black screen flash between transitions
+  FIX: preload all screenshot images before starting the slideshow
+  Use CSS opacity crossfade instead of display none/block:
+    - Current image: opacity 1
+    - Next image: opacity 0, position absolute, same position
+    - On transition: current fades out (opacity 0), next fades in (opacity 1)
+    - Duration: 400ms, ease: easeInOut
+    - Both images are always rendered in DOM, just opacity changes — no remounting
+  This eliminates any black flash between transitions
+
+FIX — MOBILE RESPONSIVE:
+- On screens below 768px: section stacks vertically (heading top, phone bottom)
+- Phone mockup: max-width 280px on mobile, centered
+- All text readable, buttons accessible on mobile
+- No horizontal overflow
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3 — "BECOME A SKILLBUDDY" BUTTON (Remove emoji, add logo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Button has a star emoji ⭐ instead of SkillBuddy logo. Same issue on the provider registration page.
+
+FIX — NAVBAR BUTTON:
+- Remove the ⭐ star emoji completely from the "Become a SkillBuddy" button
+- Replace with the actual SkillBuddy logo icon (the small icon/favicon version of the logo — the wave+dots mark, NOT the full wordmark)
+- Logo img tag: width 20px, height 20px, object-fit contain
+- Layout: [logo icon] [space] [Become a SkillBuddy text]
+- If the logo file path is unclear, use the same logo src that the navbar brand logo uses but sized to 20x20px
+
+FIX — PROVIDER REGISTRATION PAGE (opened when button is clicked):
+- On desktop: the page layout is broken — content is appearing too far down. Fix the page layout so it is properly centered and visible on desktop screens
+- Remove any star emoji from this page as well
+- Replace with SkillBuddy logo icon same as above (20x20px)
+- The page must look correct on both mobile AND desktop
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4 — STAR REWARD SECTION (Mobile responsive)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: The 3 star reward cards are not displaying properly on mobile.
+
+FIX:
+- Desktop: 3 cards in a row (grid-cols-3)
+- Mobile (below 768px): 1 card per row, stacked vertically (grid-cols-1)
+- Tablet (768px-1024px): 1 or 2 cards per row
+- Each card: full width on mobile, proper padding, readable text
+- Stars inside cards: properly sized on mobile (not too large)
+- No horizontal overflow on any screen size
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 5 — TESTIMONIALS SECTION (Mobile card overlap)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Testimonial cards overlap each other on mobile because they are in a horizontal layout that doesn't fit.
+
+FIX:
+- Mobile (below 768px): cards stack vertically, ONE card per row (grid-cols-1)
+- Tablet (768px-1024px): TWO cards per row (grid-cols-2)
+- Desktop (1024px+): FOUR cards per row (grid-cols-4) — keep as is
+- Each card: full width on mobile, no overflow, no overlap
+- Remove any horizontal scroll behavior on mobile for this section
+- Cards must have consistent height — use align-items: stretch so all cards in a row are equal height
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 6 — POPULAR SERVICES CAROUSEL (Flickering / Smooth animations)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Popular services cards flicker too much. Cards change even without clicking buttons.
+
+FIX:
+- Cards must ONLY change when the LEFT or RIGHT arrow button is clicked — no automatic changing
+- Remove any auto-play or auto-scroll behavior from this carousel completely
+- The wheel/scroll event inside this section: make sure it only triggers card navigation when the user explicitly scrolls and the section is active — add a debounce of 300ms so rapid scroll events don't cause flickering
+- Card transition animation: smooth crossfade + slide, duration 400ms, ease [0.22, 1, 0.36, 1]
+- During transition: do NOT unmount/remount cards — use opacity and transform only
+- Add a isAnimating state flag:
+  const [isAnimating, setIsAnimating] = useState(false)
+  When navigation is triggered: set isAnimating = true
+  After animation completes (400ms): set isAnimating = false
+  While isAnimating is true: ignore any new navigation triggers
+  This prevents rapid flickering from multiple triggers
+- Cards must animate smoothly left or right based on direction — not jump or flash
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT CHANGE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change any brand colors or design system
+- Do NOT change any working animations or sections
+- Do NOT change authentication or language systems
+- Do NOT change the scroll-snap homepage behavior
+- Do NOT change any routing or data fetching
+- Only fix the 6 specific issues listed above
+- After all fixes: test on desktop (1280px), tablet (768px), and mobile (375px) — all must look correct
+- Zero console errors after fixes

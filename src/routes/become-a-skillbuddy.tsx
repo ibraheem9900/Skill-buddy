@@ -5,6 +5,7 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Upload, ChevronDown, Loader2, ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/navbar";
+import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -198,7 +199,7 @@ function BecomeASkillBuddy() {
           >
             <div className="mb-6 flex items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <span className="text-lg">⭐</span>
+                <img src={iconTransparent} alt="SkillBuddy" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
               </div>
               <span className="text-xl font-extrabold tracking-tight">SkillBuddy</span>
             </div>

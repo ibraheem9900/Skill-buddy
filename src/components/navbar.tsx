@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Moon, Star, Sun, User } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 import { useTheme } from "@/components/theme-provider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageSelector } from "@/components/language-selector";
@@ -60,9 +61,8 @@ export function Navbar() {
             <Button asChild variant="ghost" size="sm"><Link to="/auth/login">{t("nav.login")}</Link></Button>
             <Button asChild size="sm" className="shadow-elegant"><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
             <Button asChild size="sm" className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F] hover:shadow-lg">
-              <Link to="/register" search={{ role: "provider" }}>
-                <Star className="h-4 w-4 fill-white" />
-                <User className="h-3.5 w-3.5" />
+              <Link to="/become-a-skillbuddy">
+                <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
                 <span>Become a SkillBuddy</span>
               </Link>
             </Button>
@@ -85,9 +85,8 @@ export function Navbar() {
                   <Button asChild variant="outline"><Link to="/auth/login">{t("nav.login")}</Link></Button>
                   <Button asChild><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
                   <Button asChild className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F]">
-                    <Link to="/register" search={{ role: "provider" }}>
-                      <Star className="h-4 w-4 fill-white" />
-                      <User className="h-3.5 w-3.5" />
+                    <Link to="/become-a-skillbuddy">
+                      <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
                       <span>Become a SkillBuddy</span>
                     </Link>
                   </Button>

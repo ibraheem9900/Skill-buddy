@@ -16,6 +16,7 @@ import { Navbar } from "@/components/navbar";
 import { SERVICES, TESTIMONIALS, OFFERS, CATEGORIES } from "@/lib/data";
 import { CATEGORIES_FULL } from "@/lib/categories";
 import { useI18n } from "@/lib/i18n";
+import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,9 +41,20 @@ function Home() {
   const activeSectionRef = useRef(0);
   const [popularServicesCard, setPopularServicesCard] = useState(0);
   const popularServicesCardRef = useRef(0);
+  const isAnimatingRef = useRef(false);
+  const lastWheelTime = useRef(0);
 
   useEffect(() => { popularServicesCardRef.current = popularServicesCard; }, [popularServicesCard]);
   useEffect(() => { activeSectionRef.current = activeSection; }, [activeSection]);
+
+  const navigatePopular = useCallback((d: number) => {
+    if (isAnimatingRef.current) return;
+    const next = popularServicesCardRef.current + d;
+    if (next < 0 || next > 7) return;
+    isAnimatingRef.current = true;
+    setPopularServicesCard(next);
+    setTimeout(() => { isAnimatingRef.current = false; }, 400);
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.overflow = "hidden";
@@ -80,14 +92,27 @@ function Home() {
     if (!container) return;
     const handleWheel = (e: WheelEvent) => {
       const sec = activeSectionRef.current;
-      if (e.deltaY > 0) {
-        if (sec === POPULAR_SERVICES_IDX && popularServicesCardRef.current < 7) {
-          e.preventDefault(); setPopularServicesCard((p) => p + 1); return;
+      if (sec !== POPULAR_SERVICES_IDX) return;
+      const now = Date.now();
+      if (now - lastWheelTime.current < 300) { e.preventDefault(); return; }
+      if (e.deltaY > 0 && popularServicesCardRef.current < 7) {
+        e.preventDefault();
+        lastWheelTime.current = now;
+        if (!isAnimatingRef.current) {
+          isAnimatingRef.current = true;
+          setPopularServicesCard((p) => p + 1);
+          setTimeout(() => { isAnimatingRef.current = false; }, 400);
         }
-      } else if (e.deltaY < 0) {
-        if (sec === POPULAR_SERVICES_IDX && popularServicesCardRef.current > 0) {
-          e.preventDefault(); setPopularServicesCard((p) => p - 1); return;
+        return;
+      } else if (e.deltaY < 0 && popularServicesCardRef.current > 0) {
+        e.preventDefault();
+        lastWheelTime.current = now;
+        if (!isAnimatingRef.current) {
+          isAnimatingRef.current = true;
+          setPopularServicesCard((p) => p - 1);
+          setTimeout(() => { isAnimatingRef.current = false; }, 400);
         }
+        return;
       }
     };
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -120,7 +145,7 @@ function Home() {
             <PostJobSection isActive={activeSection === 1} />,
             <CategoriesSection isActive={activeSection === 2} />,
             <SpecialOffersSection isActive={activeSection === 3} />,
-            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} onNavigate={(d) => setPopularServicesCard((p) => Math.max(0, Math.min(7, p + d)))} />,
+            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
             <HowItWorksSection isActive={activeSection === 5} />,
             <WhatMakesUsSpecialSection isActive={activeSection === 6} />,
             <StarRewardSection isActive={activeSection === 7} />,
@@ -270,7 +295,8 @@ function PostJobSection({ isActive }: { isActive: boolean }) {
                 gap: "10px",
               }}
             >
-              ⭐ {t("nav.becomeSkillBuddy")}
+              <img src={iconTransparent} alt="SkillBuddy" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
+              {t("nav.becomeSkillBuddy")}
             </motion.button>
           </motion.div>
         </motion.div>
@@ -1045,7 +1071,7 @@ function StarRewardSection({ isActive }: { isActive: boolean }) {
         >
           {t("sec.star.subtitle")}
         </motion.p>
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
           {[1, 2, 3].map((level, i) => (
             <motion.div
               key={level}
@@ -1104,42 +1130,81 @@ const APP_SCREENSHOTS = [
 
 function AppShowcaseSection({ isActive }: { isActive: boolean }) {
   const [screenIdx, setScreenIdx] = useState(0);
-  const [screenDir, setScreenDir] = useState(1);
 
   useEffect(() => {
     if (!isActive) return;
     const timer = setInterval(() => {
-      setScreenDir(1);
       setScreenIdx((p) => (p + 1) % APP_SCREENSHOTS.length);
     }, 3000);
     return () => clearInterval(timer);
   }, [isActive]);
 
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden border-y border-border dark:bg-[#080C10] bg-[#F0FDF4]">
-      <div className="relative mx-auto w-full max-w-2xl px-4 sm:px-6 flex flex-col items-center">
-        {/* Label + Heading */}
+    <section className="relative flex h-full flex-col justify-center overflow-hidden border-y border-border dark:bg-[#080C10] bg-[#F0FDF4]">
+      <div
+        className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-14"
+        style={{ paddingTop: 80, paddingBottom: 24 }}
+      >
+        {/* LEFT: Heading + description + store badges */}
         <motion.div
-          className="text-center mb-6"
-          initial={{ opacity: 0, y: 40 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          transition={{ duration: 0.5, delay: isActive ? 0.1 : 0, ease: easeExpo }}
+          className="flex-1 text-center lg:text-left"
+          initial={{ opacity: 0, x: -40 }}
+          animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+          transition={{ duration: 0.6, ease: easeExpo }}
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary mb-3">
             <Smartphone className="h-3 w-3" /> Available on iOS &amp; Android
           </span>
-          <h2 className="font-display text-2xl font-extrabold sm:text-4xl">Your Services, In Your Pocket</h2>
-          <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+          <h2 className="font-display text-3xl font-extrabold sm:text-4xl lg:text-5xl mt-2 mb-3 leading-tight">
+            Your Services,<br className="hidden lg:block" /> In Your Pocket
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-sm mx-auto lg:mx-0">
             Browse services, post jobs, chat with providers, and track your bookings — all in one beautiful app.
           </p>
+
+          {/* Store badges */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={isActive ? { x: 0, opacity: 1 } : { x: -20, opacity: 0 }}
+              transition={{ duration: 0.4, delay: isActive ? 0.4 : 0 }}
+            >
+              <div
+                className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition"
+                style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130 }}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 flex-shrink-0"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
+                <div className="leading-tight">
+                  <div className="text-[9px] opacity-80">Download on the</div>
+                  <div className="text-sm font-semibold">App Store</div>
+                </div>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ x: 20, opacity: 0 }}
+              animate={isActive ? { x: 0, opacity: 1 } : { x: 20, opacity: 0 }}
+              transition={{ duration: 0.4, delay: isActive ? 0.5 : 0 }}
+            >
+              <div
+                className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition"
+                style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140 }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 flex-shrink-0"><path d="M3.18 23.76c.29.17.63.19.94.07l12.43-7.17-2.63-2.63L3.18 23.76z" fill="#EA4335" /><path d="M22.54 10.22 19.6 8.52l-2.95 2.95 2.95 2.95 2.97-1.72a1.58 1.58 0 0 0 0-2.48z" fill="#FBBC04" /><path d="M3.18.24a1.57 1.57 0 0 0-.93 1.41v20.7c0 .59.33 1.1.93 1.41l.09.05L15.7 12l-.01-.09L3.18.24z" fill="#4285F4" /><path d="M13.92 12l2.66-2.66-12.4-7.1-.09-.06L13.92 12z" fill="#34A853" /></svg>
+                <div className="leading-tight">
+                  <div className="text-[9px] opacity-80">Get it on</div>
+                  <div className="text-sm font-semibold">Google Play</div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
 
-        {/* iPhone Mockup */}
+        {/* RIGHT: Phone mockup */}
         <motion.div
-          className="relative flex flex-col items-center"
+          className="relative flex flex-col items-center flex-shrink-0"
           initial={{ scale: 0.3, opacity: 0, y: 60, rotateX: 20 }}
           animate={isActive ? { scale: 1, opacity: 1, y: 0, rotateX: 0 } : { scale: 0.3, opacity: 0, y: 60, rotateX: 20 }}
-          transition={{ duration: 0.8, delay: isActive ? 0.3 : 0, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.8, delay: isActive ? 0.2 : 0, ease: [0.34, 1.56, 0.64, 1] }}
           style={{ perspective: 1000 }}
         >
           <motion.div
@@ -1154,62 +1219,46 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
             } : {}}
             transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" }, rotateY: { duration: 6, repeat: Infinity, ease: "easeInOut" }, filter: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } }}
           >
-            {/* iPhone frame */}
             <div
               className="relative dark:bg-[#1C1C1E] bg-[#E5E5EA]"
               style={{
-                width: "clamp(200px, 40vw, 260px)",
-                height: "clamp(420px, 80vw, 540px)",
+                width: "clamp(180px, 28vw, 230px)",
+                height: "clamp(370px, 58vw, 475px)",
                 borderRadius: 52,
                 boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.15), 0 0 0 1px rgba(0,0,0,0.15), 0 24px 64px rgba(0,0,0,0.25)",
                 padding: 8,
                 position: "relative",
               }}
             >
-              {/* Side buttons — left (volume) */}
               <div className="absolute left-[-3px] top-[100px] w-[3px] h-8 rounded-l-full dark:bg-[#3a3a3c] bg-[#c7c7cc]" />
               <div className="absolute left-[-3px] top-[148px] w-[3px] h-8 rounded-l-full dark:bg-[#3a3a3c] bg-[#c7c7cc]" />
-              {/* Side button — right (power) */}
               <div className="absolute right-[-3px] top-[120px] w-[3px] h-12 rounded-r-full dark:bg-[#3a3a3c] bg-[#c7c7cc]" />
 
-              {/* Screen area */}
               <div
                 className="relative overflow-hidden bg-black"
                 style={{ borderRadius: 44, height: "100%", width: "100%" }}
               >
-                {/* Dynamic Island */}
+                {/* Dynamic Island — reduced size */}
                 <div
-                  className="absolute top-[14px] left-1/2 -translate-x-1/2 z-20 bg-black"
-                  style={{ width: 126, height: 37, borderRadius: 24 }}
+                  className="absolute top-[10px] left-1/2 -translate-x-1/2 z-20 bg-black"
+                  style={{ width: 60, height: 20, borderRadius: 12 }}
                 />
 
-                {/* Screenshot carousel */}
-                <div className="absolute inset-0 overflow-hidden">
-                  <AnimatePresence mode="wait" custom={screenDir}>
-                    <motion.div
-                      key={screenIdx}
-                      custom={screenDir}
-                      variants={{
-                        enter: (d: number) => ({ opacity: 0, x: d > 0 ? "100%" : "-100%" }),
-                        center: { opacity: 1, x: 0 },
-                        exit: (d: number) => ({ opacity: 0, x: d > 0 ? "-100%" : "100%" }),
-                      }}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
+                {/* Screenshot crossfade — all images in DOM, opacity only, no flash */}
+                <div className="absolute inset-0">
+                  {APP_SCREENSHOTS.map((ss, i) => (
+                    <motion.img
+                      key={i}
+                      src={ss.src}
+                      alt={ss.label}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      animate={{ opacity: i === screenIdx ? 1 : 0 }}
                       transition={{ duration: 0.4, ease: "easeInOut" }}
-                      style={{ position: "absolute", inset: 0 }}
-                    >
-                      <img
-                        src={APP_SCREENSHOTS[screenIdx].src}
-                        alt={APP_SCREENSHOTS[screenIdx].label}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </motion.div>
-                  </AnimatePresence>
+                    />
+                  ))}
                 </div>
 
-                {/* Dot indicators inside phone */}
+                {/* Dot indicators */}
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10">
                   {APP_SCREENSHOTS.map((_, i) => (
                     <motion.div
@@ -1224,13 +1273,12 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
             </div>
           </motion.div>
 
-          {/* Phone shadow */}
           <motion.div
             initial={{ opacity: 0, scaleX: 0.3 }}
             animate={isActive ? { opacity: 0.3, scaleX: 1 } : { opacity: 0, scaleX: 0.3 }}
             transition={{ duration: 0.4, delay: isActive ? 0.6 : 0 }}
             style={{
-              width: "clamp(160px, 30vw, 200px)", height: 20,
+              width: "clamp(140px, 22vw, 180px)", height: 20,
               borderRadius: "50%",
               background: "rgba(45,122,95,0.6)",
               filter: "blur(12px)",
@@ -1238,54 +1286,6 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
             }}
           />
         </motion.div>
-
-        {/* Store badges */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-          <motion.div
-            initial={{ x: -30, opacity: 0 }}
-            animate={isActive ? { x: 0, opacity: 1 } : { x: -30, opacity: 0 }}
-            transition={{ duration: 0.4, delay: isActive ? 1.0 : 0 }}
-            animate-hover={{ scale: 1.03 }}
-          >
-            <motion.div
-              animate={isActive ? { scale: [1, 1.03, 1] } : {}}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <div
-                className="flex items-center gap-2 rounded-xl dark:bg-black bg-black px-4 py-2.5 text-white cursor-pointer select-none"
-                style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130 }}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 flex-shrink-0"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
-                <div className="leading-tight">
-                  <div className="text-[9px] opacity-80">Download on the</div>
-                  <div className="text-sm font-semibold">App Store</div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial={{ x: 30, opacity: 0 }}
-            animate={isActive ? { x: 0, opacity: 1 } : { x: 30, opacity: 0 }}
-            transition={{ duration: 0.4, delay: isActive ? 1.1 : 0 }}
-          >
-            <motion.div
-              animate={isActive ? { scale: [1, 1.03, 1] } : {}}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-            >
-              <div
-                className="flex items-center gap-2 rounded-xl dark:bg-black bg-black px-4 py-2.5 text-white cursor-pointer select-none"
-                style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140 }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 flex-shrink-0"><path d="M3.18 23.76c.29.17.63.19.94.07l12.43-7.17-2.63-2.63L3.18 23.76z" fill="#EA4335" /><path d="M22.54 10.22 19.6 8.52l-2.95 2.95 2.95 2.95 2.97-1.72a1.58 1.58 0 0 0 0-2.48z" fill="#FBBC04" /><path d="M3.18.24a1.57 1.57 0 0 0-.93 1.41v20.7c0 .59.33 1.1.93 1.41l.09.05L15.7 12l-.01-.09L3.18.24z" fill="#4285F4" /><path d="M13.92 12l2.66-2.66-12.4-7.1-.09-.06L13.92 12z" fill="#34A853" /></svg>
-                <div className="leading-tight">
-                  <div className="text-[9px] opacity-80">Get it on</div>
-                  <div className="text-sm font-semibold">Google Play</div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
       </div>
     </section>
   );
@@ -1390,23 +1390,6 @@ function OurVisionSection({ isActive }: { isActive: boolean }) {
 
 function TestimonialsSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isActive) return;
-    const timer = setInterval(() => {
-      setActiveTestimonial((p) => (p + 1) % TESTIMONIALS.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [isActive]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      const card = scrollRef.current.children[activeTestimonial] as HTMLElement;
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }
-  }, [activeTestimonial]);
 
   return (
     <section className="relative flex h-full flex-col justify-center overflow-hidden bg-background pt-16">
@@ -1421,62 +1404,10 @@ function TestimonialsSection({ isActive }: { isActive: boolean }) {
           <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
         </motion.div>
 
-        {/* Desktop grid */}
-        <div className="hidden md:grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {TESTIMONIALS.map((tt, i) => (
             <TestimonialCard key={tt.id} tt={tt} isActive={isActive} delay={i * 0.14} />
           ))}
-        </div>
-
-        {/* Mobile: horizontal swipe carousel */}
-        <div className="md:hidden">
-          <div
-            ref={scrollRef}
-            style={{
-              display: "flex", gap: 16, overflowX: "auto", scrollbarWidth: "none",
-              WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory",
-              padding: "0 16px",
-            }}
-          >
-            <style>{`.md\\:hidden div::-webkit-scrollbar{display:none}`}</style>
-            {TESTIMONIALS.map((tt, i) => (
-              <motion.div
-                key={tt.id}
-                style={{ minWidth: "85vw", scrollSnapAlign: "center", flexShrink: 0 }}
-                initial={{ opacity: 0, scale: 0.88, y: 30 }}
-                animate={isActive ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.88, y: 30 }}
-                transition={{ duration: 0.5, delay: isActive ? i * 0.08 : 0, ease: easeExpo }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <div className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card h-full">
-                  <div className="flex gap-0.5 text-warning">
-                    {Array.from({ length: tt.rating }).map((_, j) => <Star key={j} className="h-4 w-4 fill-current text-yellow-400" />)}
-                  </div>
-                  <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/90">"{tt.text}"</p>
-                  <div className="mt-4 flex items-center gap-3">
-                    <img src={tt.avatar} alt={tt.name} className="h-10 w-10 rounded-full" />
-                    <div>
-                      <div className="text-sm font-semibold">{tt.name}</div>
-                      <div className="text-xs text-muted-foreground">{tt.role}</div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Mobile dot indicators */}
-          <div className="mt-4 flex justify-center gap-2">
-            {TESTIMONIALS.map((_, i) => (
-              <motion.button
-                key={i}
-                onClick={() => setActiveTestimonial(i)}
-                animate={{ width: i === activeTestimonial ? 20 : 8, backgroundColor: i === activeTestimonial ? "#2D7A5F" : "rgba(45,122,95,0.3)" }}
-                className="h-2 rounded-full border-none cursor-pointer"
-                transition={{ duration: 0.3 }}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </section>
