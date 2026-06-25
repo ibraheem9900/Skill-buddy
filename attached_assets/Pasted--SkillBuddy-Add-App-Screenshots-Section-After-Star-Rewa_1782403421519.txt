@@ -1,0 +1,264 @@
+# SkillBuddy — Add App Screenshots Section (After Star Reward)
+
+## ADD THIS AS A NEW SECTION between "Star Reward" and "Our Vision"
+
+---
+
+## SECTION 8.5 — APP SHOWCASE (iPhone Mockup with Screenshots)
+
+**Position:** Immediately AFTER "The SkillBuddy Star Reward" section and BEFORE "Our Vision / Growing Together" section
+
+**Section name/heading:** "Experience SkillBuddy" or "The App You'll Love"
+
+---
+
+### CONTENT
+
+```
+Label above heading: "📱 AVAILABLE ON IOS & ANDROID"
+
+Heading: "Your Services, In Your Pocket"
+Subheading: "Everything you need — browse services, post jobs, chat with providers, and track your bookings — all in one beautiful app."
+
+CENTER: iPhone 17 Pro Max mockup (realistic phone frame)
+  - Inside the phone screen: app screenshots that auto-cycle
+  - Screenshots provided by user (placeholder slots for now — user will provide images)
+  - Each screenshot fills the phone screen area exactly
+
+BELOW PHONE: Two store badges
+  [App Store Badge]    [Google Play Badge]
+  (these are just visual badges — no real links needed yet)
+```
+
+---
+
+### PHONE MOCKUP DESIGN
+
+```
+Use a realistic iPhone 17 Pro Max SVG/CSS mockup:
+- Phone frame: titanium/dark gray color (matches iPhone 17 Pro Max design)
+- Dimensions ratio: 393 x 852 (iPhone 17 Pro Max screen ratio)
+- Corner radius: 55px (rounded corners like real iPhone)
+- Side buttons: volume buttons on left, power button on right (CSS details)
+- Dynamic Island: small pill shape at top center of screen
+- Screen area: where screenshots display
+
+Phone frame can be implemented as:
+  Option A: Pure CSS with border-radius, shadows, pseudo-elements
+  Option B: SVG outline frame
+  Option C: Use a ready-made iPhone mockup CSS from a CDN
+
+Phone size on desktop: 280px wide x 580px tall (centered)
+Phone size on mobile: 220px wide x 460px tall
+```
+
+---
+
+### SCREENSHOTS CAROUSEL (Inside the phone screen)
+
+```
+Screenshots cycle automatically every 3 seconds:
+- User will provide actual app screenshot images
+- For now: use placeholder colored screens with text labels:
+  Screen 1: "#2D7A5F background" — label "Home Screen"
+  Screen 2: "#1a3a2a background" — label "Services"
+  Screen 3: "#0d2b1f background" — label "Booking"
+  Screen 4: "#162a1e background" — label "Chat"
+  Screen 5: "#0f1f17 background" — label "Profile"
+
+Screenshot transition animation (inside phone):
+  From: { opacity: 0, x: '100%' } (slides in from right)
+  To:   { opacity: 1, x: '0%' }
+  Exiting: { opacity: 0, x: '-100%' } (slides out to left)
+  Duration: 400ms, ease: easeInOut
+  Auto-advance: every 3000ms
+
+Dot indicators below phone screen (inside frame):
+  Small dots showing current screenshot (1 of 5)
+  Active dot: white, others: semi-transparent white
+
+// To replace placeholder screens with real screenshots later:
+// User provides image files → import them → replace placeholder divs
+// Each image: object-fit: cover, width: 100%, height: 100%
+```
+
+---
+
+### IN ANIMATION (when section enters — ONE SECTION AT A TIME rule applies)
+
+```
+Step 1 — Section background fades in:
+  opacity: 0 → 1, duration: 300ms
+
+Step 2 — Label + Heading slides up:
+  { y: 40, opacity: 0 } → { y: 0, opacity: 1 }
+  Duration: 500ms, delay: 100ms
+
+Step 3 — iPhone POPS IN from center (main entrance):
+  From: { scale: 0.3, opacity: 0, y: 60, rotateX: 20deg }
+  To:   { scale: 1,   opacity: 1, y: 0,  rotateX: 0deg }
+  Duration: 800ms
+  Ease: cubic-bezier(0.34, 1.56, 0.64, 1)  ← this gives the "pop" overshoot feel
+  Delay: 300ms
+
+Step 4 — Phone shadow appears after phone pops in:
+  Elliptical shadow below phone
+  From: { opacity: 0, scaleX: 0.3 }
+  To:   { opacity: 0.3, scaleX: 1 }
+  Duration: 400ms, delay: 600ms
+
+Step 5 — Subheading fades in below phone:
+  { y: 20, opacity: 0 } → { y: 0, opacity: 1 }
+  Duration: 400ms, delay: 800ms
+
+Step 6 — Store badges pop in:
+  Left badge: { x: -30, opacity: 0 } → { x: 0, opacity: 1 }, delay: 1000ms
+  Right badge: { x: 30, opacity: 0 } → { x: 0, opacity: 1 }, delay: 1100ms
+  Duration: 400ms each
+```
+
+### CONTINUOUS ANIMATIONS (while section is active)
+
+```
+1. Phone gentle float:
+   y: 0 → -10px → 0, duration: 3s, infinite, ease: easeInOut
+
+2. Phone slight tilt (subtle 3D feel):
+   rotateY: 0 → 3deg → -3deg → 0, duration: 6s, infinite
+   rotateX: 0 → 1deg → 0, duration: 4s, infinite
+   (very subtle — not dramatic)
+
+3. Phone glow:
+   Drop shadow pulses gently:
+   filter: drop-shadow(0 20px 40px rgba(45,122,95,0.3)) 
+        ↔ drop-shadow(0 30px 60px rgba(45,122,95,0.5))
+   Duration: 2.5s, infinite alternate
+
+4. Screenshots auto-cycle (as described above, every 3s)
+
+5. Store badges subtle pulse:
+   scale: 1 → 1.03 → 1, duration: 2s, alternate infinite
+```
+
+### OUT ANIMATION
+
+```
+Phone: { scale: 0.8, opacity: 0, y: -30, filter: 'blur(8px)' }
+All content: { opacity: 0 }
+Duration: 450ms, ease: easeIn
+```
+
+---
+
+### LAYOUT
+
+```
+Desktop layout:
+┌─────────────────────────────────────────────┐
+│  📱 AVAILABLE ON IOS & ANDROID              │
+│                                             │
+│  "Your Services, In Your Pocket"            │
+│  Subheading text                            │
+│                                             │
+│            ┌─────────┐                      │
+│            │  📱     │                      │
+│            │ [App    │                      │
+│            │  Screen]│                      │
+│            │         │                      │
+│            └─────────┘                      │
+│              ● ○ ○ ○ ○                      │
+│                                             │
+│      [App Store]  [Google Play]             │
+└─────────────────────────────────────────────┘
+
+Mobile layout: same, phone centered, slightly smaller
+```
+
+---
+
+### HOW TO ADD REAL SCREENSHOTS LATER
+
+```typescript
+// When user provides actual screenshot images:
+// 1. Add image files to: public/app-screenshots/
+//    - screenshot-1.png (Home Screen)
+//    - screenshot-2.png (Services)
+//    - screenshot-3.png (Booking)
+//    - screenshot-4.png (Chat)
+//    - screenshot-5.png (Profile)
+
+// 2. In the component, replace placeholder divs:
+const screenshots = [
+  '/app-screenshots/screenshot-1.png',
+  '/app-screenshots/screenshot-2.png',
+  '/app-screenshots/screenshot-3.png',
+  '/app-screenshots/screenshot-4.png',
+  '/app-screenshots/screenshot-5.png',
+]
+
+// 3. Display inside phone screen:
+<img 
+  src={screenshots[currentIndex]} 
+  alt="App screenshot"
+  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+/>
+```
+
+---
+
+### DARK MODE vs LIGHT MODE
+
+```
+Dark mode:
+  Section background: #080C10 (very dark)
+  Phone frame: #1C1C1E (iPhone titanium dark)
+  Phone shadow: green glow (rgba 45,122,95)
+  Text: white headings, gray subtext
+  Store badges: dark background versions
+
+Light mode:
+  Section background: #F0FDF4 (light mint)
+  Phone frame: #E5E5EA (iPhone titanium light)
+  Phone shadow: subtle dark shadow
+  Text: dark headings, medium gray subtext
+  Store badges: light background versions
+```
+
+---
+
+## UPDATED SECTION ORDER
+
+After adding this section, the homepage order is:
+
+1. INTRO — Logo animation
+2. HERO — Headline + Search
+3. CATEGORIES — Service categories
+4. SPECIAL OFFERS — 3 offer cards
+5. POPULAR SERVICES — 8 service cards
+6. HOW IT WORKS — 5 steps
+7. WHAT MAKES US SPECIAL — 4 feature cards
+8. STAR REWARD — Uber perk section
+9. **[NEW] APP SHOWCASE — iPhone mockup with screenshots** ← ADD HERE
+10. OUR VISION — Vision + careers
+11. TESTIMONIALS — What people say
+12. FOOTER
+
+---
+
+## CHECKLIST
+
+- [ ] New section added between Star Reward and Our Vision
+- [ ] iPhone 17 Pro Max mockup frame (CSS or SVG — realistic proportions)
+- [ ] Dynamic Island visible at top of phone screen
+- [ ] 5 placeholder screenshot slots inside phone (ready for real images)
+- [ ] Screenshots auto-cycle every 3 seconds with slide animation
+- [ ] Dot indicators inside/below phone screen
+- [ ] Section IN: phone POPS in with overshoot spring animation
+- [ ] Phone continuous: gentle float + subtle tilt + green glow pulse
+- [ ] App Store + Google Play badges appear after phone
+- [ ] Section OUT: phone shrinks + blurs away
+- [ ] Dark mode: dark phone frame + green glow shadow
+- [ ] Light mode: light phone frame + subtle shadow
+- [ ] Mobile responsive: phone smaller but same animations
+- [ ] scroll-snap: fits into one-section-at-a-time system
+- [ ] Real screenshots can be added by placing images in public/app-screenshots/

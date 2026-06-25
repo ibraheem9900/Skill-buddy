@@ -1,0 +1,630 @@
+# SkillBuddy — Comprehensive Fixes & Mobile Responsive Prompt
+
+## CRITICAL RULE
+- Do NOT break any existing working functionality
+- Apply ALL fixes below carefully one by one
+- Both dark mode AND light mode must work perfectly for every fix
+- Mobile responsive is the TOP priority
+
+---
+
+## FIX 1 — NAVBAR Z-INDEX (Most Critical)
+
+**Problem:** Navbar appears BEHIND page content / sections overlap the navbar
+
+**Fix:**
+```css
+/* Navbar must always be on top of everything */
+nav, header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999 !important;
+}
+
+/* All page content must have top padding equal to navbar height */
+main, .page-content, #root > div {
+  padding-top: 80px; /* adjust to match actual navbar height */
+}
+
+/* Every section/page wrapper: */
+.section-wrapper {
+  position: relative;
+  z-index: 1; /* always lower than navbar's 9999 */
+}
+```
+
+Make sure EVERY page (Home, Services, Jobs, Careers, FAQs, Contact, Auth) has this padding-top so content starts below the navbar, not behind it.
+
+---
+
+## FIX 2 — HERO SECTION: Remove "Become a SkillBuddy" Button
+
+**Problem:** "Become a SkillBuddy" button appears in the Expert Help / Hero section
+
+**Fix:**
+- Remove the "Become a SkillBuddy" button from the Hero section (Section 1 — "Expert Care, Anytime Anywhere")
+- Do NOT remove it from navbar or anywhere else
+- Just remove it from hero section only
+
+---
+
+## FIX 3 — SECOND SECTION: Replace Search Bar with "Become a SkillBuddy" Button
+
+**Problem:** Section 2 ("Post a job, get bids...") has a search bar that needs to be replaced
+
+**Fix:**
+- Remove the search bar from Section 2 ("Post a job, get bids, choose the best — your trusted help is one click away")
+- Replace it with a beautiful "Become a SkillBuddy" CTA button:
+
+```tsx
+// Button design:
+<motion.button
+  onClick={() => navigate('/become-a-skillbuddy')}
+  animate={{
+    boxShadow: [
+      '0 0 20px rgba(45,122,95,0.4)',
+      '0 0 40px rgba(45,122,95,0.8)',
+      '0 0 20px rgba(45,122,95,0.4)'
+    ]
+  }}
+  transition={{ duration: 2, repeat: Infinity }}
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.97 }}
+  style={{
+    background: 'linear-gradient(135deg, #2D7A5F, #4CAF84)',
+    color: 'white',
+    padding: '16px 40px',
+    borderRadius: '50px',
+    fontSize: '18px',
+    fontWeight: '700',
+    fontFamily: 'Sora',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  }}
+>
+  ⭐ Become a SkillBuddy
+</motion.button>
+```
+
+- Button has continuous green glow pulse animation
+- Clicking navigates to `/become-a-skillbuddy` page (new page — see Fix 4)
+
+---
+
+## FIX 4 — NEW PAGE: "Become a SkillBuddy" Application Form
+
+**Route:** `/become-a-skillbuddy`
+
+**Page Layout:**
+```
+Two-column layout (desktop):
+LEFT SIDE (40% width): SkillBuddy info panel
+RIGHT SIDE (60% width): Application form
+
+Single column on mobile (form below info)
+```
+
+**LEFT SIDE — Info Panel:**
+```
+Background: green gradient (#2D7A5F → #1a5c3a)
+Content (white text):
+  - SkillBuddy logo (white version)
+  - Heading: "Join the SkillBuddy Family"
+  - Paragraph: "Become a verified SkillBuddy professional and start earning 
+    on your own terms. We connect you with thousands of clients across 
+    Estonia, Latvia, Lithuania and beyond. Join today and take control 
+    of your career."
+  - 3 benefit points with checkmark icons:
+    ✓ Flexible working hours
+    ✓ Competitive earnings in EUR
+    ✓ Free Uber rides after 3-Star status
+  - Bottom: SkillBuddy tagline
+```
+
+**RIGHT SIDE — Application Form:**
+```
+Form title: "Apply to Become a SkillBuddy Professional"
+Subtitle: "Fill in your details below and we'll be in touch within 48 hours."
+
+FORM FIELDS (in this exact order):
+
+1. First Name * (text input, required)
+   placeholder: "Enter your first name"
+
+2. Last Name * (text input, required)
+   placeholder: "Enter your last name"
+
+3. Email Address * (email input, required)
+   placeholder: "your@email.com"
+
+4. Phone Number * (tel input, required)
+   placeholder: "+372 000 0000"
+
+5. Address * (text input, required)
+   placeholder: "Street, City, Country"
+
+6. Personal Code * (number input, required)
+   - Exactly 11 digits — no more, no less
+   - Only numbers allowed (no letters, no spaces, no special chars)
+   - Validation: must be exactly 11 numeric digits
+   - Error message if wrong: "Personal code must be exactly 11 digits"
+   - Input type: "tel" with pattern="[0-9]{11}" maxLength={11}
+   - placeholder: "00000000000"
+
+7. CV / Resume Upload (optional)
+   - Label: "Upload your CV or Resume (optional)"
+   - Accepted formats: PDF, DOC, DOCX
+   - Max size: 5MB
+   - Shows file name after selection
+   - Drag & drop zone OR click to browse
+   - Style: dashed border box with upload icon
+   - Error if wrong format: "Please upload PDF, DOC, or DOCX files only"
+   - Error if too large: "File must be under 5MB"
+
+8. Category * (dropdown select, required)
+   - Label: "Which category do you work in? *"
+   - Options: All categories from the platform
+     Creative & Design, Pet Care, Beauty & Personal Care,
+     Health & Wellness, Home & Property, Personal & Household Assistance,
+     Education & Training, Event & Party, Business & Professional,
+     Travel & Transportation, Repair & Customization
+
+9. Subcategory * (dropdown select, required)
+   - Label: "Select your specific service *"
+   - Options: dynamically change based on selected Category above
+   - Example: if Category = "Home & Property" → show: Plumber, Electrician, Mechanic, Locksmith, Home Cleaner, Carpet Cleaner, Window Cleaner, etc.
+   - All 55 services from the existing services data file
+
+10. Availability Preferences (multi-select checkboxes)
+    - Label: "When are you available? *"
+    - Options:
+      □ Weekday mornings (Mon-Fri, 8am-12pm)
+      □ Weekday afternoons (Mon-Fri, 12pm-6pm)
+      □ Weekday evenings (Mon-Fri, 6pm-10pm)
+      □ Weekends
+      □ Flexible / Available anytime
+
+11. Tell Us About Yourself * (textarea, required)
+    - Label: "Tell us more about yourself *"
+    - placeholder: "Describe your experience, skills, and why you want to join SkillBuddy..."
+    - Min 50 characters, max 1000 characters
+    - Character counter shown: "X / 1000"
+    - Min height: 120px, resizable
+
+12. Terms checkbox (required)
+    □ I agree to the Terms & Conditions and Privacy Policy
+
+SUBMIT BUTTON:
+  "Submit Application →" 
+  - Green filled, full width, rounded pill
+  - Shows loading spinner while submitting
+  - Disabled state when form has validation errors
+
+ON SUCCESS:
+  Show success state (replace form with):
+  - Large green checkmark animation (SVG draws itself)
+  - Heading: "Application Received! 🎉"
+  - Text: "Thank you for applying! Our team will review your application and get back to you within 48 hours."
+  - Button: "Back to Home →"
+
+ON SUBMIT — Send email to: skillbuddyteam@gmail.com
+  Subject: "New SkillBuddy Provider Application — [First Name] [Last Name]"
+  Body includes all form data
+```
+
+**Form Validation:**
+- All required fields show red border + error message if empty on submit
+- Personal code: exactly 11 digits, numbers only
+- Email: valid format
+- File: correct format + size
+- Terms: must be checked
+
+**Design — Dark Mode:**
+```
+Right side background: #0D1117
+Form inputs: #161B22 bg, #2D7A5F border on focus
+Labels: #8B949E
+Input text: #FFFFFF
+```
+
+**Design — Light Mode:**
+```
+Right side background: #FFFFFF
+Form inputs: #F8FAFB bg, #2D7A5F border on focus
+Labels: #374151
+Input text: #0D1117
+```
+
+---
+
+## FIX 5 — CATEGORIES SECTION: Mobile Responsive
+
+**Problem:** Categories section hides items on mobile, not fully visible
+
+**Fix:**
+```tsx
+// Desktop: horizontal slider with arrow buttons (existing — keep as is)
+// Mobile: same horizontal slider but with:
+//   - Arrow buttons (< and >) visible and tappable on mobile too
+//   - Buttons: 36px circle, green background, white arrow
+//   - Touch/swipe also works for sliding
+//   - Show 3 categories visible at once on mobile (not 9)
+//   - Dot indicators below
+
+// Mobile CSS:
+@media (max-width: 768px) {
+  .category-slider-container {
+    padding: 0 44px; /* space for arrow buttons */
+  }
+  .category-card {
+    min-width: 100px;
+    padding: 12px 8px;
+  }
+  .category-icon-circle {
+    width: 56px;
+    height: 56px;
+  }
+  .category-label {
+    font-size: 11px;
+    text-align: center;
+  }
+  .slider-arrow-btn {
+    display: flex !important; /* show on mobile */
+    width: 36px;
+    height: 36px;
+  }
+}
+```
+
+---
+
+## FIX 6 — SPECIAL OFFERS SECTION: Up/Down Card Navigation
+
+**Problem:** Cards have layout issues on both desktop and mobile
+
+**Fix — New Layout:**
+```
+Remove current layout entirely.
+New layout: Single card visible at a time with UP (▲) and DOWN (▼) buttons on the RIGHT side
+
+Layout:
+┌─────────────────────────────┐
+│                      [▲]   │
+│   [Current Card — large]    │
+│                      [▼]   │
+│   [Small preview above]     │
+│   [Small preview below]     │
+└─────────────────────────────┘
+
+Exactly like the screenshot/diagram provided:
+- Card previous: smaller, partially visible above main card
+- Card 1 (current): large, center
+- Card after: smaller, partially visible below main card
+- UP button: goes to previous card
+- DOWN button: goes to next card
+- Buttons on the RIGHT side, vertically centered
+
+Button style:
+  - Circle 48px, background: #2D7A5F (green)
+  - White arrow icon inside
+  - whileHover: scale 1.1, brightness increase
+  - whileTap: scale 0.9
+
+Card transition animation (smooth drawer/elevator feel):
+  Going DOWN (next card):
+    Current card: { y: 0 → '-110%' } (slides up and out)
+    Next card: { y: '110%' → 0 } (slides up from below)
+    Duration: 450ms, ease: [0.22, 1, 0.36, 1]
+  
+  Going UP (previous card):
+    Current card: { y: 0 → '110%' } (slides down and out)
+    Previous card: { y: '-110%' → 0 } (slides down from above)
+    Duration: 450ms, ease: [0.22, 1, 0.36, 1]
+
+3 cards total (3 offer cards)
+After last card → loops back to first (circular)
+After first → goes to last (circular in reverse)
+
+Mobile: same layout, slightly smaller card
+```
+
+---
+
+## FIX 7 — HOW IT WORKS SECTION: Mobile Responsive
+
+**Problem:** Steps don't all show on mobile
+
+**Fix:**
+```tsx
+// Desktop: horizontal timeline (keep as is)
+// Mobile: VERTICAL timeline (stack steps top to bottom)
+
+@media (max-width: 768px) {
+  .how-it-works-container {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+  .step-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+    width: 100%;
+  }
+  .step-circle {
+    min-width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+  .step-content {
+    flex: 1;
+    text-align: left;
+  }
+  .connecting-line {
+    /* vertical line on mobile */
+    width: 2px;
+    height: 32px;
+    margin-left: 23px; /* center under circle */
+    background: #2D7A5F;
+  }
+}
+
+// All 5 steps must be visible on mobile — no hiding
+// Add horizontal scroll as fallback if vertical doesn't fit:
+.how-it-works-mobile-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* hide scrollbar */
+}
+```
+
+---
+
+## FIX 8 — WHAT MAKES US SPECIAL: Up/Down Card Layout
+
+**Same as Fix 6 — apply identical Up/Down card navigation:**
+```
+Same layout as Special Offers fix:
+- Single card visible at center
+- Previous card peek above
+- Next card peek below  
+- UP (▲) and DOWN (▼) buttons on right side
+- Same smooth elevator/drawer slide animation
+- 4 cards: Verified Experts, No Hidden Fees, Satisfaction Guaranteed, Built on Trust
+- Circular navigation (after card 4 → back to card 1)
+
+Button animation:
+  whileHover: { scale: 1.1, backgroundColor: '#1a5c3a' }
+  whileTap: { scale: 0.9 }
+  Initial: animate with bounce when section first appears
+    { scale: 0 → 1.2 → 1 }, spring stiffness: 300, damping: 15
+```
+
+---
+
+## FIX 9 — STAR REWARD SECTION: Mobile Responsive
+
+**Fix:**
+```tsx
+@media (max-width: 768px) {
+  .star-reward-section {
+    padding: 24px 16px;
+    flex-direction: column;
+  }
+  .star-reward-main-card {
+    width: 100%;
+    padding: 24px 20px;
+  }
+  .stars-container {
+    gap: 12px;
+  }
+  .star-icon {
+    font-size: 32px; /* smaller on mobile */
+  }
+  .step-cards-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .step-card {
+    width: 100%;
+  }
+  .exclusive-badge {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+}
+```
+
+---
+
+## FIX 10 — GROWING TOGETHER SECTION: Mobile Responsive
+
+**Fix:**
+```tsx
+@media (max-width: 768px) {
+  .vision-section {
+    padding: 24px 16px;
+  }
+  .vision-heading {
+    font-size: clamp(24px, 6vw, 40px); /* responsive font size */
+    text-align: center;
+  }
+  .vision-statement-text {
+    font-size: clamp(16px, 4vw, 22px);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .pillar-cards-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .pillar-card {
+    width: 100%;
+    border-left: 3px solid #2D7A5F;
+    padding: 20px;
+  }
+  .cta-button {
+    width: 100%;
+    text-align: center;
+  }
+}
+```
+
+---
+
+## FIX 11 — TESTIMONIALS: Mobile Responsive
+
+**Fix:**
+```tsx
+@media (max-width: 768px) {
+  .testimonials-grid {
+    flex-direction: column; /* stack vertically on mobile */
+    gap: 16px;
+  }
+  .testimonial-card {
+    width: 100%;
+    padding: 20px;
+  }
+  /* OR: keep horizontal but show 1 card at a time with swipe */
+  .testimonials-carousel {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    gap: 16px;
+    padding: 0 16px;
+    scrollbar-width: none;
+  }
+  .testimonial-card {
+    scroll-snap-align: center;
+    min-width: 85vw; /* almost full width on mobile */
+    flex-shrink: 0;
+  }
+}
+// Show dot indicators below on mobile
+// Auto-rotate continues on mobile
+```
+
+---
+
+## FIX 12 — GLOBAL MOBILE RESPONSIVE
+
+Apply these globally for ALL sections:
+
+```css
+/* Prevent horizontal overflow on mobile */
+* {
+  box-sizing: border-box;
+}
+body, html {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Global padding for mobile */
+@media (max-width: 768px) {
+  .section-container {
+    padding: 40px 16px;
+  }
+  h1 { font-size: clamp(28px, 7vw, 48px); }
+  h2 { font-size: clamp(22px, 5vw, 36px); }
+  h3 { font-size: clamp(18px, 4vw, 24px); }
+  p  { font-size: clamp(14px, 3.5vw, 16px); }
+}
+
+/* All section headings: prevent text overflow */
+h1, h2, h3 {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* All images: responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* All grids: responsive */
+.grid-2 { 
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+```
+
+---
+
+## FIX 13 — MOBILE ANIMATIONS (Premium Feel)
+
+Add these extra animations for mobile users:
+
+```tsx
+// 1. Touch ripple effect on all tappable elements:
+// When user taps a button/card, show green ripple circle expanding
+
+// 2. Section entrance on mobile (simpler, fast):
+const mobileVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+  }
+}
+
+// 3. Card hover → on mobile use "tap" animation instead:
+whileTap={{ scale: 0.97, backgroundColor: 'rgba(45,122,95,0.05)' }}
+
+// 4. Smooth scroll between sections on mobile:
+scroll-behavior: smooth;
+-webkit-overflow-scrolling: touch;
+
+// 5. Loading animation for images on mobile:
+// Skeleton shimmer while images load
+```
+
+---
+
+## COMPLETE CHECKLIST
+
+- [ ] Navbar: z-index: 9999, all pages have padding-top equal to navbar height
+- [ ] Navbar always above content on every page (Home, Services, Jobs, Careers, FAQs, Contact, Auth)
+- [ ] Hero section: "Become a SkillBuddy" button REMOVED
+- [ ] Section 2 ("Post a job..."): search bar removed, replaced with glowing "Become a SkillBuddy" button
+- [ ] Clicking "Become a SkillBuddy" → navigates to /become-a-skillbuddy
+- [ ] /become-a-skillbuddy page: two-column layout (info left, form right)
+- [ ] Form: First Name, Last Name, Email, Phone, Address fields
+- [ ] Form: Personal Code — exactly 11 digits, numbers only, validation
+- [ ] Form: CV/Resume upload (PDF/DOC/DOCX, max 5MB, optional)
+- [ ] Form: Category dropdown (all categories)
+- [ ] Form: Subcategory dropdown (changes based on category)
+- [ ] Form: Availability preferences (checkboxes)
+- [ ] Form: "Tell us about yourself" textarea with character counter
+- [ ] Form: Terms & Conditions checkbox
+- [ ] Form: Submit sends email to skillbuddyteam@gmail.com
+- [ ] Form: Success animation after submit
+- [ ] Form: Full validation with error messages
+- [ ] Categories section: fully visible on mobile with arrow buttons
+- [ ] Special Offers: Up/Down card navigation with smooth elevator animation
+- [ ] Special Offers: Shows card above + current + card below (like diagram)
+- [ ] Special Offers: Green circle UP and DOWN buttons on right side
+- [ ] How It Works: vertical layout on mobile, all 5 steps visible
+- [ ] What Makes Us Special: same Up/Down card navigation as Special Offers
+- [ ] Star Reward: mobile responsive
+- [ ] Growing Together: mobile responsive with responsive font sizes
+- [ ] Testimonials: mobile shows cards one at a time with swipe
+- [ ] Global: no horizontal scroll/overflow on mobile
+- [ ] Global: all text responsive font sizes
+- [ ] Global: all images responsive
+- [ ] Mobile animations: tap effects, smooth scroll, entrance animations
+- [ ] Dark mode: all fixes look beautiful
+- [ ] Light mode: all fixes look beautiful
+- [ ] No existing functionality broken

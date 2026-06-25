@@ -25,6 +25,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as BecomeASkillbuddyRouteImport } from './routes/become-a-skillbuddy'
 import { Route as BecomeAProviderRouteImport } from './routes/become-a-provider'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -119,6 +120,11 @@ const CareersRoute = CareersRouteImport.update({
   path: '/careers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BecomeASkillbuddyRoute = BecomeASkillbuddyRouteImport.update({
+  id: '/become-a-skillbuddy',
+  path: '/become-a-skillbuddy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BecomeAProviderRoute = BecomeAProviderRouteImport.update({
   id: '/become-a-provider',
   path: '/become-a-provider',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-provider': typeof BecomeAProviderRoute
+  '/become-a-skillbuddy': typeof BecomeASkillbuddyRoute
   '/careers': typeof CareersRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-provider': typeof BecomeAProviderRoute
+  '/become-a-skillbuddy': typeof BecomeASkillbuddyRoute
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-provider': typeof BecomeAProviderRoute
+  '/become-a-skillbuddy': typeof BecomeASkillbuddyRoute
   '/careers': typeof CareersRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-provider'
+    | '/become-a-skillbuddy'
     | '/careers'
     | '/categories'
     | '/chat'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-provider'
+    | '/become-a-skillbuddy'
     | '/categories'
     | '/chat'
     | '/contact'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-provider'
+    | '/become-a-skillbuddy'
     | '/careers'
     | '/categories'
     | '/chat'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   BecomeAProviderRoute: typeof BecomeAProviderRoute
+  BecomeASkillbuddyRoute: typeof BecomeASkillbuddyRoute
   CareersRoute: typeof CareersRouteWithChildren
   CategoriesRoute: typeof CategoriesRoute
   ChatRoute: typeof ChatRoute
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/careers'
       fullPath: '/careers'
       preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-a-skillbuddy': {
+      id: '/become-a-skillbuddy'
+      path: '/become-a-skillbuddy'
+      fullPath: '/become-a-skillbuddy'
+      preLoaderRoute: typeof BecomeASkillbuddyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/become-a-provider': {
@@ -649,6 +669,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   BecomeAProviderRoute: BecomeAProviderRoute,
+  BecomeASkillbuddyRoute: BecomeASkillbuddyRoute,
   CareersRoute: CareersRouteWithChildren,
   CategoriesRoute: CategoriesRoute,
   ChatRoute: ChatRoute,
