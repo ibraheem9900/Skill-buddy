@@ -1,5 +1,6 @@
+"use client";
+
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { Menu, Moon, Star, Sun, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,6 @@ import { useI18n } from "@/lib/i18n";
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const { t } = useI18n();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const navLinks = [
     { to: "/", label: t("nav.home") },
@@ -32,11 +25,24 @@ export function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-        scrolled ? "glass border-b border-border" : "bg-transparent"
-      }`}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        zIndex: 9999,
+        height: 64,
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        transition: "background 0.3s ease, border-color 0.3s ease",
+      }}
+      className={
+        theme === "dark"
+          ? "bg-[rgba(18,18,18,0.85)] border-b border-[rgba(255,255,255,0.08)]"
+          : "bg-[rgba(255,255,255,0.85)] border-b border-[rgba(0,0,0,0.08)]"
+      }
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center"><Logo /></Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -44,7 +50,8 @@ export function Navbar() {
             <Link
               key={n.to}
               to={n.to}
-              className="rounded-md px-3 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-accent hover:text-foreground"
+              style={{ color: theme === "dark" ? "#ffffff" : "#111111" }}
+              className="rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-accent hover:text-foreground"
               activeProps={{ className: "text-primary" }}
               activeOptions={{ exact: n.to === "/" }}
             >

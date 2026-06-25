@@ -1,0 +1,191 @@
+Fix the following specific issues on the SkillBuddy homepage. Do NOT change anything that is already working correctly. Only fix what is listed below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 1 — NAVBAR (Sticky, Visible, Theme-Aware)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Navbar links disappear when scrolling over dark sections (like "What Makes Us Special"). Navbar background keeps changing.
+
+FIX:
+- position: fixed, top: 0, left: 0, width: 100%, z-index: 9999
+- Navbar must ALWAYS stay on top of every section including dark ones
+- Navbar background:
+  Light theme: rgba(255, 255, 255, 0.85)
+  Dark theme:  rgba(18, 18, 18, 0.85)
+- backdropFilter: blur(12px) — frosted glass effect
+- border-bottom: 1px solid rgba(0,0,0,0.08) in light / rgba(255,255,255,0.08) in dark
+- This background must NEVER be transparent or change randomly
+- Navbar text/links color:
+  Light theme: #111111 (always dark text, always visible)
+  Dark theme:  #FFFFFF (always light text, always visible)
+- Links must NEVER disappear or become invisible over any section background
+- Add transition: background 0.3s ease so theme switch is smooth
+- Navbar height: 64px, consistent on all pages
+- Logo stays left, links stay center/right — do not reorder
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 2 — "WHAT MAKES US SPECIAL" SECTION THEME FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: This section has a hardcoded dark background even in light theme.
+
+FIX:
+- Remove any hardcoded dark background color from this section
+- Light theme: section background must be the same as the rest of the page (white or light gray — match global light theme bg)
+- Dark theme: section background must be the same as the rest of the page (dark bg — match global dark theme bg)
+- All text in this section:
+  Light theme: dark text (#111 or current body text color)
+  Dark theme: light text (#fff or current dark mode text color)
+- Cards in this section:
+  Light theme: white card bg with light border/shadow
+  Dark theme: dark card bg (#1e1e1e or similar) with dark border
+- Use CSS variables or Tailwind dark: classes — do NOT hardcode colors
+- After fix: this section must look consistent with all other sections in both themes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3 — POPULAR SERVICES SECTION (Square Cards, Swipe to Reveal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Cards are round/circular. Should be square. Swipe/scroll to reveal next card is not working properly.
+
+CARD DESIGN FIX:
+- Remove border-radius: 50% or any circular shape from service cards
+- Cards must be SQUARE or slightly rounded rectangles:
+  border-radius: 16px (subtle rounding only — NOT circular)
+- Each card: full width of the section container, fixed height (e.g. 320px on desktop, 260px on mobile)
+- Card layout: image on top (or left), service name, brief description below
+- Cards must fill the full width of their container — no small or shrunken cards
+
+SWIPE/SCROLL BEHAVIOR FIX:
+- Show ONE card at a time (full width, full height of section)
+- Card behind: the NEXT card is peeking from below (show top ~40px of next card)
+- When user scrolls DOWN within this section OR swipes up:
+  Current card: slides UP and out (y: 0 to -100%, opacity 1 to 0)
+  Duration: 400ms, ease: [0.76, 0, 0.24, 1]
+  Next card: slides UP into view from below (y: 100% to 0, opacity 0 to 1)
+  Duration: 400ms, same ease
+  Both animate simultaneously
+- When user scrolls UP within this section OR swipes down:
+  Reverse of above — current exits downward, previous enters from above
+- After all 8 cards are shown, next scroll moves to the next homepage section
+- Before first card, previous scroll moves to the previous homepage section
+- Use Framer Motion drag on Y axis OR listen to wheel events within the section
+- On drag release: snap to nearest card (use onDragEnd with velocity check)
+- Card index indicator: small dots on the right side showing which card (1 of 8, 2 of 8, etc.)
+
+THEME:
+- Light theme: card bg white, text dark, shadow: 0 4px 24px rgba(0,0,0,0.08)
+- Dark theme: card bg #1e1e1e, text white, shadow: 0 4px 24px rgba(0,0,0,0.3)
+
+CARD OPEN BEHAVIOR:
+- Clicking/tapping a card still opens it — keep existing open behavior exactly as is
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4 — SPECIAL OFFERS SECTION (Full Width Cards, Working Stack)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Cards are not full width, section is not filling the screen properly, stack interaction not working.
+
+FIX:
+
+SECTION SIZE:
+- Section must be 100vw wide, 100vh tall (full screen snap section)
+- Section must be perfectly centered — content centered both horizontally and vertically
+- No extra padding that shrinks the cards too much
+
+CARD SIZE:
+- Each card: width 90% of container (max-width: 600px on desktop, 92vw on mobile)
+- Height: auto but minimum 200px
+- border-radius: 20px
+- Cards must look LARGE and prominent — they are the main focus of this section
+
+STACK LAYOUT (3 cards stacked like a deck):
+- All 3 cards positioned absolutely, centered in the section
+- Card 1 (top/front):  scale: 1.00, y: 0px,   zIndex: 3, opacity: 1
+- Card 2 (middle):     scale: 0.94, y: 16px,   zIndex: 2, opacity: 0.9
+- Card 3 (bottom):     scale: 0.88, y: 32px,   zIndex: 1, opacity: 0.75
+- Cards behind peeking out below gives a "deck" visual
+
+STACK INTERACTION:
+- User scrolls down within this section OR swipes up → Card 1 exits:
+  Card 1: y: 0 to -120%, rotate: -8deg, opacity: 1 to 0, duration: 500ms
+  Card 2: animates to Card 1's position (scale 0.94→1.00, y: 16→0)
+  Card 3: animates to Card 2's position (scale 0.88→0.94, y: 32→16)
+  Duration: 400ms, ease: [0.76, 0, 0.24, 1]
+- After Card 1 exits, Card 2 is now on top. Next scroll exits Card 2.
+- After Card 3 exits, next scroll moves to next homepage section.
+- User scrolls UP → cards come back in reverse
+- Also support drag: user can drag the top card upward to dismiss it
+  dragConstraints: { top: -200, bottom: 0 }
+  On release if dragged > 80px up → dismiss card (same animation as scroll)
+  On release if < 80px → snap back to original position
+
+THEME:
+- Light theme: card bg white, text dark
+- Dark theme: card bg #1e1e1e or #2a2a2a, text white
+- Card shadow: 0 8px 40px rgba(0,0,0,0.15) in light / 0 8px 40px rgba(0,0,0,0.4) in dark
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 5 — SECTION SIZING AND SPACING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Sections have unequal gaps. Footer and testimonials have too much empty space between them.
+
+FIX:
+- Every section on the homepage: height: 100vh, width: 100vw
+- scroll-snap-type: y mandatory on the scroll container
+- scroll-snap-align: start on every section
+- overflow: hidden on each section (no content spills out)
+- Each section: display flex, alignItems center, justifyContent center
+- All content inside each section: properly centered, max-width: 1200px, padding: 0 24px
+- NO section should have extra margin-top or margin-bottom that creates gaps
+- Testimonials section: height 100vh, content centered — remove any extra bottom padding
+- Footer section: height auto (footer can be shorter than 100vh) but NO extra top gap
+  Footer snaps into view after testimonials with no empty space between them
+- Equal padding inside all sections: paddingTop: 80px (to account for fixed navbar), paddingBottom: 40px
+
+MOBILE RESPONSIVE:
+- On screens < 768px:
+  All sections still 100vh
+  Padding: 0 16px
+  Font sizes reduce appropriately
+  Cards: 92vw wide
+  Stack cards: visible and functional with touch swipe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 6 — SECTION SCROLL TRANSITIONS (One at a time, smooth reveal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Section transitions are not smooth. Multiple sections visible at once.
+
+FIX:
+- Only ONE section visible at a time
+- Scroll container: height 100vh, overflow-y scroll, scroll-snap-type y mandatory
+- Each section: height 100vh, scroll-snap-align start, overflow hidden
+
+Transition when scrolling DOWN (current → next):
+- Current section: opacity 1→0, y 0→-60px, duration 400ms, ease easeIn
+- Next section: opacity 0→1, y 60px→0, duration 500ms, ease [0.22,1,0.36,1]
+- Overlap: next starts 150ms after current starts exiting
+
+Transition when scrolling UP (current → previous):
+- Current section: opacity 1→0, y 0→60px, duration 400ms
+- Previous section: opacity 0→1, y -60px→0, duration 500ms
+
+Use Framer Motion AnimatePresence with mode="wait" OR CSS scroll-snap with Framer Motion whileInView.
+
+BOTH LIGHT AND DARK THEME:
+- All transitions work identically in both themes
+- No section should have wrong colors in either theme
+- Test: toggle theme while on any section — colors update instantly, animations unaffected
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT CHANGE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change any existing functionality (card open, view all, navigation)
+- Do NOT change brand colors (#2D7A5F green and others)
+- Do NOT change fonts or text content
+- Do NOT change authentication, language, or loader systems
+- Do NOT add new pages or routes
+- Only fix the 6 issues listed above
+- After all fixes: zero console errors, smooth scroll on both desktop and mobile

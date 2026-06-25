@@ -31,6 +31,7 @@ export const Route = createFileRoute("/")({
 
 const SECTION_COUNT = 11;
 const SPECIAL_OFFERS_IDX = 3;
+const POPULAR_SERVICES_IDX = 4;
 const WHAT_MAKES_IDX = 6;
 const easeExpo = [0.22, 1, 0.36, 1] as const;
 
@@ -41,11 +42,14 @@ function Home() {
   const [activeSection, setActiveSection] = useState(0);
   const activeSectionRef = useRef(0);
   const [specialOffersCard, setSpecialOffersCard] = useState(0);
+  const [popularServicesCard, setPopularServicesCard] = useState(0);
   const [featureCard, setFeatureCard] = useState(0);
   const specialOffersCardRef = useRef(0);
+  const popularServicesCardRef = useRef(0);
   const featureCardRef = useRef(0);
 
   useEffect(() => { specialOffersCardRef.current = specialOffersCard; }, [specialOffersCard]);
+  useEffect(() => { popularServicesCardRef.current = popularServicesCard; }, [popularServicesCard]);
   useEffect(() => { featureCardRef.current = featureCard; }, [featureCard]);
   useEffect(() => { activeSectionRef.current = activeSection; }, [activeSection]);
 
@@ -89,12 +93,18 @@ function Home() {
         if (sec === SPECIAL_OFFERS_IDX && specialOffersCardRef.current < 3) {
           e.preventDefault(); setSpecialOffersCard((p) => p + 1); return;
         }
+        if (sec === POPULAR_SERVICES_IDX && popularServicesCardRef.current < 7) {
+          e.preventDefault(); setPopularServicesCard((p) => p + 1); return;
+        }
         if (sec === WHAT_MAKES_IDX && featureCardRef.current < 4) {
           e.preventDefault(); setFeatureCard((p) => p + 1); return;
         }
       } else if (e.deltaY < 0) {
         if (sec === SPECIAL_OFFERS_IDX && specialOffersCardRef.current > 0) {
           e.preventDefault(); setSpecialOffersCard((p) => p - 1); return;
+        }
+        if (sec === POPULAR_SERVICES_IDX && popularServicesCardRef.current > 0) {
+          e.preventDefault(); setPopularServicesCard((p) => p - 1); return;
         }
         if (sec === WHAT_MAKES_IDX && featureCardRef.current > 0) {
           e.preventDefault(); setFeatureCard((p) => p - 1); return;
@@ -116,9 +126,9 @@ function Home() {
       </AnimatePresence>
 
       <motion.div
-        className="fixed top-0 inset-x-0 z-40"
-        initial={{ y: -60, opacity: 0 }}
-        animate={introComplete ? { y: 0, opacity: 1 } : { y: -60, opacity: 0 }}
+        style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999 }}
+        initial={{ y: -80, opacity: 0 }}
+        animate={introComplete ? { y: 0, opacity: 1 } : { y: -80, opacity: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         <Navbar />
@@ -143,7 +153,7 @@ function Home() {
             <PostJobSection isActive={activeSection === 1} />,
             <CategoriesSection isActive={activeSection === 2} />,
             <SpecialOffersSection isActive={activeSection === 3} cardsDismissed={specialOffersCard} />,
-            <PopularServicesSection isActive={activeSection === 4} />,
+            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} />,
             <HowItWorksSection isActive={activeSection === 5} />,
             <WhatMakesUsSpecialSection isActive={activeSection === 6} cardsDismissed={featureCard} />,
             <StarRewardSection isActive={activeSection === 7} />,
@@ -155,8 +165,14 @@ function Home() {
           <div
             key={idx}
             ref={setRef(idx)}
-            style={{ scrollSnapAlign: "start", height: "100vh" }}
-            className="relative flex-shrink-0 overflow-hidden"
+            style={{
+              scrollSnapAlign: "start",
+              height: idx === 10 ? "auto" : "100vh",
+              minHeight: idx === 10 ? 0 : "100vh",
+              overflow: "hidden",
+              position: "relative",
+              flexShrink: 0,
+            }}
           >
             {child}
           </div>
@@ -172,7 +188,7 @@ function HeroSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   const titleWords = `${t("hero.titleA")} ${t("hero.titleB")} ${t("hero.titleC")}`.split(" ");
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden">
+    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden" style={{ paddingTop: 64 }}>
       <div className="absolute inset-0 gradient-hero opacity-90" />
       <div className="relative mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
         <motion.div
@@ -240,7 +256,7 @@ function HeroSection({ isActive }: { isActive: boolean }) {
 function PostJobSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background">
+    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background" style={{ paddingTop: 64 }}>
       <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
         <motion.h2
           className="font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl"
@@ -325,14 +341,16 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
 
 function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean; cardsDismissed: number }) {
   const { t } = useI18n();
+  const OFFERS_COUNT = OFFERS.length;
   const stackCfg = [
-    { scale: 1.0, y: 0, zIndex: 3 },
-    { scale: 0.94, y: 18, zIndex: 2 },
-    { scale: 0.88, y: 36, zIndex: 1 },
+    { scale: 1.00, y: 0,  zIndex: 3, opacity: 1 },
+    { scale: 0.94, y: 16, zIndex: 2, opacity: 0.9 },
+    { scale: 0.88, y: 32, zIndex: 1, opacity: 0.75 },
   ];
+
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden border-y border-border bg-surface/30 pt-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden border-y border-border bg-surface/30">
+      <div className="w-full px-4 sm:px-6 flex flex-col items-center" style={{ paddingTop: 80 }}>
         <motion.div
           className="mb-8 text-center"
           initial={{ opacity: 0, y: 30 }}
@@ -342,15 +360,15 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
           <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
           <h2 className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {cardsDismissed < 3
-              ? `Scroll to reveal all offers — ${3 - cardsDismissed} remaining`
+            {cardsDismissed < OFFERS_COUNT
+              ? `Scroll to reveal all offers — ${OFFERS_COUNT - cardsDismissed} remaining`
               : "All offers revealed!"}
           </p>
         </motion.div>
 
         <motion.div
-          className="relative mx-auto"
-          style={{ height: 280, maxWidth: 440 }}
+          className="relative mx-auto w-full"
+          style={{ height: 280, maxWidth: 600 }}
           initial={{ opacity: 0, y: 100 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 100 }}
           transition={{ duration: 0.7, ease: easeExpo }}
@@ -358,15 +376,22 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
           {OFFERS.map((offer, rawIdx) => {
             const deckIdx = rawIdx - cardsDismissed;
             if (deckIdx < 0) return null;
-            const cfg = stackCfg[deckIdx] ?? { scale: 0.82, y: 54, zIndex: 0 };
+            const cfg = stackCfg[deckIdx] ?? { scale: 0.82, y: 48, zIndex: 0, opacity: 0 };
+            const isTop = deckIdx === 0;
             return (
               <motion.div
                 key={offer.id}
-                style={{ position: "absolute", zIndex: cfg.zIndex, width: "100%", willChange: "transform" }}
-                animate={{ scale: cfg.scale, y: cfg.y, opacity: deckIdx > 2 ? 0 : 1 }}
+                drag={isTop ? "y" : false}
+                dragConstraints={{ top: -200, bottom: 0 }}
+                dragElastic={0.15}
+                style={{ position: "absolute", zIndex: cfg.zIndex, width: "100%", willChange: "transform", cursor: isTop ? "grab" : "default" }}
+                animate={{ scale: cfg.scale, y: cfg.y, opacity: deckIdx > 2 ? 0 : cfg.opacity }}
                 transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
               >
-                <div className={`relative flex min-h-[220px] flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${offer.accent} p-6 text-white shadow-elegant`}>
+                <div
+                  className={`relative flex min-h-[200px] flex-col overflow-hidden bg-gradient-to-br ${offer.accent} p-6 text-white`}
+                  style={{ borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.15)" }}
+                >
                   <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
                   <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
                     {t("sec.limited")}
@@ -382,7 +407,7 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
           })}
         </motion.div>
 
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-4 flex justify-center gap-2" style={{ paddingTop: 8 }}>
           {OFFERS.map((_, i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i >= cardsDismissed ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"}`} />
           ))}
@@ -392,101 +417,106 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
   );
 }
 
-/* ── Section 4: Popular Services (vertical drag circular carousel) ──────────── */
+/* ── Section 4: Popular Services (one-card-at-a-time, square) ───────────────── */
 
-function PopularServicesSection({ isActive }: { isActive: boolean }) {
+const CARD_EASE: [number, number, number, number] = [0.76, 0, 0.24, 1];
+
+function PopularServicesSection({ isActive, activeCardIdx }: { isActive: boolean; activeCardIdx: number }) {
   const { t } = useI18n();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const SLOT = 280;
+  const prevIdxRef = useRef(activeCardIdx);
+  const direction = activeCardIdx > prevIdxRef.current ? 1 : -1;
+  useEffect(() => { prevIdxRef.current = activeCardIdx; }, [activeCardIdx]);
 
-  const handleDragEnd = useCallback((_: unknown, info: { offset: { y: number } }) => {
-    if (info.offset.y < -50 && activeIdx < popular.length - 1) setActiveIdx((p) => p + 1);
-    else if (info.offset.y > 50 && activeIdx > 0) setActiveIdx((p) => p - 1);
-  }, [activeIdx, popular.length]);
-
-  useEffect(() => { if (!isActive) setActiveIdx(0); }, [isActive]);
+  const svc = popular[activeCardIdx];
+  const nextSvc = popular[activeCardIdx + 1];
 
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background pt-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col items-center lg:flex-row lg:items-start lg:gap-16">
-          <motion.div
-            className="mb-8 lg:mb-0 lg:w-64 lg:pt-12"
-            initial={{ opacity: 0, x: -40 }}
-            animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
-            transition={{ duration: 0.6, ease: easeExpo }}
-          >
+    <section className="relative flex h-full overflow-hidden bg-background">
+      <div className="w-full flex flex-col" style={{ paddingTop: 80, paddingBottom: 40 }}>
+        <motion.div
+          className="px-4 sm:px-8 mb-6 flex items-end justify-between gap-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.5, ease: easeExpo }}
+        >
+          <div>
             <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
             <h2 className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
-            <p className="mt-3 text-sm text-muted-foreground">Drag up or down to explore</p>
-            <Button asChild variant="outline" className="mt-6">
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">{activeCardIdx + 1} / {popular.length}</span>
+            <Button asChild variant="outline" size="sm">
               <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          <div className="relative flex-1 overflow-hidden" style={{ height: Math.min(SLOT * 3, 480), maxHeight: "60vh" }}>
+        <div className="relative flex-1 px-4 sm:px-8" style={{ overflow: "hidden" }}>
+          <AnimatePresence mode="popLayout" custom={direction}>
             <motion.div
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.15}
-              onDragEnd={handleDragEnd}
-              style={{ cursor: "grab" }}
-              className="absolute inset-0"
+              key={activeCardIdx}
+              custom={direction}
+              initial={{ y: direction > 0 ? "100%" : "-100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: direction > 0 ? "-100%" : "100%", opacity: 0 }}
+              transition={{ duration: 0.4, ease: CARD_EASE }}
+              className="absolute inset-x-4 sm:inset-x-8 top-0"
+              style={{ borderRadius: 16, overflow: "hidden", height: "calc(100% - 50px)" }}
             >
-              {popular.map((svc, i) => {
-                const diff = i - activeIdx;
-                const visible = Math.abs(diff) <= 2;
-                const scale = diff === 0 ? 1 : Math.abs(diff) === 1 ? 0.92 : 0.85;
-                const opacity = diff === 0 ? 1 : Math.abs(diff) === 1 ? 0.7 : 0.5;
-                return (
-                  <motion.div
-                    key={svc.id}
-                    style={{ position: "absolute", top: "50%", left: "50%", willChange: "transform" }}
-                    animate={{ y: `calc(-50% + ${diff * SLOT}px)`, x: "-50%", scale, opacity: visible ? opacity : 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    whileHover={diff === 0 ? { scale: 1.04, transition: { duration: 0.2 } } : undefined}
+              <Link to="/services/$id" params={{ id: svc.slug }} className="block h-full">
+                <div
+                  className="h-full w-full relative"
+                  style={{
+                    background: `url(${svc.image}) center/cover no-repeat`,
+                    borderRadius: 16,
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8"
+                    style={{ borderRadius: 16, background: "linear-gradient(to top, rgba(0,0,0,0.82) 40%, transparent 100%)" }}
                   >
-                    <Link to="/services/$id" params={{ id: svc.slug }}>
-                      <div
-                        className="overflow-hidden shadow-elegant"
-                        style={{
-                          width: 220,
-                          height: 220,
-                          borderRadius: "50%",
-                          background: `url(${svc.image}) center/cover`,
-                          position: "relative",
-                        }}
-                      >
-                        <div
-                          className="absolute inset-0 flex flex-col items-center justify-end pb-6 text-center"
-                          style={{ borderRadius: "50%", background: "linear-gradient(to top, rgba(0,0,0,0.75) 40%, transparent 100%)" }}
-                        >
-                          <p className="font-semibold text-white text-sm px-4 leading-tight">{svc.title}</p>
-                          <div className="mt-1 flex items-center gap-0.5">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs text-white/90">{svc.rating}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm text-white/90 font-medium">{svc.rating} · {svc.reviewCount} reviews</span>
+                    </div>
+                    <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight">{svc.title}</h3>
+                    <p className="mt-2 text-sm text-white/80 line-clamp-2">{svc.description}</p>
+                    <div className="mt-4 flex items-center gap-3">
+                      <span className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-white">
+                        {t("common.viewAll")} →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </motion.div>
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background to-transparent" />
-          </div>
+          </AnimatePresence>
 
-          <div className="mt-6 flex flex-row gap-1.5 lg:mt-0 lg:flex-col lg:justify-center" style={{ paddingTop: "10vh" }}>
-            {popular.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIdx(i)}
-                className={`rounded-full transition-all duration-200 ${i === activeIdx ? "h-1.5 w-6 lg:h-6 lg:w-1.5 bg-primary" : "h-1.5 w-1.5 bg-muted-foreground/30"}`}
-              />
-            ))}
-          </div>
+          {nextSvc && (
+            <div
+              className="absolute inset-x-4 sm:inset-x-8 flex items-center gap-4 px-6"
+              style={{
+                bottom: 0,
+                height: 50,
+                borderRadius: "0 0 16px 16px",
+                background: "var(--color-card)",
+                borderTop: "1px solid var(--color-border)",
+              }}
+            >
+              <span className="text-xs text-muted-foreground font-medium">Next: {nextSvc.title}</span>
+              <span className="text-xs text-muted-foreground">↓ scroll</span>
+            </div>
+          )}
+        </div>
+
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1.5" style={{ paddingTop: 80 }}>
+          {popular.map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-200 ${i === activeCardIdx ? "h-6 w-1.5 bg-primary" : "h-1.5 w-1.5 bg-muted-foreground/30"}`}
+            />
+          ))}
         </div>
       </div>
     </section>
@@ -589,14 +619,14 @@ const FEATURES = [
 function WhatMakesUsSpecialSection({ isActive, cardsDismissed }: { isActive: boolean; cardsDismissed: number }) {
   const { t } = useI18n();
   const stackCfg = [
-    { scale: 1.0, y: 0, zIndex: 4 },
+    { scale: 1.0, y: 0,  zIndex: 4 },
     { scale: 0.95, y: 14, zIndex: 3 },
     { scale: 0.90, y: 28, zIndex: 2 },
     { scale: 0.85, y: 42, zIndex: 1 },
   ];
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-[#0D1117] pt-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background border-y border-border">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6" style={{ paddingTop: 80 }}>
         <motion.div
           className="mb-8 text-center"
           initial={{ opacity: 0, y: 30 }}
@@ -604,8 +634,8 @@ function WhatMakesUsSpecialSection({ isActive, cardsDismissed }: { isActive: boo
           transition={{ duration: 0.5, ease: easeExpo }}
         >
           <p className="text-sm font-semibold text-primary">{t("sec.special.badge")}</p>
-          <h2 className="mt-1 font-display text-3xl font-extrabold text-white sm:text-4xl">{t("sec.special.title")}</h2>
-          <p className="mt-2 text-sm text-[#8B949E]">
+          <h2 className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.special.title")}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             {cardsDismissed < FEATURES.length
               ? `Scroll to explore — ${FEATURES.length - cardsDismissed} feature${FEATURES.length - cardsDismissed !== 1 ? "s" : ""} remaining`
               : "All features revealed!"}
@@ -630,18 +660,18 @@ function WhatMakesUsSpecialSection({ isActive, cardsDismissed }: { isActive: boo
                 animate={{ scale: cfg.scale, y: cfg.y, opacity: deckIdx > 3 ? 0 : 1 }}
                 transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
               >
-                <div className="rounded-2xl border-2 border-[#2D7A5F]/30 bg-[#161B22] p-7">
+                <div className="rounded-2xl border-2 border-border bg-card p-7 dark:bg-[#1e1e1e]">
                   <div className="flex items-start gap-4">
                     <motion.div
-                      className="inline-flex rounded-xl bg-[#2D7A5F]/10 p-3 text-[#4CAF84]"
+                      className="inline-flex rounded-xl bg-primary/10 p-3 text-primary"
                       animate={deckIdx === 0 ? { scale: [1, 1.12, 1], rotate: [0, -8, 8, 0] } : { scale: 1, rotate: 0 }}
                       transition={{ duration: 0.6, delay: 0.1 }}
                     >
                       <feat.Icon className="h-7 w-7" />
                     </motion.div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">{t(feat.titleKey)}</h3>
-                      <p className="mt-2 text-[#8B949E]">{t(feat.descKey)}</p>
+                      <h3 className="text-xl font-bold text-foreground">{t(feat.titleKey)}</h3>
+                      <p className="mt-2 text-muted-foreground">{t(feat.descKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -652,7 +682,7 @@ function WhatMakesUsSpecialSection({ isActive, cardsDismissed }: { isActive: boo
 
         <div className="mt-4 flex justify-center gap-2">
           {FEATURES.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i >= cardsDismissed ? "w-6 bg-primary" : "w-1.5 bg-[#2D7A5F]/30"}`} />
+            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i >= cardsDismissed ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"}`} />
           ))}
         </div>
       </div>
