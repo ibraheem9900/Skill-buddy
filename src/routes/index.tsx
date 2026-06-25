@@ -271,6 +271,7 @@ function HeroSection({ isActive }: { isActive: boolean }) {
 
 function PostJobSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
+
   return (
     <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background" style={{ paddingTop: 64 }}>
       <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
@@ -358,7 +359,7 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
 function SpecialOffersSection({ isActive, cardsDismissed, onDismiss }: { isActive: boolean; cardsDismissed: number; onDismiss: () => void }) {
   const { t } = useI18n();
   const stackCfg = [
-    { scale: 1.00, y: 0,  zIndex: 3, opacity: 1 },
+    { scale: 1.00, y: 0, zIndex: 3, opacity: 1 },
     { scale: 0.95, y: 18, zIndex: 2, opacity: 0.85 },
     { scale: 0.90, y: 36, zIndex: 1, opacity: 0.70 },
   ];
@@ -695,7 +696,7 @@ const FEATURES = [
 function WhatMakesUsSpecialSection({ isActive, cardsDismissed }: { isActive: boolean; cardsDismissed: number }) {
   const { t } = useI18n();
   const stackCfg = [
-    { scale: 1.0, y: 0,  zIndex: 4 },
+    { scale: 1.0, y: 0, zIndex: 4 },
     { scale: 0.95, y: 14, zIndex: 3 },
     { scale: 0.90, y: 28, zIndex: 2 },
     { scale: 0.85, y: 42, zIndex: 1 },

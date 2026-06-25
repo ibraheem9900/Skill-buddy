@@ -13,6 +13,16 @@ export function LogoIntro({ onComplete }: LogoIntroProps) {
   const [phase, setPhase] = useState<"show" | "exit">("show");
   const hasPlayedRef = useRef(false);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Transform scroll progress to animation phases
+  const curveProgress = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
+  const ballsProgress = useTransform(scrollYProgress, [0.5, 0.8], [0, 1]);
+  const fadeOutProgress = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
+
   useEffect(() => {
     if (hasPlayedRef.current) return;
     hasPlayedRef.current = true;
