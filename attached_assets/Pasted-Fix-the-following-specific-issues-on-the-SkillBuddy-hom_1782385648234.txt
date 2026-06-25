@@ -1,0 +1,179 @@
+Fix the following specific issues on the SkillBuddy homepage. Do NOT change anything else that is already working.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 1 — REMOVE LOGO INTRO ANIMATION COMPLETELY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Remove the entire intro/splash animation sequence (wave drawing, balls appearing, logo moving to navbar, overlay fading)
+- Remove the sessionStorage check for 'sb_intro'
+- Remove the intro overlay component entirely
+- Homepage must start DIRECTLY on the Hero section ("Expert Help, Anytime, Anywhere")
+- On page load: Hero section is immediately visible, no animation delay before showing content
+- Keep all OTHER scroll animations on the homepage (section reveals, card animations, etc.)
+- Only the intro logo animation is removed — nothing else changes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 2 — POPULAR SERVICES SECTION (Horizontal Carousel — exactly like screenshot)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT PROBLEM: Cards are not scrolling correctly — they disappear all at once instead of sliding one by one.
+
+TARGET LAYOUT (exactly as shown in the uploaded screenshot):
+- 3 cards visible at a time horizontally: [Previous] [Current] [Next]
+- Current card (center): largest, full opacity, fully visible, slightly elevated (scale: 1.0)
+- Previous card (left): smaller, lower opacity (0.5), blurred slightly (filter: blur(2px)), scale: 0.88
+- Next card (right): smaller, lower opacity (0.5), blurred slightly (filter: blur(2px)), scale: 0.88
+- Left arrow button: on the far left side of the section
+- Right arrow button: on the far right side of the section
+- Arrows: large enough to tap easily, semi-transparent background circle, brand color icon
+
+CARD DESIGN:
+- Shape: square with rounded corners — border-radius: 20px (NOT circular)
+- Size: Current card: 340px × 340px on desktop, 260px × 260px on mobile
+- Side cards: 280px × 280px on desktop (slightly smaller than current)
+- Card content: service image on top half, service name + short description on bottom half
+- Light theme: white card bg, dark text, shadow: 0 8px 32px rgba(0,0,0,0.10)
+- Dark theme: #1e1e1e card bg, white text, shadow: 0 8px 32px rgba(0,0,0,0.35)
+
+CAROUSEL BEHAVIOR:
+- Total 8 cards, navigate with LEFT and RIGHT arrow buttons
+- When RIGHT arrow clicked:
+  Current card: slides LEFT and out (x: 0 to -100%, opacity: 1 to 0.5, scale: 1 to 0.88, blur increases)
+  Next card: slides LEFT into center (x: right position to center, opacity: 0.5 to 1, scale: 0.88 to 1, blur: 2px to 0)
+  New next card: slides in from right (x: far right to right position, opacity: 0 to 0.5)
+  All simultaneously, duration: 400ms, ease: [0.22, 1, 0.36, 1]
+- When LEFT arrow clicked:
+  Reverse of above — cards slide RIGHT
+- At card 1: left arrow is disabled (opacity: 0.3, not clickable)
+- At card 8: right arrow is disabled (opacity: 0.3, not clickable)
+- Also support touch/mouse drag: drag left → go next, drag right → go previous
+  Threshold: if dragged more than 80px → snap to next/previous card
+
+ARROW BUTTON STYLE:
+- Circle button, 48px diameter
+- Background: rgba(45, 122, 95, 0.15) — light green tint
+- Border: 1px solid #2D7A5F
+- Icon color: #2D7A5F
+- On hover: background: #2D7A5F, icon color: white
+- Positioned vertically centered in the section, at left edge and right edge
+- On mobile: smaller (36px diameter), still visible and tappable
+
+CARD INDICATOR DOTS:
+- Below the carousel: 8 small dots showing current position
+- Active dot: #2D7A5F, width: 24px (elongated pill)
+- Inactive dot: rgba(45,122,95,0.3), width: 8px, circular
+- Transition between dots: smooth width animation 300ms
+
+CARD CLICK BEHAVIOR:
+- Clicking/tapping the CENTER card opens it — keep existing open behavior exactly
+- Clicking a side (blurred) card: navigates to that card (makes it the center) — does NOT open it
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3 — SPECIAL OFFERS SECTION (Proper card scroll, one at a time)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT PROBLEM: All cards disappear at once when scrolling. Cards should reveal one by one.
+
+TARGET BEHAVIOR:
+- 3 offer cards total, stacked like a deck (one behind the other)
+- Only the TOP card is fully visible at any time
+- Cards behind peek out below to show there are more
+
+STACK LAYOUT (all 3 cards absolutely positioned, centered):
+- Card 1 (front/top):  scale: 1.00, y: 0px,  zIndex: 3, opacity: 1
+- Card 2 (middle):     scale: 0.95, y: 18px,  zIndex: 2, opacity: 0.85
+- Card 3 (back):       scale: 0.90, y: 36px,  zIndex: 1, opacity: 0.70
+
+CARD SIZE:
+- Width: min(560px, 90vw) — large and prominent
+- Height: auto, minimum 220px
+- border-radius: 24px
+- Padding: 32px inside
+- Light theme: white bg, dark text, green accent details
+- Dark theme: #1e2a24 or #1a2520 bg (dark green tint), white text
+
+SCROLL/SWIPE BEHAVIOR (one card at a time):
+- User scrolls DOWN within section OR swipes up on the card:
+  Card 1 exits: y: 0 to -110%, rotate: -6deg, opacity: 1 to 0
+  Duration: 500ms, ease: [0.76, 0, 0.24, 1]
+  Simultaneously Card 2 moves to Card 1 position: scale 0.95→1.00, y: 18→0, opacity: 0.85→1
+  Simultaneously Card 3 moves to Card 2 position: scale 0.90→0.95, y: 36→18, opacity: 0.70→0.85
+- After Card 1 is gone, Card 2 is now on top. Next scroll removes Card 2 same way.
+- After Card 3 is gone: next scroll exits this section and goes to next homepage section
+- User scrolls UP: reverse — cards come back in from above
+  Card flies back in from top: y: -110% to 0, rotate: -6deg to 0deg, opacity: 0 to 1
+  Others move back to their behind positions
+
+DRAG SUPPORT:
+- Top card is draggable upward (Framer Motion drag, axis: y)
+- dragConstraints: top: -250, bottom: 20
+- On release: if dragged more than 100px up → dismiss card (play exit animation)
+- On release: if less than 100px → snap back to y: 0
+
+CARD PROGRESS INDICATOR:
+- Small "1 / 3", "2 / 3", "3 / 3" text indicator above or below the stack
+- Updates as cards are dismissed
+- Style: small, muted text, brand color for the number
+
+DO NOT change the content inside the offer cards — only fix the scroll/animation behavior and sizing.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4 — HERO SECTION: REPLACE "nav.becomeProvider" WITH GLOWING "BECOME A SKILLBUDDY" BUTTON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT PROBLEM: In the Hero section, below the "View All" button area, there is a broken button showing the translation key "nav.becomeProvider" as raw text instead of a proper button.
+
+FIX:
+
+REMOVE: Delete or fix the broken "nav.becomeProvider" text/button completely.
+
+ADD: A proper "Become a SkillBuddy" glowing CTA button in its place.
+
+BUTTON DESIGN:
+- Text: "Become a SkillBuddy" (use translation key: t('nav.becomeSkillBuddy') — make sure this key exists in all 5 language files)
+- Background: #2D7A5F (brand green)
+- Text color: white, font-weight: bold, font-size: 16px
+- Border-radius: 50px (pill shape)
+- Padding: 14px 32px
+- Border: none
+
+GLOW ANIMATION (continuous, never stops):
+- boxShadow animates continuously:
+  From: 0 0 0px rgba(45, 122, 95, 0)
+  To:   0 0 20px rgba(45, 122, 95, 0.7), 0 0 40px rgba(45, 122, 95, 0.4)
+  Back: 0 0 0px rgba(45, 122, 95, 0)
+- Duration: 2s per cycle, repeat: Infinity, ease: easeInOut
+- Use Framer Motion animate prop for this
+
+HOVER EFFECT:
+- scale: 1.06
+- boxShadow increases: 0 0 30px rgba(45,122,95,0.9), 0 0 60px rgba(45,122,95,0.5)
+- Background slightly lighter: #348f6e
+- Transition: 0.2s ease
+
+TAP/CLICK EFFECT:
+- scale: 0.96
+- On click: navigate to /register?role=provider
+
+PLACEMENT:
+- Place it in the Hero section below the main CTA buttons
+- Or place it next to/below the "View All" services button
+- It must be clearly visible, properly centered or aligned with other buttons
+- On mobile: full width button (width: 90%)
+
+MAKE SURE:
+- The translation key 'nav.becomeSkillBuddy' exists and returns "Become a SkillBuddy" in English
+- Same key returns correct translations in Estonian, Russian, Latvian, Lithuanian
+- No raw translation key text visible anywhere on the page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT CHANGE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change navbar design or functionality
+- Do NOT change theme toggle or language selector
+- Do NOT change authentication system
+- Do NOT change any other section animations that are working
+- Do NOT change what happens when a service card is opened/clicked
+- Do NOT change footer or other sections
+- Only fix the 4 issues listed above
+- After fixes: zero console errors, smooth animations on desktop and mobile, both themes work correctly

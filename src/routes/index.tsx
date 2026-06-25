@@ -7,11 +7,11 @@ import {
   Search, Sparkles, ArrowRight, Star, Shield, Ban, ThumbsUp, Heart,
   ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen,
   Mail, Facebook, Instagram, Twitter, Youtube,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryCard } from "@/components/category-card";
-import { LogoIntro, useLogoIntro } from "@/components/logo-intro";
 import { Navbar } from "@/components/navbar";
 import { SERVICES, TESTIMONIALS, OFFERS, CATEGORIES } from "@/lib/data";
 import { CATEGORIES_FULL } from "@/lib/categories";
@@ -36,7 +36,6 @@ const WHAT_MAKES_IDX = 6;
 const easeExpo = [0.22, 1, 0.36, 1] as const;
 
 function Home() {
-  const { showIntro, introComplete, handleIntroComplete } = useLogoIntro();
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(SECTION_COUNT).fill(null));
   const [activeSection, setActiveSection] = useState(0);
@@ -121,18 +120,7 @@ function Home() {
 
   return (
     <>
-      <AnimatePresence>
-        {showIntro && <LogoIntro onComplete={handleIntroComplete} />}
-      </AnimatePresence>
-
-      <motion.div
-        style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999 }}
-        initial={{ y: -80, opacity: 0 }}
-        animate={introComplete ? { y: 0, opacity: 1 } : { y: -80, opacity: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Navbar />
-      </motion.div>
+      <Navbar />
 
       <div
         ref={containerRef}
@@ -152,8 +140,8 @@ function Home() {
             <HeroSection isActive={activeSection === 0} />,
             <PostJobSection isActive={activeSection === 1} />,
             <CategoriesSection isActive={activeSection === 2} />,
-            <SpecialOffersSection isActive={activeSection === 3} cardsDismissed={specialOffersCard} />,
-            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} />,
+            <SpecialOffersSection isActive={activeSection === 3} cardsDismissed={specialOffersCard} onDismiss={() => setSpecialOffersCard((p) => Math.min(OFFERS.length - 1, p + 1))} />,
+            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} onNavigate={(d) => setPopularServicesCard((p) => Math.max(0, Math.min(7, p + d)))} />,
             <HowItWorksSection isActive={activeSection === 5} />,
             <WhatMakesUsSpecialSection isActive={activeSection === 6} cardsDismissed={featureCard} />,
             <StarRewardSection isActive={activeSection === 7} />,
@@ -242,9 +230,37 @@ function HeroSection({ isActive }: { isActive: boolean }) {
           <Button asChild size="lg" className="shadow-elegant">
             <Link to="/services">{t("common.viewAll")}</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link to="/register" search={{ role: "provider" }}>{t("nav.becomeProvider")}</Link>
-          </Button>
+          <motion.div
+            animate={isActive ? {
+              boxShadow: [
+                "0 0 0px rgba(45,122,95,0)",
+                "0 0 20px rgba(45,122,95,0.7), 0 0 40px rgba(45,122,95,0.4)",
+                "0 0 0px rgba(45,122,95,0)",
+              ],
+            } : {}}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ borderRadius: 50 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.06, boxShadow: "0 0 30px rgba(45,122,95,0.9), 0 0 60px rgba(45,122,95,0.5)" }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              style={{ borderRadius: 50 }}
+            >
+              <Link
+                to="/register"
+                search={{ role: "provider" }}
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  background: "#2D7A5F", color: "white", fontWeight: "bold",
+                  fontSize: 16, borderRadius: 50, padding: "14px 32px",
+                  textDecoration: "none", whiteSpace: "nowrap",
+                }}
+              >
+                {t("nav.becomeSkillBuddy")}
+              </Link>
+            </motion.div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
@@ -339,14 +355,15 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
 
 /* ── Section 3: Special Offers (stacked deck) ──────────────────────────────── */
 
-function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean; cardsDismissed: number }) {
+function SpecialOffersSection({ isActive, cardsDismissed, onDismiss }: { isActive: boolean; cardsDismissed: number; onDismiss: () => void }) {
   const { t } = useI18n();
-  const OFFERS_COUNT = OFFERS.length;
   const stackCfg = [
     { scale: 1.00, y: 0,  zIndex: 3, opacity: 1 },
-    { scale: 0.94, y: 16, zIndex: 2, opacity: 0.9 },
-    { scale: 0.88, y: 32, zIndex: 1, opacity: 0.75 },
+    { scale: 0.95, y: 18, zIndex: 2, opacity: 0.85 },
+    { scale: 0.90, y: 36, zIndex: 1, opacity: 0.70 },
   ];
+  const visibleOffers = OFFERS.slice(cardsDismissed);
+  const currentCard = cardsDismissed + 1;
 
   return (
     <section className="relative flex h-full flex-col items-center justify-center overflow-hidden border-y border-border bg-surface/30">
@@ -360,56 +377,63 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
           <p className="text-sm font-semibold text-primary">{t("sec.limited")}</p>
           <h2 className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.specialOffers")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {cardsDismissed < OFFERS_COUNT
-              ? `Scroll to reveal all offers — ${OFFERS_COUNT - cardsDismissed} remaining`
-              : "All offers revealed!"}
+            <span className="text-primary font-semibold">{currentCard}</span>
+            <span className="text-muted-foreground"> / {OFFERS.length}</span>
           </p>
         </motion.div>
 
         <motion.div
           className="relative mx-auto w-full"
-          style={{ height: 280, maxWidth: 600 }}
+          style={{ height: 300, maxWidth: 560 }}
           initial={{ opacity: 0, y: 100 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 100 }}
           transition={{ duration: 0.7, ease: easeExpo }}
         >
-          {OFFERS.map((offer, rawIdx) => {
-            const deckIdx = rawIdx - cardsDismissed;
-            if (deckIdx < 0) return null;
-            const cfg = stackCfg[deckIdx] ?? { scale: 0.82, y: 48, zIndex: 0, opacity: 0 };
-            const isTop = deckIdx === 0;
-            return (
-              <motion.div
-                key={offer.id}
-                drag={isTop ? "y" : false}
-                dragConstraints={{ top: -200, bottom: 0 }}
-                dragElastic={0.15}
-                style={{ position: "absolute", zIndex: cfg.zIndex, width: "100%", willChange: "transform", cursor: isTop ? "grab" : "default" }}
-                animate={{ scale: cfg.scale, y: cfg.y, opacity: deckIdx > 2 ? 0 : cfg.opacity }}
-                transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
-              >
-                <div
-                  className={`relative flex min-h-[200px] flex-col overflow-hidden bg-gradient-to-br ${offer.accent} p-6 text-white`}
-                  style={{ borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.15)" }}
+          <AnimatePresence mode="sync">
+            {visibleOffers.map((offer, deckIdx) => {
+              const cfg = stackCfg[deckIdx] ?? { scale: 0.84, y: 54, zIndex: 0, opacity: 0 };
+              const isTop = deckIdx === 0;
+              return (
+                <motion.div
+                  key={offer.id}
+                  drag={isTop ? "y" : false}
+                  dragConstraints={{ top: -250, bottom: 20 }}
+                  dragElastic={0.12}
+                  onDragEnd={(_e, info) => { if (info.offset.y < -100) onDismiss(); }}
+                  style={{ position: "absolute", zIndex: cfg.zIndex, width: "100%", willChange: "transform", cursor: isTop ? "grab" : "default" }}
+                  initial={false}
+                  animate={{ scale: cfg.scale, y: cfg.y, opacity: deckIdx > 2 ? 0 : cfg.opacity }}
+                  exit={{ y: "-110%", rotate: -6, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
                 >
-                  <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
-                  <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
-                    {t("sec.limited")}
-                  </span>
-                  <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight text-white">{t(offer.titleKey)}</h3>
-                  <p className="mt-2 text-sm text-white/90">{t(offer.subKey)}</p>
-                  <button className="mt-auto self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
-                    {t(offer.ctaKey)}
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
+                  <div
+                    className={`relative flex min-h-[220px] flex-col overflow-hidden bg-gradient-to-br ${offer.accent} p-8 text-white`}
+                    style={{ borderRadius: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}
+                  >
+                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
+                    <span className="self-start rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
+                      {t("sec.limited")}
+                    </span>
+                    <h3 className="mt-3 font-display text-2xl font-extrabold leading-tight text-white">{t(offer.titleKey)}</h3>
+                    <p className="mt-2 text-sm text-white/90">{t(offer.subKey)}</p>
+                    <button className="mt-auto self-start rounded-md bg-white px-4 py-2 text-sm font-bold !text-slate-900 shadow-elegant transition hover:bg-white/90">
+                      {t(offer.ctaKey)}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </motion.div>
 
-        <div className="mt-4 flex justify-center gap-2" style={{ paddingTop: 8 }}>
+        <div className="mt-6 flex justify-center gap-2">
           {OFFERS.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i >= cardsDismissed ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"}`} />
+            <motion.div
+              key={i}
+              animate={{ width: i === cardsDismissed ? 24 : 8, backgroundColor: i === cardsDismissed ? "#2D7A5F" : "rgba(45,122,95,0.3)" }}
+              className="h-2 rounded-full"
+              transition={{ duration: 0.3 }}
+            />
           ))}
         </div>
       </div>
@@ -417,25 +441,28 @@ function SpecialOffersSection({ isActive, cardsDismissed }: { isActive: boolean;
   );
 }
 
-/* ── Section 4: Popular Services (one-card-at-a-time, square) ───────────────── */
+/* ── Section 4: Popular Services (3-card horizontal carousel) ───────────────── */
 
-const CARD_EASE: [number, number, number, number] = [0.76, 0, 0.24, 1];
+const CAROUSEL_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const CUR_W = 340;
+const SIDE_W = 280;
+const CARD_GAP = 28;
+const SLOT_OFFSET = Math.round(CUR_W / 2 + CARD_GAP + SIDE_W / 2);
 
-function PopularServicesSection({ isActive, activeCardIdx }: { isActive: boolean; activeCardIdx: number }) {
+function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isActive: boolean; activeCardIdx: number; onNavigate: (delta: number) => void }) {
   const { t } = useI18n();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
-  const prevIdxRef = useRef(activeCardIdx);
-  const direction = activeCardIdx > prevIdxRef.current ? 1 : -1;
-  useEffect(() => { prevIdxRef.current = activeCardIdx; }, [activeCardIdx]);
 
-  const svc = popular[activeCardIdx];
-  const nextSvc = popular[activeCardIdx + 1];
+  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (info.offset.x < -80 && activeCardIdx < popular.length - 1) onNavigate(1);
+    else if (info.offset.x > 80 && activeCardIdx > 0) onNavigate(-1);
+  };
 
   return (
     <section className="relative flex h-full overflow-hidden bg-background">
-      <div className="w-full flex flex-col" style={{ paddingTop: 80, paddingBottom: 40 }}>
+      <div className="w-full flex flex-col" style={{ paddingTop: 80, paddingBottom: 24 }}>
         <motion.div
-          className="px-4 sm:px-8 mb-6 flex items-end justify-between gap-4"
+          className="px-6 mb-6 flex items-end justify-between gap-4"
           initial={{ opacity: 0, y: -20 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={{ duration: 0.5, ease: easeExpo }}
@@ -444,82 +471,131 @@ function PopularServicesSection({ isActive, activeCardIdx }: { isActive: boolean
             <p className="text-sm font-semibold text-primary">{t("sec.popular")}</p>
             <h2 className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">{t("sec.popularServices")}</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{activeCardIdx + 1} / {popular.length}</span>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
-            </Button>
-          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/services">{t("common.viewAll")} <ArrowRight className="ml-1 h-4 w-4" /></Link>
+          </Button>
         </motion.div>
 
-        <div className="relative flex-1 px-4 sm:px-8" style={{ overflow: "hidden" }}>
-          <AnimatePresence mode="popLayout" custom={direction}>
-            <motion.div
-              key={activeCardIdx}
-              custom={direction}
-              initial={{ y: direction > 0 ? "100%" : "-100%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: direction > 0 ? "-100%" : "100%", opacity: 0 }}
-              transition={{ duration: 0.4, ease: CARD_EASE }}
-              className="absolute inset-x-4 sm:inset-x-8 top-0"
-              style={{ borderRadius: 16, overflow: "hidden", height: "calc(100% - 50px)" }}
-            >
-              <Link to="/services/$id" params={{ id: svc.slug }} className="block h-full">
-                <div
-                  className="h-full w-full relative"
-                  style={{
-                    background: `url(${svc.image}) center/cover no-repeat`,
-                    borderRadius: 16,
-                  }}
-                >
-                  <div
-                    className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8"
-                    style={{ borderRadius: 16, background: "linear-gradient(to top, rgba(0,0,0,0.82) 40%, transparent 100%)" }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-white/90 font-medium">{svc.rating} · {svc.reviewCount} reviews</span>
-                    </div>
-                    <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight">{svc.title}</h3>
-                    <p className="mt-2 text-sm text-white/80 line-clamp-2">{svc.description}</p>
-                    <div className="mt-4 flex items-center gap-3">
-                      <span className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-white">
-                        {t("common.viewAll")} →
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          </AnimatePresence>
+        <div className="relative flex flex-1 items-center">
+          {/* Left arrow */}
+          <motion.button
+            onClick={() => onNavigate(-1)}
+            disabled={activeCardIdx === 0}
+            animate={{ opacity: activeCardIdx === 0 ? 0.3 : 1 }}
+            whileHover={activeCardIdx > 0 ? { backgroundColor: "#2D7A5F", color: "white" } : {}}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "absolute", left: 16, zIndex: 20,
+              width: 48, height: 48, borderRadius: "50%",
+              background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F",
+              color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: activeCardIdx === 0 ? "not-allowed" : "pointer", flexShrink: 0,
+            }}
+          >
+            <ChevronLeft size={22} />
+          </motion.button>
 
-          {nextSvc && (
-            <div
-              className="absolute inset-x-4 sm:inset-x-8 flex items-center gap-4 px-6"
-              style={{
-                bottom: 0,
-                height: 50,
-                borderRadius: "0 0 16px 16px",
-                background: "var(--color-card)",
-                borderTop: "1px solid var(--color-border)",
-              }}
-            >
-              <span className="text-xs text-muted-foreground font-medium">Next: {nextSvc.title}</span>
-              <span className="text-xs text-muted-foreground">↓ scroll</span>
+          {/* Cards viewport */}
+          <div className="relative flex-1 overflow-hidden" style={{ height: CUR_W + 20 }}>
+            <div className="relative h-full flex items-center justify-center">
+              {[-2, -1, 0, 1, 2].map((offset) => {
+                const cardIdx = activeCardIdx + offset;
+                if (cardIdx < 0 || cardIdx >= popular.length) return null;
+                const svc = popular[cardIdx];
+                const isCurrent = offset === 0;
+                const isSide = Math.abs(offset) === 1;
+                const xPos = offset * SLOT_OFFSET;
+                const scale = isCurrent ? 1 : isSide ? 0.88 : 0.76;
+                const opacity = isCurrent ? 1 : isSide ? 0.5 : 0;
+                const blur = isCurrent ? 0 : isSide ? 2 : 4;
+                const size = isCurrent ? CUR_W : SIDE_W;
+
+                return (
+                  <motion.div
+                    key={svc.id}
+                    drag={isCurrent ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.1}
+                    onDragEnd={handleDragEnd}
+                    animate={{ x: xPos, scale, opacity, filter: `blur(${blur}px)` }}
+                    transition={{ duration: 0.4, ease: CAROUSEL_EASE }}
+                    onClick={() => { if (!isCurrent) onNavigate(offset > 0 ? 1 : -1); }}
+                    style={{
+                      position: "absolute", width: size, height: size,
+                      borderRadius: 20, overflow: "hidden", flexShrink: 0,
+                      cursor: isCurrent ? "grab" : "pointer",
+                      boxShadow: isCurrent
+                        ? "0 8px 32px rgba(0,0,0,0.10)"
+                        : "0 4px 16px rgba(0,0,0,0.08)",
+                    }}
+                    className="dark:[box-shadow:0_8px_32px_rgba(0,0,0,0.35)]"
+                  >
+                    {isCurrent ? (
+                      <Link to="/services/$id" params={{ id: svc.slug }} className="block h-full w-full" onClick={(e) => e.stopPropagation()}>
+                        <CardInner svc={svc} t={t} />
+                      </Link>
+                    ) : (
+                      <CardInner svc={svc} t={t} />
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
-          )}
+          </div>
+
+          {/* Right arrow */}
+          <motion.button
+            onClick={() => onNavigate(1)}
+            disabled={activeCardIdx === popular.length - 1}
+            animate={{ opacity: activeCardIdx === popular.length - 1 ? 0.3 : 1 }}
+            whileHover={activeCardIdx < popular.length - 1 ? { backgroundColor: "#2D7A5F", color: "white" } : {}}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "absolute", right: 16, zIndex: 20,
+              width: 48, height: 48, borderRadius: "50%",
+              background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F",
+              color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: activeCardIdx === popular.length - 1 ? "not-allowed" : "pointer", flexShrink: 0,
+            }}
+          >
+            <ChevronRight size={22} />
+          </motion.button>
         </div>
 
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1.5" style={{ paddingTop: 80 }}>
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 mt-4">
           {popular.map((_, i) => (
-            <div
+            <motion.div
               key={i}
-              className={`rounded-full transition-all duration-200 ${i === activeCardIdx ? "h-6 w-1.5 bg-primary" : "h-1.5 w-1.5 bg-muted-foreground/30"}`}
+              animate={{ width: i === activeCardIdx ? 24 : 8, backgroundColor: i === activeCardIdx ? "#2D7A5F" : "rgba(45,122,95,0.3)" }}
+              className="h-2 rounded-full"
+              transition={{ duration: 0.3 }}
             />
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function CardInner({ svc, t }: { svc: typeof SERVICES[0]; t: (k: string) => string }) {
+  return (
+    <div
+      className="h-full w-full relative bg-card dark:bg-[#1e1e1e]"
+      style={{ background: `url(${svc.image}) center/cover no-repeat` }}
+    >
+      <div
+        className="absolute inset-0 flex flex-col justify-end p-5"
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 45%, transparent 100%)" }}
+      >
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+          <span className="text-xs text-white/90 font-medium">{svc.rating} · {svc.reviewCount}</span>
+        </div>
+        <h3 className="font-display text-lg font-extrabold text-white leading-tight line-clamp-2">{svc.title}</h3>
+        <p className="mt-1 text-xs text-white/75 line-clamp-2">{svc.description}</p>
+      </div>
+    </div>
   );
 }
 
