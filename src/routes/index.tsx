@@ -31,8 +31,8 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const SECTION_COUNT = 13;
-const POPULAR_SERVICES_IDX = 5;
+const SECTION_COUNT = 12;
+const POPULAR_SERVICES_IDX = 4;
 const easeExpo = [0.22, 1, 0.36, 1] as const;
 
 /* ── Badge SVG (Bronze / Silver / Gold shield) ───────────────────────────────── */
@@ -137,18 +137,17 @@ function Home() {
         {(
           [
             <HeroSection isActive={activeSection === 0} />,
-            <PostJobSection isActive={activeSection === 1} />,
-            <CategoriesSection isActive={activeSection === 2} />,
-            <EliteRewardsSection isActive={activeSection === 3} />,
-            <SpecialOffersSection isActive={activeSection === 4} />,
-            <PopularServicesSection isActive={activeSection === 5} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
-            <HowItWorksSection isActive={activeSection === 6} />,
-            <WhatMakesUsSpecialSection isActive={activeSection === 7} />,
-            <StarRewardSection isActive={activeSection === 8} />,
-            <AppShowcaseSection isActive={activeSection === 9} />,
-            <OurVisionSection isActive={activeSection === 10} />,
-            <TestimonialsSection isActive={activeSection === 11} />,
-            <FooterSection isActive={activeSection === 12} />,
+            <CategoriesSection isActive={activeSection === 1} />,
+            <EliteRewardsSection isActive={activeSection === 2} />,
+            <SpecialOffersSection isActive={activeSection === 3} />,
+            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
+            <HowItWorksSection isActive={activeSection === 5} />,
+            <WhatMakesUsSpecialSection isActive={activeSection === 6} />,
+            <StarRewardSection isActive={activeSection === 7} />,
+            <AppShowcaseSection isActive={activeSection === 8} />,
+            <OurVisionSection isActive={activeSection === 9} />,
+            <TestimonialsSection isActive={activeSection === 10} />,
+            <FooterSection isActive={activeSection === 11} />,
           ] as ReactElement[]
         ).map((child, idx) => (
           <div
@@ -156,8 +155,8 @@ function Home() {
             ref={setRef(idx)}
             style={{
               scrollSnapAlign: "start",
-              height: idx === 12 ? "auto" : "100vh",
-              minHeight: idx === 12 ? 0 : "100vh",
+              height: idx === 11 ? "auto" : "100vh",
+              minHeight: idx === 11 ? 0 : "100vh",
               overflow: "hidden",
               position: "relative",
               flexShrink: 0,
@@ -247,58 +246,7 @@ function HeroSection({ isActive }: { isActive: boolean }) {
   );
 }
 
-/* ── Section 1: Post a Job ────────────────────────────────────────────────────── */
-function PostJobSection({ isActive }: { isActive: boolean }) {
-  const { t } = useI18n();
-  const navigate = useNavigate();
-
-  return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-background" style={{ paddingTop: 64 }}>
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <motion.h2
-          className="font-display text-3xl font-extrabold leading-tight sm:text-5xl md:text-6xl"
-          style={{ willChange: "transform", wordBreak: "break-word", overflowWrap: "break-word" }}
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
-          animate={isActive ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.95 }}
-          transition={{ duration: 0.7, ease: easeExpo }}
-        >
-          {t("hero.subtitle")}
-        </motion.h2>
-
-        <motion.div
-          className="mt-10 flex flex-wrap justify-center gap-4"
-          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-          animate={isActive ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }}
-          transition={{ duration: 0.5, delay: isActive ? 0.2 : 0, type: "spring", stiffness: 300, damping: 20 }}
-        >
-          <motion.div
-            animate={isActive ? {
-              boxShadow: ["0 0 20px rgba(45,122,95,0.4)", "0 0 40px rgba(45,122,95,0.8)", "0 0 20px rgba(45,122,95,0.4)"],
-            } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ borderRadius: 50 }}
-          >
-            <motion.button
-              onClick={() => navigate({ to: "/jobs" })}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                background: "linear-gradient(135deg, #2D7A5F, #4CAF84)",
-                color: "white", padding: "16px 40px", borderRadius: "50px",
-                fontSize: "clamp(16px, 4vw, 18px)", fontWeight: "700",
-                border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px",
-              }}
-            >
-              Post a Job →
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ── Section 2: Categories — 6 at a time, arrows, animated ──────────────────── */
+/* ── Section 1: Categories — 6 at a time, arrows, animated ──────────────────── */
 function CategoriesSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   const allCats = CATEGORIES_FULL.slice(0, 12);
@@ -381,7 +329,8 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
               <ChevronLeft size={20} />
             </motion.button>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1" style={{ overflow: "hidden" }}>
+              <div style={{ padding: "12px 0", overflow: "visible" }}>
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={startIndex}
@@ -391,7 +340,7 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
                   exit={{ x: direction > 0 ? -60 : 60, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="grid gap-3"
-                  style={{ gridTemplateColumns: "repeat(6, 1fr)" }}
+                  style={{ gridTemplateColumns: "repeat(6, 1fr)", overflow: "visible" }}
                 >
                   {visibleCats.map((cat) => (
                     <motion.div
@@ -404,6 +353,7 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
                   ))}
                 </motion.div>
               </AnimatePresence>
+              </div>
             </div>
 
             <motion.button
@@ -537,16 +487,31 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
           Every milestone you hit on SkillBuddy comes with exclusive perks designed to make your journey easier and more rewarding.
         </motion.p>
 
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <style>{`
+          .elite-scroll::-webkit-scrollbar{height:4px}
+          .elite-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
+          .elite-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
+          .elite-cards{display:flex;gap:16px;min-width:max-content;padding:4px 2px 4px}
+          .elite-card{min-width:268px;flex-shrink:0}
+          @media(min-width:1024px){
+            .elite-scroll{overflow-x:visible!important}
+            .elite-cards{display:grid;grid-template-columns:repeat(3,1fr);min-width:0;padding:4px 0}
+            .elite-card{min-width:0}
+          }
+        `}</style>
+        <div className="elite-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
+        <div className="elite-cards">
           {ELITE_BADGES.map((badge) => (
             <motion.div
               key={badge.tier}
+              className="elite-card"
               initial={badge.enterFrom}
               animate={isActive ? { x: 0, y: 0, opacity: 1 } : badge.enterFrom}
               transition={{ duration: 0.6, delay: isActive ? badge.delay : 0, ease: easeExpo }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="relative rounded-2xl border-2 p-5 sm:p-6 dark:bg-transparent"
               style={{
+                position: "relative", borderRadius: 16, borderWidth: 2, borderStyle: "solid",
+                padding: "1.25rem 1.5rem",
                 borderColor: badge.glowColor,
                 boxShadow: badge.tier === "gold" ? undefined : undefined,
               }}
@@ -584,6 +549,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
               </ul>
             </motion.div>
           ))}
+        </div>
         </div>
 
         <motion.div
@@ -631,16 +597,24 @@ const OFFER_COLORS = [
 ];
 
 const rotateCardVariants = {
-  enter: (d: string) => ({
-    rotateX: d === "down" ? 60 : -60,
-    y: d === "down" ? "100%" : "-100%",
+  enter: (dir: number) => ({
+    rotateX: dir > 0 ? 70 : -70,
+    scale: 0.75,
     opacity: 0,
+    y: dir > 0 ? "30%" : "-30%",
+    zIndex: 1,
   }),
-  center: { rotateX: 0, y: "0%", opacity: 1 },
-  exit: (d: string) => ({
-    rotateX: d === "down" ? -60 : 60,
-    y: d === "down" ? "-100%" : "100%",
+  center: {
+    rotateX: 0, scale: 1, opacity: 1, y: "0%", zIndex: 2,
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: (dir: number) => ({
+    rotateX: dir > 0 ? -70 : 70,
+    scale: 0.75,
     opacity: 0,
+    y: dir > 0 ? "-30%" : "30%",
+    zIndex: 1,
+    transition: { duration: 0.45, ease: [0.4, 0, 1, 1] },
   }),
 };
 
@@ -649,10 +623,10 @@ function SpecialOffersSection({ isActive }: { isActive: boolean }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [direction, setDirection] = useState<"up" | "down">("down");
+  const [direction, setDirection] = useState<1 | -1>(1);
 
-  const goNext = () => { setDirection("down"); setCurrentIdx((p) => (p + 1) % OFFERS.length); };
-  const goPrev = () => { setDirection("up"); setCurrentIdx((p) => (p - 1 + OFFERS.length) % OFFERS.length); };
+  const goNext = () => { setDirection(1); setCurrentIdx((p) => (p + 1) % OFFERS.length); };
+  const goPrev = () => { setDirection(-1); setCurrentIdx((p) => (p - 1 + OFFERS.length) % OFFERS.length); };
   const prevIdx = (currentIdx - 1 + OFFERS.length) % OFFERS.length;
   const nextIdx = (currentIdx + 1) % OFFERS.length;
 
@@ -688,7 +662,7 @@ function SpecialOffersSection({ isActive }: { isActive: boolean }) {
             </div>
 
             {/* Main card */}
-            <div className="absolute inset-0 z-10 flex items-center" style={{ perspective: "1000px" }}>
+            <div className="absolute inset-0 z-10" style={{ perspective: "1000px", perspectiveOrigin: "center center" }}>
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentIdx}
@@ -697,11 +671,16 @@ function SpecialOffersSection({ isActive }: { isActive: boolean }) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-full"
-                  style={{ transformStyle: "preserve-3d" }}
+                  style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    transformStyle: "preserve-3d",
+                    backfaceVisibility: "hidden",
+                    display: "flex", alignItems: "center",
+                  }}
                 >
-                  <OfferCard offer={OFFERS[currentIdx]} offerIdx={currentIdx} t={t} isDark={isDark} />
+                  <div className="w-full">
+                    <OfferCard offer={OFFERS[currentIdx]} offerIdx={currentIdx} t={t} isDark={isDark} />
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -955,29 +934,35 @@ function HowItWorksSection({ isActive }: { isActive: boolean }) {
           </div>
         </div>
 
-        {/* Mobile: vertical timeline */}
-        <div className="lg:hidden flex flex-col gap-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 220px)" }}>
-          {HOW_STEPS.map(({ Icon, key }, i) => (
-            <motion.div
-              key={key}
-              initial={{ opacity: 0, x: -20 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-              transition={{ delay: isActive ? 0.1 + i * 0.12 : 0, duration: 0.4, ease: easeExpo }}
-              className="flex items-start gap-4 mb-4"
-            >
-              <div className="flex flex-col items-center">
-                <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant">
+        {/* Mobile: horizontal scroll */}
+        <style>{`
+          .steps-scroll::-webkit-scrollbar{height:4px}
+          .steps-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
+          .steps-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
+          .steps-row{display:flex;gap:12px;padding:8px 2px 8px;min-width:max-content}
+          .step-mob{min-width:200px;flex-shrink:0}
+          @media(min-width:1024px){.steps-scroll{display:none}}
+        `}</style>
+        <div className="lg:hidden steps-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
+          <div className="steps-row">
+            {HOW_STEPS.map(({ Icon, key }, i) => (
+              <motion.div
+                key={key}
+                className="step-mob rounded-2xl border border-border bg-card p-4 text-center shadow-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ delay: isActive ? 0.1 + i * 0.1 : 0, duration: 0.4, ease: easeExpo }}
+                whileTap={{ scale: 0.96, backgroundColor: "rgba(45,122,95,0.08)" }}
+              >
+                <div className="relative mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
                   <Icon className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-background font-mono text-[10px] font-bold text-primary ring-2 ring-primary">{i + 1}</span>
+                  <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-background font-mono text-[10px] font-bold text-primary" style={{ border: "2px solid #2D7A5F" }}>{i + 1}</span>
                 </div>
-                {i < HOW_STEPS.length - 1 && <div className="mt-1 h-6 w-0.5 bg-primary/40" />}
-              </div>
-              <div className="flex-1 pt-1">
                 <h3 className="font-display text-sm font-bold">{t(`step.${key}.title`)}</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t(`step.${key}.desc`)}</p>
-              </div>
-            </motion.div>
-          ))}
+                <p className="mt-1 text-xs text-muted-foreground">{t(`step.${key}.desc`)}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -1038,10 +1023,10 @@ const FEATURES = [
 function WhatMakesUsSpecialSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [direction, setDirection] = useState<"up" | "down">("down");
+  const [direction, setDirection] = useState<1 | -1>(1);
 
-  const goNext = () => { setDirection("down"); setCurrentIdx((p) => (p + 1) % FEATURES.length); };
-  const goPrev = () => { setDirection("up"); setCurrentIdx((p) => (p - 1 + FEATURES.length) % FEATURES.length); };
+  const goNext = () => { setDirection(1); setCurrentIdx((p) => (p + 1) % FEATURES.length); };
+  const goPrev = () => { setDirection(-1); setCurrentIdx((p) => (p - 1 + FEATURES.length) % FEATURES.length); };
   const prevIdx = (currentIdx - 1 + FEATURES.length) % FEATURES.length;
   const nextIdx = (currentIdx + 1) % FEATURES.length;
 
@@ -1071,7 +1056,7 @@ function WhatMakesUsSpecialSection({ isActive }: { isActive: boolean }) {
             </div>
 
             {/* Main */}
-            <div className="absolute inset-0 z-10 flex items-center" style={{ perspective: "1000px" }}>
+            <div className="absolute inset-0 z-10" style={{ perspective: "1000px", perspectiveOrigin: "center center" }}>
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentIdx}
@@ -1080,11 +1065,16 @@ function WhatMakesUsSpecialSection({ isActive }: { isActive: boolean }) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-full"
-                  style={{ transformStyle: "preserve-3d" }}
+                  style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    transformStyle: "preserve-3d",
+                    backfaceVisibility: "hidden",
+                    display: "flex", alignItems: "center",
+                  }}
                 >
-                  <FeatureCard feat={FEATURES[currentIdx]} t={t} active />
+                  <div className="w-full">
+                    <FeatureCard feat={FEATURES[currentIdx]} t={t} active />
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -1209,19 +1199,32 @@ function StarRewardSection({ isActive }: { isActive: boolean }) {
           {t("sec.star.subtitle")}
         </motion.p>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
+        <style>{`
+          .star-scroll::-webkit-scrollbar{height:4px}
+          .star-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
+          .star-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
+          .star-cards{display:flex;gap:16px;min-width:max-content;padding:4px 2px 4px}
+          .star-card{min-width:268px;flex-shrink:0}
+          @media(min-width:1024px){
+            .star-scroll{overflow-x:visible!important}
+            .star-cards{display:grid;grid-template-columns:repeat(3,1fr);min-width:0;padding:4px 0}
+            .star-card{min-width:0}
+          }
+        `}</style>
+        <div className="star-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
+        <div className="star-cards">
           {BADGE_LEVELS.map(({ tier, levelKey, benefitKey, anim }, i) => (
             <motion.div
               key={tier}
+              className={`star-card relative overflow-hidden rounded-2xl border-2 p-5 sm:p-7 ${
+                tier === "gold" ? "border-yellow-400/60 bg-gradient-to-br from-yellow-400/10 to-transparent dark:border-yellow-500/60" : "border-border bg-card"
+              }`}
               style={{ willChange: "transform" }}
               initial={{ opacity: 0, scale: 0 }}
-              animate={isActive ? { opacity: 1, scale: i === 2 ? 1 : 1 } : { opacity: 0, scale: 0 }}
+              animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
               transition={{ duration: 0.7, delay: isActive ? 0.3 + i * 0.3 : 0, type: "spring", stiffness: 200, damping: 15 }}
               whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
               whileTap={{ scale: 0.98 }}
-              className={`relative overflow-hidden rounded-2xl border-2 p-5 sm:p-7 ${
-                tier === "gold" ? "border-yellow-400/60 bg-gradient-to-br from-yellow-400/10 to-transparent dark:border-yellow-500/60" : "border-border bg-card"
-              }`}
             >
               <div className="mb-5 flex items-center gap-3">
                 <motion.div
@@ -1244,6 +1247,7 @@ function StarRewardSection({ isActive }: { isActive: boolean }) {
               )}
             </motion.div>
           ))}
+        </div>
         </div>
       </div>
     </section>
@@ -1271,7 +1275,12 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
 
   return (
     <section className="relative flex h-full flex-col justify-center overflow-hidden border-y border-border dark:bg-[#080C10] bg-[#F0FDF4]">
-      <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-14" style={{ paddingTop: 80, paddingBottom: 24 }}>
+      <style>{`
+        @media(max-width:1023px){
+          .iphone-mockup{width:160px!important;height:330px!important}
+        }
+      `}</style>
+      <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-14" style={{ paddingTop: 72, paddingBottom: 16 }}>
         <motion.div className="flex-1 text-center lg:text-left" initial={{ opacity: 0, x: -40 }} animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} transition={{ duration: 0.6, ease: easeExpo }}>
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary mb-3">
             <Smartphone className="h-3 w-3" /> Available on iOS &amp; Android
@@ -1382,8 +1391,29 @@ function TestimonialsSection({ isActive }: { isActive: boolean }) {
           <p className="text-sm font-semibold text-primary">{t("sec.loved")}</p>
           <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
         </motion.div>
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {TESTIMONIALS.map((tt, i) => <TestimonialCard key={tt.id} tt={tt} isActive={isActive} delay={i * 0.14} />)}
+        <style>{`
+          .testi-scroll::-webkit-scrollbar{height:4px}
+          .testi-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
+          .testi-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
+          .testi-cards{display:flex;gap:12px;padding:4px 2px 4px;min-width:max-content;scroll-snap-type:x mandatory}
+          .testi-card-wrap{min-width:82vw;flex-shrink:0;scroll-snap-align:start}
+          @media(min-width:640px){
+            .testi-scroll{overflow-x:visible!important}
+            .testi-cards{display:grid;grid-template-columns:repeat(2,1fr);min-width:0;padding:4px 0;scroll-snap-type:none}
+            .testi-card-wrap{min-width:0}
+          }
+          @media(min-width:1024px){
+            .testi-cards{grid-template-columns:repeat(4,1fr)}
+          }
+        `}</style>
+        <div className="testi-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
+          <div className="testi-cards">
+            {TESTIMONIALS.map((tt, i) => (
+              <div key={tt.id} className="testi-card-wrap">
+                <TestimonialCard tt={tt} isActive={isActive} delay={i * 0.14} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

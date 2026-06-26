@@ -24,8 +24,12 @@ export function Navbar() {
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-[9999] h-16 bg-white/85 dark:bg-[#121212]/85 border-b border-black/[0.08] dark:border-white/[0.08] transition-colors duration-300"
-      style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      className="fixed top-0 left-0 w-full z-[9999] h-16 bg-white/[0.97] dark:bg-[#0a0e14]/[0.97] border-b border-black/10 dark:border-white/[0.08] transition-colors duration-300"
+      style={{
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        boxShadow: theme === "dark" ? "0 2px 16px rgba(0,0,0,0.4)" : "0 2px 16px rgba(0,0,0,0.06)",
+      }}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center"><Logo /></Link>

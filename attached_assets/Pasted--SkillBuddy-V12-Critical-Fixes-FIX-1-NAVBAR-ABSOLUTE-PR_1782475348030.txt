@@ -1,0 +1,438 @@
+# SkillBuddy — V12 Critical Fixes
+
+---
+
+## FIX 1 — NAVBAR (ABSOLUTE PRIORITY — DO THIS FIRST)
+
+**Problem:** Navbar blends into page content, not visually separated, still overlapping.
+
+### The ONLY correct way to fix this in TanStack Start / React:
+
+**Step 1 — Find `__root.tsx` (or root layout file) and restructure it:**
+
+```tsx
+// src/routes/__root.tsx
+
+import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { Navbar } from '../components/Navbar'
+import { Footer } from '../components/Footer'
+
+export const Route = createRootRoute({
+  component: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* NAVBAR - renders once, fixed at top */}
+      <Navbar />
+      
+      {/* MAIN CONTENT - has top padding equal to navbar height */}
+      <main style={{
+        flex: 1,
+        marginTop: '72px',  // CHANGE THIS to exact navbar height in px
+        width: '100%',
+      }}>
+        <Outlet />
+      </main>
+      
+      <Footer />
+    </div>
+  ),
+})
+```
+
+**Step 2 — In the Navbar component, set these exact styles:**
+
+```tsx
+// Navbar wrapper div:
+<nav style={{
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 9999,
+  height: '72px',
+  // Light mode:
+  backgroundColor: 'rgba(255, 255, 255, 0.97)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  // Visual separator — THIS makes it distinct from page:
+  borderBottom: '1px solid rgba(0, 0, 0, 0.10)',
+  boxShadow: '0 2px 16px rgba(0, 0, 0, 0.06)',
+}}>
+```
+
+```css
+/* In CSS for dark mode: */
+.dark nav {
+  background-color: rgba(10, 14, 20, 0.97) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4) !important;
+}
+```
+
+**Step 3 — Remove any `paddingTop` or `marginTop` from individual page components.**
+The root layout's `marginTop: '72px'` on `<main>` handles ALL pages automatically.
+Do NOT add paddingTop to each page separately — only the root layout needs it.
+
+**Step 4 — Measure actual navbar height:**
+```tsx
+// In Navbar component:
+const navRef = useRef<HTMLElement>(null)
+
+useEffect(() => {
+  const updateHeight = () => {
+    if (navRef.current) {
+      const h = navRef.current.getBoundingClientRect().height
+      // Update the main marginTop dynamically:
+      const main = document.querySelector('main')
+      if (main) main.style.marginTop = h + 'px'
+    }
+  }
+  updateHeight()
+  window.addEventListener('resize', updateHeight)
+  return () => window.removeEventListener('resize', updateHeight)
+}, [])
+
+<nav ref={navRef} style={{ position: 'fixed', top: 0, ... }}>
+```
+
+**Mobile navbar:**
+```css
+@media (max-width: 768px) {
+  nav {
+    height: 60px !important; /* mobile navbar is shorter */
+  }
+  /* Update main marginTop for mobile: */
+  main {
+    margin-top: 60px !important;
+  }
+}
+```
+
+---
+
+## FIX 2 — REMOVE "Post a Job, Get Bids" SECTION
+
+Search the codebase for ANY component or section containing:
+- "Post a job, get bids"
+- "your trusted help is one click away"
+- "choose the best"
+
+Delete the ENTIRE section component and remove it from the homepage render list.
+Do NOT remove the search bar if it exists in the hero section.
+Do NOT remove any other section.
+
+---
+
+## FIX 3 — CATEGORIES: Card Clipping on Hover (Top Hidden)
+
+**Problem:** When hovering a category card, the top of the card gets hidden/clipped.
+
+**Cause:** Parent container has `overflow: hidden` which clips the card's scale animation.
+
+**Fix:**
+
+```css
+/* Find the categories slider container and add: */
+.categories-slider-container,
+.categories-section > div,
+[class*="category-slider"] {
+  overflow: visible !important;
+  /* This lets cards scale up without being clipped */
+}
+
+/* Add padding so scaled cards have room: */
+.categories-section {
+  padding-top: 24px !important;  /* room for card to scale upward */
+  padding-bottom: 24px !important;
+}
+
+/* The slide track that moves left/right: */
+.slider-track,
+[class*="slide-track"] {
+  overflow: visible !important;
+  padding: 16px 0; /* breathing room top and bottom */
+}
+```
+
+**If the outer scroll wrapper needs overflow:hidden for the slide effect:**
+```tsx
+// Use TWO wrappers:
+// Outer: overflow:hidden (clips the slide left/right movement)
+// Inner: overflow:visible (lets cards scale on hover)
+
+<div style={{ overflow: 'hidden' }}> {/* outer - clips slide */}
+  <motion.div style={{ overflow: 'visible', padding: '20px 0' }}> {/* inner - allows hover */}
+    {/* category cards */}
+  </motion.div>
+</div>
+```
+
+---
+
+## FIX 4 — SPECIAL OFFERS + WHAT MAKES US SPECIAL: Background Card Animation
+
+**Problem:** Front card rotates correctly but background card just appears without animation.
+
+**Root cause:** `AnimatePresence` needs `mode="wait"` AND the exiting card needs explicit exit animation. Currently the background card has no enter animation.
+
+**Complete fix for BOTH sections:**
+
+```tsx
+import { AnimatePresence, motion } from 'framer-motion'
+
+// 1. Container MUST have perspective:
+<div
+  style={{
+    perspective: '1000px',
+    perspectiveOrigin: 'center center',
+    position: 'relative',
+    overflow: 'hidden',
+    height: '360px', // fixed height
+  }}
+>
+  <AnimatePresence mode="wait" custom={direction}>
+    <motion.div
+      key={currentIndex}  // MUST change key to trigger animation
+      custom={direction}
+      variants={{
+        // Card ENTERING (coming from background to front):
+        enter: (dir: number) => ({
+          rotateX: dir > 0 ? 70 : -70,
+          scale: 0.75,
+          opacity: 0,
+          y: dir > 0 ? '30%' : '-30%',
+          zIndex: 1,
+        }),
+        // Card VISIBLE (in front):
+        center: {
+          rotateX: 0,
+          scale: 1,
+          opacity: 1,
+          y: '0%',
+          zIndex: 2,
+          transition: {
+            duration: 0.55,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+        // Card EXITING (going from front to background):
+        exit: (dir: number) => ({
+          rotateX: dir > 0 ? -70 : 70,
+          scale: 0.75,
+          opacity: 0,
+          y: dir > 0 ? '-30%' : '30%',
+          zIndex: 1,
+          transition: {
+            duration: 0.45,
+            ease: [0.4, 0, 1, 1],
+          },
+        }),
+      }}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      style={{
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        transformStyle: 'preserve-3d',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
+    >
+      {/* CARD CONTENT HERE */}
+    </motion.div>
+  </AnimatePresence>
+</div>
+
+// Direction state:
+const [direction, setDirection] = useState<1 | -1>(1)
+const [currentIndex, setCurrentIndex] = useState(0)
+
+const goNext = () => {
+  setDirection(1)
+  setCurrentIndex(prev => (prev + 1) % cards.length)
+}
+const goPrev = () => {
+  setDirection(-1)
+  setCurrentIndex(prev => (prev - 1 + cards.length) % cards.length)
+}
+```
+
+**KEY POINTS that make the background animate:**
+1. `key={currentIndex}` — changing key forces AnimatePresence to animate both old AND new card
+2. `mode="wait"` — old card exits first, then new card enters (prevents overlap issues)
+3. `initial="enter"` — new card ALWAYS starts from enter state (rotated back)
+4. `exit` variants — old card ALWAYS animates out (rotated forward)
+5. Both cards animate — exit card rotates away, enter card rotates in
+
+Apply this to:
+- Special Offers section (3 cards)
+- What Makes Us Special section (4 cards)
+
+---
+
+## FIX 5 — MOBILE SCROLLBARS (All Sections)
+
+Apply horizontal scroll to these sections on mobile.
+Heading stays FIXED/STICKY, only cards scroll horizontally.
+
+### Pattern to apply to each section:
+
+```tsx
+// Section structure:
+<section>
+  {/* Heading stays — does NOT scroll */}
+  <div style={{ padding: '0 16px' }}>
+    <h2>Section Heading</h2>
+    <p>Subheading</p>
+  </div>
+  
+  {/* Cards scroll horizontally on mobile */}
+  <div
+    style={{
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      paddingBottom: '12px', // room for scrollbar
+      // Custom scrollbar:
+      scrollbarWidth: 'thin',
+      scrollbarColor: '#2D7A5F transparent',
+    }}
+    className="mobile-scroll-container"
+  >
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '16px',
+        padding: '8px 16px 8px',
+        // On mobile: min-width makes it scroll; on desktop: wraps normally
+        minWidth: 'max-content', // mobile: scrolls
+      }}
+      className="cards-row"
+    >
+      {cards.map(card => (
+        <div
+          key={card.id}
+          style={{ minWidth: '260px', flexShrink: 0 }} // fixed card width
+        >
+          {/* card content */}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+/* CSS for custom scrollbar: */
+.mobile-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+.mobile-scroll-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+.mobile-scroll-container::-webkit-scrollbar-thumb {
+  background: #2D7A5F;
+  border-radius: 10px;
+}
+
+/* On desktop: reset to normal grid/flex */
+@media (min-width: 769px) {
+  .mobile-scroll-container {
+    overflow-x: visible;
+  }
+  .cards-row {
+    min-width: unset;
+    flex-wrap: wrap; /* or grid */
+  }
+}
+```
+
+### Apply to these sections:
+
+**A) Earn Badges / Elite Rewards section:**
+- Heading "Earn Badges. Unlock Real Rewards." stays visible at top
+- 3 badge tier cards (Bronze, Silver, Gold) scroll horizontally on mobile
+- Each card: `minWidth: 260px`
+
+**B) The SkillBuddy Star Reward / Badge section:**
+- Section heading stays at top
+- 3 badge cards scroll horizontally
+- Each card: `minWidth: 260px`
+
+**C) From Idea to Done in 5 Steps:**
+- Section heading stays at top
+- 5 step cards scroll horizontally on mobile
+- Each step: `minWidth: 200px`
+- On mobile: also add tap animation (since no hover on touch):
+```tsx
+<motion.div
+  whileTap={{ scale: 0.96, backgroundColor: 'rgba(45,122,95,0.08)' }}
+  style={{ cursor: 'pointer' }}
+>
+```
+
+**D) App Showcase / iPhone section:**
+- Heading stays
+- Phone mockup + text: scroll horizontally OR stack vertically
+- Prefer stacking vertically on mobile:
+```css
+@media (max-width: 768px) {
+  .app-showcase-layout {
+    flex-direction: column !important;
+    align-items: center;
+  }
+  .iphone-mockup {
+    width: 180px !important;
+    height: 380px !important;
+  }
+}
+```
+
+**E) What People Are Saying (Testimonials):**
+- Heading stays at top
+- Testimonial cards scroll horizontally on mobile
+- Layout matches the provided screenshot (card 1 full width, cards 2, 3 peek from side)
+```css
+@media (max-width: 768px) {
+  .testimonials-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    display: flex;
+    gap: 12px;
+    padding: 0 16px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #2D7A5F transparent;
+  }
+  .testimonial-card {
+    scroll-snap-align: start;
+    min-width: 85vw; /* almost full width, shows next card peeking */
+    flex-shrink: 0;
+    border-radius: 16px;
+  }
+}
+```
+
+---
+
+## CHECKLIST
+
+- [ ] Navbar: `position: fixed`, `z-index: 9999`, border-bottom separator, box-shadow
+- [ ] Root layout (`__root.tsx`): `<main style={{ marginTop: '72px' }}>` wrapping ALL pages
+- [ ] Navbar height measured dynamically, marginTop updated on resize
+- [ ] Mobile navbar: `height: 60px`, `main { margin-top: 60px }`
+- [ ] "Post a job, get bids" section: completely deleted from homepage
+- [ ] Categories: outer `overflow: hidden`, inner `overflow: visible` with padding
+- [ ] Categories: cards no longer clip at top when hovered
+- [ ] Special Offers: `key={currentIndex}` triggers AnimatePresence for BOTH cards
+- [ ] Special Offers: `mode="wait"` + direction-aware variants
+- [ ] Special Offers: exit card rotates away, enter card rotates in (both animate)
+- [ ] What Makes Us Special: same AnimatePresence fix applied
+- [ ] Earn Badges section: heading fixed, 3 cards horizontal scroll on mobile
+- [ ] Star Reward section: heading fixed, cards horizontal scroll on mobile
+- [ ] 5 Steps section: heading fixed, steps horizontal scroll + tap animation on mobile
+- [ ] App Showcase: stacks vertically on mobile
+- [ ] Testimonials: horizontal scroll snap on mobile, shows peeking cards
+- [ ] All scrollbars: green thumb, 4px height, rounded
+- [ ] Dark mode: all fixes work correctly
+- [ ] Light mode: all fixes work correctly
+- [ ] No existing functionality broken
