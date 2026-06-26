@@ -184,3 +184,106 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+/* ── Navbar ────────────────────────────────────────────────────────────────── */
+.navbar {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.09) !important;
+}
+
+.dark .navbar {
+  background-color: rgba(9, 13, 18, 0.98) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    height: 60px !important;
+  }
+}
+
+/* ── Mobile: vertical card stacking ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .badge-tiers-row,
+  .elite-rewards-cards,
+  .star-reward-cards,
+  .badge-reward-cards,
+  .testimonials-container,
+  .testimonials-grid {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+  }
+
+  .badge-tier-card,
+  .testimonial-card {
+    width: 100% !important;
+    min-width: unset !important;
+    flex-shrink: unset !important;
+  }
+
+  .steps-container,
+  .how-it-works-steps {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    gap: 24px !important;
+  }
+
+  .step-item {
+    width: 100% !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .step-connector {
+    width: 2px !important;
+    height: 24px !important;
+    margin-left: 24px !important;
+    background: #2D7A5F !important;
+  }
+
+  .app-showcase-layout {
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-x: hidden !important;
+    gap: 32px !important;
+  }
+
+  .iphone-mockup {
+    width: 200px !important;
+    height: 420px !important;
+  }
+
+  .app-text-content {
+    text-align: center !important;
+    padding: 0 16px !important;
+  }
+
+  .cards-row,
+  .cards-grid,
+  [class*="card-row"],
+  [class*="card-grid"],
+  [class*="cards-container"] {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    min-width: unset !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+
+  .card,
+  [class*="-card"],
+  [class*="card-"] {
+    min-width: unset !important;
+    width: 100% !important;
+    flex-shrink: unset !important;
+  }
+
+  .mobile-scroll-container,
+  [class*="scroll-container"] {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+}

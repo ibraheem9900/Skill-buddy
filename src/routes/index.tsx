@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryCard } from "@/components/category-card";
-import { Navbar } from "@/components/navbar";
 import { useTheme } from "@/components/theme-provider";
 import { SERVICES, TESTIMONIALS, OFFERS, CATEGORIES } from "@/lib/data";
 import { CATEGORIES_FULL } from "@/lib/categories";
@@ -121,11 +120,10 @@ function Home() {
 
   return (
     <>
-      <Navbar />
       <div
         ref={containerRef}
         style={{
-          height: "100vh",
+          height: "calc(100vh - 72px)",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollbarWidth: "none",
@@ -155,8 +153,8 @@ function Home() {
             ref={setRef(idx)}
             style={{
               scrollSnapAlign: "start",
-              height: idx === 11 ? "auto" : "100vh",
-              minHeight: idx === 11 ? 0 : "100vh",
+              height: idx === 11 ? "auto" : "calc(100vh - 72px)",
+              minHeight: idx === 11 ? 0 : "calc(100vh - 72px)",
               overflow: "hidden",
               position: "relative",
               flexShrink: 0,
@@ -190,7 +188,7 @@ function HeroSection({ isActive }: { isActive: boolean }) {
   const current = heroTexts[heroIdx];
 
   return (
-    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden" style={{ paddingTop: 64 }}>
+    <section className="relative flex h-full flex-col items-center justify-center overflow-hidden">
       <div className="absolute inset-0 gradient-hero opacity-90" />
       <div className="relative mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
         <motion.div

@@ -17,6 +17,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { SkillBuddyLoader } from "@/components/skillbuddy-loader";
 import { LoaderProvider } from "@/context/LoaderContext";
 import { NavigationLoader } from "@/components/NavigationLoader";
+import { Navbar } from "@/components/navbar";
 
 function NotFoundComponent() {
   return (
@@ -124,9 +125,12 @@ function RootComponent() {
           <ThemeProvider>
             <SkillBuddyLoader />
             <NavigationLoader />
-            <Suspense fallback={null}>
-              <Outlet />
-            </Suspense>
+            <Navbar />
+            <div style={{ paddingTop: "72px" }}>
+              <Suspense fallback={null}>
+                <Outlet />
+              </Suspense>
+            </div>
             <Toaster richColors position="top-right" />
           </ThemeProvider>
         </I18nProvider>

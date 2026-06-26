@@ -1,17 +1,18 @@
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Moon, Sun } from "lucide-react";
-import { motion } from "framer-motion";
+import { Moon, Sun } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 import { useTheme } from "@/components/theme-provider";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const { t } = useI18n();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const navLinks = [
     { to: "/", label: t("nav.home") },
@@ -22,17 +23,38 @@ export function Navbar() {
     { to: "/contact", label: t("nav.contact") },
   ] as const;
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuOpen && !(e.target as Element).closest(".navbar")) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [menuOpen]);
+
   return (
-    <header
-      className="fixed top-0 left-0 w-full z-[9999] h-16 bg-white/[0.97] dark:bg-[#0a0e14]/[0.97] border-b border-black/10 dark:border-white/[0.08] transition-colors duration-300"
+    <nav
+      className="navbar"
       style={{
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        boxShadow: theme === "dark" ? "0 2px 16px rgba(0,0,0,0.4)" : "0 2px 16px rgba(0,0,0,0.06)",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        height: "72px",
+        display: "flex",
+        alignItems: "center",
+        boxShadow:
+          theme === "dark"
+            ? "0 2px 20px rgba(0,0,0,0.5)"
+            : "0 2px 20px rgba(0,0,0,0.07)",
       }}
     >
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link to="/" className="flex items-center"><Logo /></Link>
+      <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <Link to="/" className="flex items-center">
+          <Logo />
+        </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
           {navLinks.map((n) => (
@@ -49,8 +71,16 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-1">
-          <div className="hidden sm:block"><LanguageSelector /></div>
-          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme" className="relative overflow-hidden">
+          <div className="hidden sm:block">
+            <LanguageSelector />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            aria-label="Toggle theme"
+            className="relative overflow-hidden"
+          >
             <motion.div
               key={theme}
               initial={{ rotate: -90, opacity: 0 }}
@@ -58,48 +88,172 @@ export function Navbar() {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </motion.div>
           </Button>
+
           <div className="hidden md:flex items-center gap-2 pl-2">
-            <Button asChild variant="ghost" size="sm"><Link to="/auth/login">{t("nav.login")}</Link></Button>
-            <Button asChild size="sm" className="shadow-elegant"><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
-            <Button asChild size="sm" className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F] hover:shadow-lg">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/auth/login">{t("nav.login")}</Link>
+            </Button>
+            <Button asChild size="sm" className="shadow-elegant">
+              <Link to="/auth/signup">{t("nav.signup")}</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F] hover:shadow-lg"
+            >
               <Link to="/become-a-skillbuddy">
-                <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
-                <span>Become a SkillBuddy</span>
+                <img
+                  src={iconTransparent}
+                  alt="SkillBuddy"
+                  style={{
+                    width: 20,
+                    height: 20,
+                    objectFit: "contain",
+                    filter: "brightness(0) invert(1)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span>{t("nav.becomeSkillBuddy")}</span>
               </Link>
             </Button>
           </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <div className="mt-8 flex flex-col gap-1">
-                {navLinks.map((n) => (
-                  <Link key={n.to} to={n.to} className="rounded-lg px-3 py-3 text-base font-semibold hover:bg-accent">
-                    {n.label}
-                  </Link>
-                ))}
-                <div className="mt-2 px-1"><LanguageSelector /></div>
-                <div className="mt-4 grid gap-2">
-                  <Button asChild variant="outline"><Link to="/auth/login">{t("nav.login")}</Link></Button>
-                  <Button asChild><Link to="/auth/signup">{t("nav.signup")}</Link></Button>
-                  <Button asChild className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F]">
-                    <Link to="/become-a-skillbuddy">
-                      <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
-                      <span>Become a SkillBuddy</span>
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+
+          <button
+            className="lg:hidden ml-1 flex flex-col items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition text-foreground"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            <motion.div
+              animate={menuOpen ? "open" : "closed"}
+              className="flex flex-col gap-[5px]"
+            >
+              <motion.span
+                variants={{
+                  closed: { rotate: 0, y: 0 },
+                  open: { rotate: 45, y: 7 },
+                }}
+                transition={{ duration: 0.25 }}
+                style={{
+                  display: "block",
+                  height: "2px",
+                  width: "22px",
+                  background: "currentColor",
+                  borderRadius: 2,
+                }}
+              />
+              <motion.span
+                variants={{ closed: { opacity: 1 }, open: { opacity: 0 } }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  display: "block",
+                  height: "2px",
+                  width: "22px",
+                  background: "currentColor",
+                  borderRadius: 2,
+                }}
+              />
+              <motion.span
+                variants={{
+                  closed: { rotate: 0, y: 0 },
+                  open: { rotate: -45, y: -7 },
+                }}
+                transition={{ duration: 0.25 }}
+                style={{
+                  display: "block",
+                  height: "2px",
+                  width: "22px",
+                  background: "currentColor",
+                  borderRadius: 2,
+                }}
+              />
+            </motion.div>
+          </button>
         </div>
       </div>
-    </header>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="bg-white/[0.98] dark:bg-[#090d12]/[0.98]"
+            style={{
+              position: "absolute",
+              top: "72px",
+              left: 0,
+              right: 0,
+              zIndex: 9998,
+              borderBottom: "1px solid rgba(0,0,0,0.09)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}
+            >
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-[10px] px-4 py-3 text-base font-semibold text-[#111111] dark:text-white hover:bg-accent transition"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="mt-2 px-1">
+                <LanguageSelector />
+              </div>
+              <div className="mt-3 grid gap-2 px-1">
+                <Button
+                  asChild
+                  variant="outline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Link to="/auth/login">{t("nav.login")}</Link>
+                </Button>
+                <Button asChild onClick={() => setMenuOpen(false)}>
+                  <Link to="/auth/signup">{t("nav.signup")}</Link>
+                </Button>
+                <Button
+                  asChild
+                  className="gap-1.5 rounded-full bg-[#2D7A5F] text-white hover:bg-[#236B4F]"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Link to="/become-a-skillbuddy">
+                    <img
+                      src={iconTransparent}
+                      alt="SkillBuddy"
+                      style={{
+                        width: 18,
+                        height: 18,
+                        objectFit: "contain",
+                        filter: "brightness(0) invert(1)",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>{t("nav.becomeSkillBuddy")}</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
   );
 }

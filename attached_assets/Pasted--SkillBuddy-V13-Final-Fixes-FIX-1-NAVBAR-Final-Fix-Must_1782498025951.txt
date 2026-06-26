@@ -1,0 +1,553 @@
+# SkillBuddy — V13 Final Fixes
+
+---
+
+## FIX 1 — NAVBAR (Final Fix — Must Work This Time)
+
+**The problem is simple: navbar is not truly separated from page content.**
+
+### Complete solution:
+
+**In `__root.tsx` — this is the ONLY place to fix it:**
+
+```tsx
+export const Route = createRootRoute({
+  component: RootComponent,
+})
+
+function RootComponent() {
+  return (
+    <>
+      {/* Navbar — fixed at top, always above everything */}
+      <Navbar />
+      
+      {/* Page content — pushed down by navbar height */}
+      <div style={{ paddingTop: '72px' }}>
+        <Outlet />
+      </div>
+    </>
+  )
+}
+```
+
+**In the Navbar component — add these exact styles to the outermost nav element:**
+
+```tsx
+<nav
+  style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    height: '72px',
+    display: 'flex',
+    alignItems: 'center',
+  }}
+  className="navbar"
+>
+```
+
+```css
+/* globals.css or index.css */
+
+/* Light mode navbar */
+.navbar {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.09) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Dark mode navbar */
+.dark .navbar {
+  background-color: rgba(9, 13, 18, 0.98) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Mobile navbar */
+@media (max-width: 768px) {
+  .navbar {
+    height: 60px !important;
+  }
+  /* Adjust page content for mobile navbar height */
+  .navbar + div,
+  .navbar ~ div:first-of-type {
+    padding-top: 60px !important;
+  }
+}
+```
+
+**IMPORTANT — Remove any existing paddingTop/marginTop from:**
+- Individual page components (home, services, jobs, etc.)
+- Any section that manually adds top spacing to avoid navbar
+- These are all handled by the single `paddingTop: '72px'` in `__root.tsx`
+
+---
+
+## FIX 2 — MOBILE HAMBURGER MENU
+
+**Hamburger must open and close properly:**
+
+```tsx
+const [menuOpen, setMenuOpen] = useState(false)
+
+// Close menu when clicking outside:
+useEffect(() => {
+  const handleClickOutside = (e: MouseEvent) => {
+    if (menuOpen && !(e.target as Element).closest('.navbar')) {
+      setMenuOpen(false)
+    }
+  }
+  document.addEventListener('click', handleClickOutside)
+  return () => document.removeEventListener('click', handleClickOutside)
+}, [menuOpen])
+
+// Close menu when navigating to a new page:
+// Add to each mobile nav link: onClick={() => setMenuOpen(false)}
+
+// Hamburger button:
+<button
+  onClick={() => setMenuOpen(prev => !prev)}
+  aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+>
+  <motion.div animate={menuOpen ? 'open' : 'closed'}>
+    {/* Top line */}
+    <motion.span
+      variants={{
+        closed: { rotate: 0, y: 0 },
+        open: { rotate: 45, y: 6 },
+      }}
+      style={{ display: 'block', height: '2px', width: '24px', background: 'currentColor' }}
+    />
+    {/* Middle line */}
+    <motion.span
+      variants={{
+        closed: { opacity: 1 },
+        open: { opacity: 0 },
+      }}
+      style={{ display: 'block', height: '2px', width: '24px', background: 'currentColor', margin: '4px 0' }}
+    />
+    {/* Bottom line */}
+    <motion.span
+      variants={{
+        closed: { rotate: 0, y: 0 },
+        open: { rotate: -45, y: -6 },
+      }}
+      style={{ display: 'block', height: '2px', width: '24px', background: 'currentColor' }}
+    />
+  </motion.div>
+</button>
+
+// Mobile menu dropdown:
+<AnimatePresence>
+  {menuOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: -10, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      exit={{ opacity: 0, y: -10, height: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      style={{
+        position: 'fixed',
+        top: '60px', // below navbar
+        left: 0,
+        right: 0,
+        zIndex: 9998,
+        backgroundColor: 'rgba(255,255,255,0.98)',
+        borderBottom: '1px solid rgba(0,0,0,0.09)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+      }}
+    >
+      {navLinks.map(link => (
+        <Link
+          key={link.href}
+          to={link.href}
+          onClick={() => setMenuOpen(false)}
+          style={{ padding: '12px 16px', borderRadius: '10px', fontSize: '16px' }}
+        >
+          {t(link.labelKey)}
+        </Link>
+      ))}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+---
+
+## FIX 3 — MOBILE CARDS: VERTICAL SCROLL (Not Horizontal)
+
+**Problem:** Cards on mobile are scrolling horizontally. They must stack VERTICALLY.
+
+**Apply to ALL sections that have cards:**
+
+```css
+/* Global mobile card fix */
+@media (max-width: 768px) {
+  /* ANY row of cards → stack vertically */
+  .cards-row,
+  .cards-grid,
+  [class*="card-row"],
+  [class*="card-grid"],
+  [class*="cards-container"] {
+    flex-direction: column !important;
+    overflow-x: hidden !important; /* NO horizontal scroll */
+    min-width: unset !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+
+  /* Each card takes full width */
+  .card,
+  [class*="-card"],
+  [class*="card-"] {
+    min-width: unset !important;
+    width: 100% !important;
+    flex-shrink: unset !important;
+  }
+
+  /* Remove any horizontal scroll containers */
+  .mobile-scroll-container,
+  [class*="scroll-container"] {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+}
+```
+
+**Specifically fix these sections:**
+
+**Earn Badges / Elite Rewards — vertical stack:**
+```css
+@media (max-width: 768px) {
+  .badge-tiers-row,
+  .elite-rewards-cards {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+  }
+  .badge-tier-card {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}
+```
+
+**Star Reward / Badge section — vertical stack:**
+```css
+@media (max-width: 768px) {
+  .star-reward-cards,
+  .badge-reward-cards {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+  }
+}
+```
+
+**How It Works (5 Steps) — vertical stack:**
+```css
+@media (max-width: 768px) {
+  .steps-container,
+  .how-it-works-steps {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    gap: 24px !important;
+  }
+  .step-item {
+    width: 100% !important;
+    flex-direction: row !important; /* icon left, text right */
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  /* Vertical connecting line between steps */
+  .step-connector {
+    width: 2px !important;
+    height: 24px !important;
+    margin-left: 24px !important; /* aligns under step circle */
+    background: #2D7A5F !important;
+  }
+}
+```
+
+**App Showcase — vertical stack:**
+```css
+@media (max-width: 768px) {
+  .app-showcase-layout {
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-x: hidden !important;
+    gap: 32px !important;
+  }
+  .iphone-mockup {
+    width: 200px !important;
+    height: 420px !important;
+  }
+  .app-text-content {
+    text-align: center !important;
+    padding: 0 16px !important;
+  }
+}
+```
+
+**Testimonials — vertical stack:**
+```css
+@media (max-width: 768px) {
+  .testimonials-container,
+  .testimonials-grid {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    gap: 16px !important;
+  }
+  .testimonial-card {
+    width: 100% !important;
+    min-width: unset !important;
+    flex-shrink: unset !important;
+  }
+}
+```
+
+---
+
+## FIX 4 — LANGUAGE TRANSLATION: Footer Links
+
+**Problem:** Footer links (navigation links, page names) do not translate when language is changed.
+
+**Fix — wrap ALL footer text in `t()` function:**
+
+```tsx
+// In Footer component, find every hardcoded text string and wrap it:
+
+// Navigation links in footer:
+// WRONG:
+<Link to="/services">Services</Link>
+<Link to="/jobs">Jobs</Link>
+<Link to="/careers">Careers</Link>
+
+// CORRECT:
+<Link to="/services">{t('nav.services')}</Link>
+<Link to="/jobs">{t('nav.jobs')}</Link>
+<Link to="/careers">{t('nav.careers')}</Link>
+
+// Footer headings:
+// WRONG:
+<h4>Services Links</h4>
+<h4>Pages</h4>
+<h4>Contact</h4>
+
+// CORRECT:
+<h4>{t('footer.servicesLinks')}</h4>
+<h4>{t('footer.pages')}</h4>
+<h4>{t('footer.contact')}</h4>
+
+// Footer description text:
+// WRONG:
+<p>SkillBuddy offers personalized and...</p>
+
+// CORRECT:
+<p>{t('footer.description')}</p>
+
+// Newsletter placeholder:
+// WRONG:
+<input placeholder="Your email here" />
+
+// CORRECT:
+<input placeholder={t('footer.emailPlaceholder')} />
+
+// Copyright text:
+// WRONG:
+<p>© 2025 SkillBuddy. All rights reserved.</p>
+
+// CORRECT:
+<p>{t('footer.copyright')}</p>
+```
+
+**Add ALL footer translation keys to every language file:**
+
+```json
+// en/translation.json — add these keys:
+{
+  "footer": {
+    "description": "SkillBuddy offers personalized and verified professionals to help users achieve their career goals efficiently.",
+    "servicesLinks": "Services Links",
+    "pages": "Pages",
+    "contact": "Contact",
+    "emailPlaceholder": "Your email here",
+    "copyright": "© 2025 SkillBuddy. All rights reserved.",
+    "subscribeButton": "Subscribe",
+    "followUs": "Follow Us"
+  }
+}
+
+// et/translation.json:
+{
+  "footer": {
+    "description": "SkillBuddy pakub personaliseeritud ja kontrollitud professionaale...",
+    "servicesLinks": "Teenuste lingid",
+    "pages": "Lehed",
+    "contact": "Kontakt",
+    "emailPlaceholder": "Teie e-post siin",
+    "copyright": "© 2025 SkillBuddy. Kõik õigused kaitstud.",
+    "subscribeButton": "Telli",
+    "followUs": "Jälgi meid"
+  }
+}
+
+// ru/translation.json:
+{
+  "footer": {
+    "description": "SkillBuddy предлагает персонализированных и проверенных специалистов...",
+    "servicesLinks": "Ссылки на услуги",
+    "pages": "Страницы",
+    "contact": "Контакт",
+    "emailPlaceholder": "Ваш email здесь",
+    "copyright": "© 2025 SkillBuddy. Все права защищены.",
+    "subscribeButton": "Подписаться",
+    "followUs": "Следите за нами"
+  }
+}
+
+// lv/translation.json:
+{
+  "footer": {
+    "description": "SkillBuddy piedāvā personalizētus un pārbaudītus profesionāļus...",
+    "servicesLinks": "Pakalpojumu saites",
+    "pages": "Lapas",
+    "contact": "Kontakts",
+    "emailPlaceholder": "Jūsu e-pasts šeit",
+    "copyright": "© 2025 SkillBuddy. Visas tiesības aizsargātas.",
+    "subscribeButton": "Abonēt",
+    "followUs": "Seko mums"
+  }
+}
+
+// lt/translation.json:
+{
+  "footer": {
+    "description": "SkillBuddy siūlo personalizuotus ir patikrintus profesionalus...",
+    "servicesLinks": "Paslaugų nuorodos",
+    "pages": "Puslapiai",
+    "contact": "Kontaktai",
+    "emailPlaceholder": "Jūsų el. paštas čia",
+    "copyright": "© 2025 SkillBuddy. Visos teisės saugomos.",
+    "subscribeButton": "Prenumeruoti",
+    "followUs": "Sekite mus"
+  }
+}
+```
+
+---
+
+## FIX 5 — LANGUAGE TRANSLATION: "Become a SkillBuddy" Page
+
+**Problem:** The Become a SkillBuddy application form page does not translate.
+
+**Fix — wrap EVERY text string in `t()` on this page:**
+
+```tsx
+// Page title:
+<h1>{t('becomeSkillbuddy.title')}</h1>
+// "Apply to Become a SkillBuddy Professional"
+
+// Left panel:
+<h2>{t('becomeSkillbuddy.panelHeading')}</h2>
+<p>{t('becomeSkillbuddy.panelText')}</p>
+
+// Form labels:
+<label>{t('becomeSkillbuddy.firstName')}</label>
+<label>{t('becomeSkillbuddy.lastName')}</label>
+<label>{t('becomeSkillbuddy.email')}</label>
+<label>{t('becomeSkillbuddy.phone')}</label>
+<label>{t('becomeSkillbuddy.address')}</label>
+<label>{t('becomeSkillbuddy.personalCode')}</label>
+<label>{t('becomeSkillbuddy.cvUpload')}</label>
+<label>{t('becomeSkillbuddy.category')}</label>
+<label>{t('becomeSkillbuddy.subcategory')}</label>
+<label>{t('becomeSkillbuddy.aboutYourself')}</label>
+
+// Placeholders:
+placeholder={t('becomeSkillbuddy.firstNamePlaceholder')}
+placeholder={t('becomeSkillbuddy.emailPlaceholder')}
+// etc.
+
+// Submit button:
+<button>{t('becomeSkillbuddy.submitButton')}</button>
+
+// Success message:
+<h3>{t('becomeSkillbuddy.successTitle')}</h3>
+<p>{t('becomeSkillbuddy.successMessage')}</p>
+
+// Error messages:
+{t('becomeSkillbuddy.personalCodeError')}
+{t('becomeSkillbuddy.requiredField')}
+```
+
+**Add to ALL 5 language files (`en`, `et`, `ru`, `lv`, `lt`):**
+
+```json
+// en/translation.json — add:
+{
+  "becomeSkillbuddy": {
+    "title": "Apply to Become a SkillBuddy Professional",
+    "subtitle": "Fill in your details and we'll be in touch within 48 hours.",
+    "panelHeading": "Join the SkillBuddy Family",
+    "panelText": "Become a verified SkillBuddy professional and start earning on your own terms.",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "address": "Address",
+    "personalCode": "Personal Code",
+    "personalCodeHint": "Must be exactly 11 digits",
+    "personalCodeError": "Personal code must be exactly 11 digits",
+    "cvUpload": "Upload CV / Resume (optional)",
+    "category": "Which category do you work in?",
+    "subcategory": "Select your specific service (optional)",
+    "aboutYourself": "Tell us more about yourself",
+    "aboutPlaceholder": "Describe your experience, skills, and why you want to join SkillBuddy...",
+    "termsText": "I agree to the Terms & Conditions and Privacy Policy",
+    "submitButton": "Submit Application",
+    "successTitle": "Application Received!",
+    "successMessage": "Thank you for applying! We'll review your application and get back to you within 48 hours.",
+    "backHome": "Back to Home",
+    "requiredField": "This field is required",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastNamePlaceholder": "Enter your last name",
+    "emailPlaceholder": "your@email.com",
+    "phonePlaceholder": "+372 000 0000",
+    "addressPlaceholder": "Street, City, Country"
+  }
+}
+```
+
+Translate all the above keys for `et`, `ru`, `lv`, `lt` languages as well with proper translations for each language.
+
+---
+
+## CHECKLIST
+
+- [ ] Navbar: `position: fixed`, `z-index: 9999`, frosted glass + border-bottom separator
+- [ ] Root layout `__root.tsx`: `<div style={{ paddingTop: '72px' }}>` wraps Outlet
+- [ ] No individual pages have their own paddingTop — only root handles it
+- [ ] Mobile navbar: `height: 60px`, page pushes down by 60px
+- [ ] Hamburger: animates open/close (3 lines → X)
+- [ ] Hamburger menu: closes when link clicked, closes when clicking outside
+- [ ] Mobile menu dropdown: slides down from navbar with animation
+- [ ] All card sections on mobile: VERTICAL stack (not horizontal scroll)
+- [ ] Earn Badges cards: vertical on mobile
+- [ ] Star Reward cards: vertical on mobile
+- [ ] How It Works steps: vertical on mobile with row layout (icon + text side by side)
+- [ ] App Showcase: stacks vertically on mobile
+- [ ] Testimonials: vertical stack on mobile
+- [ ] Footer: ALL text wrapped in `t()` including links, headings, description
+- [ ] Footer translation keys added to all 5 language files (en, et, ru, lv, lt)
+- [ ] Become a SkillBuddy page: ALL text wrapped in `t()`
+- [ ] Become a SkillBuddy translation keys added to all 5 language files
+- [ ] Changing language = entire site translates including footer and become page
+- [ ] Dark mode: navbar, mobile menu look correct
+- [ ] Light mode: navbar, mobile menu look correct
+- [ ] No existing functionality broken

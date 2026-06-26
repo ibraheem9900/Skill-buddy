@@ -4,8 +4,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Upload, Loader2, ArrowLeft, ChevronDown, Check } from "lucide-react";
-import { Navbar } from "@/components/navbar";
 import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -48,21 +48,6 @@ type FormData = {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-function validate(data: FormData): FormErrors {
-  const errors: FormErrors = {};
-  if (!data.firstName.trim()) errors.firstName = "First name is required";
-  if (!data.lastName.trim()) errors.lastName = "Last name is required";
-  if (!data.email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) errors.email = "Valid email is required";
-  if (!data.phone.trim()) errors.phone = "Phone number is required";
-  if (!data.address.trim()) errors.address = "Address is required";
-  if (!/^\d{11}$/.test(data.personalCode)) errors.personalCode = "Personal code must be exactly 11 digits";
-  if (!data.category) errors.category = "Please select a category";
-  if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = "Please write at least 50 characters";
-  if (!data.terms) errors.terms = "You must agree to the Terms & Conditions";
-  return errors;
-}
-
-/* ── Custom styled dropdown ──────────────────────────────────────────────────── */
 function CustomSelect({
   value,
   onChange,
@@ -152,6 +137,22 @@ function CustomSelect({
 
 function BecomeASkillBuddy() {
   const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const validate = (data: FormData): FormErrors => {
+    const errors: FormErrors = {};
+    if (!data.firstName.trim()) errors.firstName = t("becomeSkillbuddy.firstNameRequired");
+    if (!data.lastName.trim()) errors.lastName = t("becomeSkillbuddy.lastNameRequired");
+    if (!data.email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) errors.email = t("becomeSkillbuddy.emailRequired");
+    if (!data.phone.trim()) errors.phone = t("becomeSkillbuddy.phoneRequired");
+    if (!data.address.trim()) errors.address = t("becomeSkillbuddy.addressRequired");
+    if (!/^\d{11}$/.test(data.personalCode)) errors.personalCode = t("becomeSkillbuddy.personalCodeError");
+    if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
+    if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
+    if (!data.terms) errors.terms = t("becomeSkillbuddy.termsRequired");
+    return errors;
+  };
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -204,13 +205,11 @@ function BecomeASkillBuddy() {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Navbar />
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
           className="text-center max-w-md"
-          style={{ paddingTop: 80 }}
         >
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
@@ -221,14 +220,14 @@ function BecomeASkillBuddy() {
             <CheckCircle className="h-12 w-12 text-[#2D7A5F]" />
           </motion.div>
           <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-3xl font-extrabold mb-3">
-            Application Received! 🎉
+            {t("becomeSkillbuddy.successTitle")}
           </motion.h2>
           <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-muted-foreground mb-8 leading-relaxed">
-            Thank you for applying! Our team will review your application and get back to you within 48 hours.
+            {t("becomeSkillbuddy.successMessage")}
           </motion.p>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
             <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-[#2D7A5F] px-8 py-3.5 font-semibold text-white shadow-lg hover:bg-[#236B4F] transition">
-              Back to Home →
+              {t("becomeSkillbuddy.backHome")}
             </Link>
           </motion.div>
         </motion.div>
@@ -238,9 +237,7 @@ function BecomeASkillBuddy() {
 
   return (
     <div className="min-h-screen bg-background" style={{ overflowX: "hidden" }}>
-      <Navbar />
-
-      <div className="flex min-h-screen flex-col lg:flex-row" style={{ paddingTop: 64 }}>
+      <div className="flex min-h-[calc(100vh-72px)] flex-col lg:flex-row">
         {/* LEFT — Info Panel */}
         <div
           className="flex flex-col justify-center p-8 sm:p-12 lg:p-16 lg:w-[40%] text-white"
@@ -253,12 +250,18 @@ function BecomeASkillBuddy() {
               </div>
               <span className="text-xl font-extrabold tracking-tight">SkillBuddy</span>
             </div>
-            <h1 className="mb-4 font-extrabold text-2xl sm:text-3xl lg:text-4xl leading-tight">Join the SkillBuddy Family</h1>
+            <h1 className="mb-4 font-extrabold text-2xl sm:text-3xl lg:text-4xl leading-tight">
+              {t("becomeSkillbuddy.panelHeading")}
+            </h1>
             <p className="mb-8 text-white/80 text-sm sm:text-base leading-relaxed">
-              Become a verified SkillBuddy professional and start earning on your own terms. We connect you with thousands of clients across Estonia, Latvia, Lithuania and beyond.
+              {t("becomeSkillbuddy.panelText")}
             </p>
             <div className="space-y-4 mb-10">
-              {["Flexible working hours", "Competitive earnings in EUR", "Free Uber rides after Gold Badge status"].map((benefit) => (
+              {[
+                t("becomeSkillbuddy.benefit1"),
+                t("becomeSkillbuddy.benefit2"),
+                t("becomeSkillbuddy.benefit3"),
+              ].map((benefit) => (
                 <div key={benefit} className="flex items-center gap-3">
                   <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
                     <CheckCircle className="h-4 w-4" />
@@ -280,64 +283,98 @@ function BecomeASkillBuddy() {
             className="mx-auto max-w-2xl"
           >
             <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition">
-              <ArrowLeft className="h-4 w-4" /> Back to home
+              <ArrowLeft className="h-4 w-4" /> {t("becomeSkillbuddy.backToHome")}
             </Link>
 
-            <h2 className="mb-1 text-2xl sm:text-3xl font-extrabold">Apply to Become a SkillBuddy Professional</h2>
-            <p className="mb-8 text-sm text-muted-foreground">Fill in your details below and we'll be in touch within 48 hours.</p>
+            <h2 className="mb-1 text-2xl sm:text-3xl font-extrabold">{t("becomeSkillbuddy.title")}</h2>
+            <p className="mb-8 text-sm text-muted-foreground">{t("becomeSkillbuddy.subtitle")}</p>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
               {/* Name row */}
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 <div>
-                  <label className={labelClass}>First Name *</label>
-                  <input className={inputClass(errors.firstName)} placeholder="Enter your first name" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
+                  <label className={labelClass}>{t("becomeSkillbuddy.firstName")} *</label>
+                  <input
+                    className={inputClass(errors.firstName)}
+                    placeholder={t("becomeSkillbuddy.firstNamePlaceholder")}
+                    value={form.firstName}
+                    onChange={(e) => set("firstName", e.target.value)}
+                  />
                   {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Last Name *</label>
-                  <input className={inputClass(errors.lastName)} placeholder="Enter your last name" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
+                  <label className={labelClass}>{t("becomeSkillbuddy.lastName")} *</label>
+                  <input
+                    className={inputClass(errors.lastName)}
+                    placeholder={t("becomeSkillbuddy.lastNamePlaceholder")}
+                    value={form.lastName}
+                    onChange={(e) => set("lastName", e.target.value)}
+                  />
                   {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label className={labelClass}>Email Address *</label>
-                <input type="email" className={inputClass(errors.email)} placeholder="your@email.com" value={form.email} onChange={(e) => set("email", e.target.value)} />
+                <label className={labelClass}>{t("becomeSkillbuddy.email")} *</label>
+                <input
+                  type="email"
+                  className={inputClass(errors.email)}
+                  placeholder={t("becomeSkillbuddy.emailPlaceholder")}
+                  value={form.email}
+                  onChange={(e) => set("email", e.target.value)}
+                />
                 {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
               </div>
 
               {/* Phone */}
               <div>
-                <label className={labelClass}>Phone Number *</label>
-                <input type="tel" className={inputClass(errors.phone)} placeholder="+372 000 0000" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+                <label className={labelClass}>{t("becomeSkillbuddy.phone")} *</label>
+                <input
+                  type="tel"
+                  className={inputClass(errors.phone)}
+                  placeholder={t("becomeSkillbuddy.phonePlaceholder")}
+                  value={form.phone}
+                  onChange={(e) => set("phone", e.target.value)}
+                />
                 {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
               </div>
 
               {/* Address */}
               <div>
-                <label className={labelClass}>Address *</label>
-                <input className={inputClass(errors.address)} placeholder="Street, City, Country" value={form.address} onChange={(e) => set("address", e.target.value)} />
+                <label className={labelClass}>{t("becomeSkillbuddy.address")} *</label>
+                <input
+                  className={inputClass(errors.address)}
+                  placeholder={t("becomeSkillbuddy.addressPlaceholder")}
+                  value={form.address}
+                  onChange={(e) => set("address", e.target.value)}
+                />
                 {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
               </div>
 
               {/* Personal Code */}
               <div>
-                <label className={labelClass}>Personal Code *</label>
+                <label className={labelClass}>{t("becomeSkillbuddy.personalCode")} *</label>
                 <input
-                  type="tel" inputMode="numeric" pattern="[0-9]{11}" maxLength={11}
-                  className={inputClass(errors.personalCode)} placeholder="00000000000"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]{11}"
+                  maxLength={11}
+                  className={inputClass(errors.personalCode)}
+                  placeholder="00000000000"
                   value={form.personalCode}
-                  onChange={(e) => { const val = e.target.value.replace(/\D/g, "").slice(0, 11); set("personalCode", val); }}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    set("personalCode", val);
+                  }}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">{form.personalCode.length}/11 digits</p>
+                <p className="mt-1 text-xs text-muted-foreground">{form.personalCode.length}/11 — {t("becomeSkillbuddy.personalCodeHint")}</p>
                 {errors.personalCode && <p className="mt-1 text-xs text-red-500">{errors.personalCode}</p>}
               </div>
 
               {/* CV Upload */}
               <div>
-                <label className={labelClass}>CV / Resume (optional)</label>
+                <label className={labelClass}>{t("becomeSkillbuddy.cvUpload")}</label>
                 <div
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                   onDragLeave={() => setDragOver(false)}
@@ -351,46 +388,54 @@ function BecomeASkillBuddy() {
                     <p className="text-sm font-medium text-[#2D7A5F]">{cvFile.name}</p>
                   ) : (
                     <>
-                      <p className="text-sm font-medium">Drag &amp; drop or click to browse</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX — max 5MB</p>
+                      <p className="text-sm font-medium">{t("becomeSkillbuddy.cvDragDrop")}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("becomeSkillbuddy.cvFormats")}</p>
                     </>
                   )}
                 </div>
                 {cvError && <p className="mt-1 text-xs text-red-500">{cvError}</p>}
               </div>
 
-              {/* Category — Custom dropdown */}
+              {/* Category */}
               <div>
-                <label className={labelClass}>Which category do you work in? *</label>
+                <label className={labelClass}>{t("becomeSkillbuddy.category")} *</label>
                 <CustomSelect
                   value={form.category}
-                  onChange={(val) => { setForm((p) => ({ ...p, category: val, subcategory: "" })); if (errors.category) setErrors((p) => { const n = { ...p }; delete n.category; return n; }); }}
+                  onChange={(val) => {
+                    setForm((p) => ({ ...p, category: val, subcategory: "" }));
+                    if (errors.category) setErrors((p) => { const n = { ...p }; delete n.category; return n; });
+                  }}
                   options={CATEGORIES_LIST}
-                  placeholder="Select a category"
+                  placeholder={t("becomeSkillbuddy.categoryPlaceholder")}
                   error={errors.category}
                 />
                 {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
               </div>
 
-              {/* Subcategory — Optional, custom dropdown */}
+              {/* Subcategory */}
               <div>
-                <label className={labelClass}>Select your specific service <span className="text-muted-foreground font-normal">(optional)</span></label>
+                <label className={labelClass}>
+                  {t("becomeSkillbuddy.subcategory")}{" "}
+                  <span className="text-muted-foreground font-normal">{t("becomeSkillbuddy.subcategoryOptional")}</span>
+                </label>
                 <CustomSelect
                   value={form.subcategory}
                   onChange={(val) => set("subcategory", val)}
                   options={form.category ? (CATEGORY_SUBCATEGORIES[form.category] ?? []) : []}
-                  placeholder={form.category ? "Select a service (optional)" : "Select a category first"}
+                  placeholder={form.category ? t("becomeSkillbuddy.subcategoryPlaceholder") : t("becomeSkillbuddy.subcategoryFirst")}
                   disabled={!form.category}
                 />
               </div>
 
               {/* Bio */}
               <div>
-                <label className={labelClass}>Tell us more about yourself *</label>
+                <label className={labelClass}>{t("becomeSkillbuddy.aboutYourself")} *</label>
                 <textarea
                   className={`${inputClass(errors.bio)} resize-y`}
-                  placeholder="Describe your experience, skills, and why you want to join SkillBuddy..."
-                  rows={5} minLength={50} maxLength={1000}
+                  placeholder={t("becomeSkillbuddy.aboutPlaceholder")}
+                  rows={5}
+                  minLength={50}
+                  maxLength={1000}
                   style={{ minHeight: 120 }}
                   value={form.bio}
                   onChange={(e) => set("bio", e.target.value)}
@@ -404,12 +449,17 @@ function BecomeASkillBuddy() {
               {/* Terms */}
               <div>
                 <label className="flex cursor-pointer items-start gap-3">
-                  <input type="checkbox" checked={form.terms} onChange={(e) => set("terms", e.target.checked)} className="mt-0.5 h-4 w-4 rounded accent-[#2D7A5F] cursor-pointer flex-shrink-0" />
+                  <input
+                    type="checkbox"
+                    checked={form.terms}
+                    onChange={(e) => set("terms", e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded accent-[#2D7A5F] cursor-pointer flex-shrink-0"
+                  />
                   <span className="text-sm text-[#374151] dark:text-[#8B949E]">
-                    I agree to the{" "}
-                    <Link to="/terms" className="text-[#2D7A5F] underline hover:no-underline">Terms &amp; Conditions</Link>
-                    {" "}and{" "}
-                    <Link to="/privacy" className="text-[#2D7A5F] underline hover:no-underline">Privacy Policy</Link>
+                    {t("becomeSkillbuddy.termsText")}{" "}
+                    <Link to="/terms" className="text-[#2D7A5F] underline hover:no-underline">{t("becomeSkillbuddy.termsLink")}</Link>
+                    {" "}{t("becomeSkillbuddy.termsAnd")}{" "}
+                    <Link to="/privacy" className="text-[#2D7A5F] underline hover:no-underline">{t("becomeSkillbuddy.privacyLink")}</Link>
                   </span>
                 </label>
                 {errors.terms && <p className="mt-1 text-xs text-red-500">{errors.terms}</p>}
@@ -425,8 +475,8 @@ function BecomeASkillBuddy() {
                 style={{ background: "linear-gradient(135deg, #2D7A5F, #4CAF84)", boxShadow: "0 4px 20px rgba(45,122,95,0.35)" }}
               >
                 {loading ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" />Submitting...</>
-                ) : "Submit Application →"}
+                  <><Loader2 className="h-5 w-5 animate-spin" />{t("becomeSkillbuddy.submitting")}</>
+                ) : t("becomeSkillbuddy.submitButton")}
               </motion.button>
             </form>
           </motion.div>
