@@ -2,3 +2,5 @@
 - [i18n flat dict pattern](i18n-pattern.md) — all 5 locales (en/et/ru/lv/lt) live in one file; t() falls back to en then the raw key; sec.mostBooked kept for compat, sec.popularServices is the new heading key
 - [Vercel ESM createRequire fix](vercel-esm-require.md) — Node.js 20 ESM has no require(); Bun silently polyfills it masking the bug locally; must prepend createRequire polyfill to ssr-bundle.mjs
 - [Homepage snap-scroll architecture](homepage-snap-arch.md) — homepage bypasses SiteShell entirely; uses position:fixed snap container + separate fixed Navbar wrapper with motion slide-in; body overflow hidden on mount; wheel events intercepted on container for card-deck sections
+- [3D rotateX card flip pattern](3d-rotate-card-flip.md) — shared rotateCardVariants with rotateX + y + opacity; container needs perspective:"1000px", card needs transformStyle:"preserve-3d"; works for both SpecialOffers and WhatMakesUsSpecial sections
+- [useTheme in homepage](use-theme-homepage.md) — import useTheme from @/components/theme-provider (not next-themes); used in OfferCard for dark/light color switching inline; exported as named export from theme-provider.tsx
