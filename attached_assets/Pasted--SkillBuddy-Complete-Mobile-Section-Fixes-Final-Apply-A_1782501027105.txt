@@ -1,0 +1,782 @@
+# SkillBuddy — Complete Mobile & Section Fixes (Final)
+
+> Apply ALL fixes below. Do not break any existing desktop functionality.
+
+---
+
+## FIX 1 — REMOVE EXTRA GAP BETWEEN SECTIONS
+
+**Problem:** After navbar fix, large empty white space appears above sections on both desktop and mobile.
+
+```css
+/* Remove forced 100vh from sections on mobile */
+@media (max-width: 768px) {
+  section,
+  .section,
+  [class*="section-"],
+  [class*="-section"],
+  .snap-section,
+  [class*="snap-"] {
+    min-height: auto !important;
+    height: auto !important;
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+    margin-top: 0 !important;
+  }
+
+  main > *:first-child,
+  .page-content > *:first-child {
+    padding-top: 24px !important;
+    margin-top: 0 !important;
+  }
+}
+
+/* Desktop: reduce gap if sections shifted too far down */
+@media (min-width: 769px) {
+  section,
+  .section {
+    scroll-margin-top: 72px;
+  }
+}
+```
+
+---
+
+## FIX 2 — HAMBURGER MENU
+
+### A) Make it smaller:
+```css
+@media (max-width: 768px) {
+  .hamburger-button,
+  button[aria-label*="menu"],
+  button[aria-label*="Menu"] {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 6px !important;
+  }
+}
+```
+
+### B) Animate 3 lines → X smoothly:
+```tsx
+const [open, setOpen] = useState(false)
+
+<button onClick={() => setOpen(p => !p)}>
+  <motion.div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: 20 }}>
+    <motion.span
+      animate={open ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{ display: 'block', height: 2, background: 'currentColor', borderRadius: 2, width: 20 }}
+    />
+    <motion.span
+      animate={open ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
+      transition={{ duration: 0.2 }}
+      style={{ display: 'block', height: 2, background: 'currentColor', borderRadius: 2, width: 20 }}
+    />
+    <motion.span
+      animate={open ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{ display: 'block', height: 2, background: 'currentColor', borderRadius: 2, width: 20 }}
+    />
+  </motion.div>
+</button>
+```
+
+### C) RIGHT SIDE DRAWER (not top dropdown):
+```tsx
+{/* Backdrop */}
+<AnimatePresence>
+  {open && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={() => setOpen(false)}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9997,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+      }}
+    />
+  )}
+</AnimatePresence>
+
+{/* Right Drawer */}
+<AnimatePresence>
+  {open && (
+    <motion.div
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: '72vw',
+        maxWidth: '300px',
+        zIndex: 9998,
+        backgroundColor: 'var(--background, white)',
+        boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px',
+        overflowY: 'auto',
+      }}
+    >
+      {/* Close button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+        <button
+          onClick={() => setOpen(false)}
+          style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: 'currentColor' }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* SkillBuddy logo inside drawer */}
+      <div style={{ marginBottom: '32px', paddingLeft: '8px' }}>
+        <img src="/logo.png" alt="SkillBuddy" style={{ height: '32px' }} />
+      </div>
+
+      {/* Nav links */}
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+        {[
+          { label: 'Home', href: '/' },
+          { label: 'Services', href: '/services' },
+          { label: 'Jobs', href: '/jobs' },
+          { label: 'Careers', href: '/careers' },
+          { label: 'FAQs', href: '/faqs' },
+          { label: 'Contact Us', href: '/contact' },
+        ].map((link, i) => (
+          <motion.div
+            key={link.href}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05, duration: 0.2 }}
+          >
+            <a
+              href={link.href}
+              onClick={() => setOpen(false)}
+              style={{
+                display: 'block',
+                padding: '13px 16px',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: 500,
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+            >
+              {link.label}
+            </a>
+          </motion.div>
+        ))}
+      </nav>
+
+      {/* Auth buttons at bottom */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '24px' }}>
+        <a href="/auth/login" onClick={() => setOpen(false)}>
+          <button style={{
+            width: '100%', padding: '12px', borderRadius: '50px',
+            border: '1.5px solid #2D7A5F', background: 'transparent',
+            color: '#2D7A5F', fontWeight: 600, fontSize: '15px', cursor: 'pointer'
+          }}>
+            Log In
+          </button>
+        </a>
+        <a href="/auth/signup" onClick={() => setOpen(false)}>
+          <button style={{
+            width: '100%', padding: '12px', borderRadius: '50px',
+            background: '#2D7A5F', color: 'white',
+            fontWeight: 600, fontSize: '15px', border: 'none', cursor: 'pointer'
+          }}>
+            Sign Up
+          </button>
+        </a>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+---
+
+## FIX 3 — ALL CARDS: VERTICAL STACK ON MOBILE (No horizontal scroll)
+
+```css
+@media (max-width: 768px) {
+  /* Kill all horizontal scroll */
+  body { overflow-x: hidden !important; }
+  * { max-width: 100vw; box-sizing: border-box; }
+
+  /* All flex rows become columns */
+  .cards-row,
+  .cards-grid,
+  .badge-cards-container,
+  .tier-cards,
+  .reward-cards,
+  [class*="card-row"],
+  [class*="cards-row"],
+  [class*="cards-container"],
+  [class*="tier-row"],
+  [class*="badge-row"] {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    min-width: unset !important;
+    width: 100% !important;
+    gap: 16px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* All cards full width */
+  .card,
+  .tier-card,
+  .badge-card,
+  .reward-card,
+  [class*="-card"],
+  [class*="card-"] {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    flex-shrink: unset !important;
+  }
+}
+```
+
+---
+
+## FIX 4 — "FROM IDEA TO DONE IN 5 STEPS" (Mobile)
+
+**Problem:** Steps show horizontally, cut off, only 1 step visible. Looks bad.
+
+**Fix — Full vertical layout on mobile:**
+
+```css
+@media (max-width: 768px) {
+  /* Steps container → vertical */
+  .steps-container,
+  .how-it-works-steps,
+  [class*="steps-row"],
+  [class*="steps-container"] {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+
+  /* Each step card → horizontal layout (icon left, text right) */
+  .step-item,
+  .step-card,
+  [class*="step-item"],
+  [class*="step-card"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 16px !important;
+    background: var(--card-bg, #fff) !important;
+    border-radius: 16px !important;
+    border: 1px solid var(--border, #e5e7eb) !important;
+  }
+
+  /* Step circle/icon */
+  .step-icon,
+  .step-circle,
+  [class*="step-icon"],
+  [class*="step-number"] {
+    min-width: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    font-size: 18px !important;
+  }
+
+  /* Step text */
+  .step-title { font-size: 15px !important; font-weight: 700 !important; }
+  .step-description { font-size: 13px !important; }
+
+  /* Hide horizontal connecting lines */
+  .step-connector-horizontal,
+  [class*="connector-line"],
+  [class*="step-line"] {
+    display: none !important;
+  }
+}
+```
+
+---
+
+## FIX 5 — STAR REWARD / BADGE SECTION (Mobile)
+
+**Problem:** 3 badge cards squished side by side, text cut off, names showing only 1-2 letters.
+
+**Fix:**
+```css
+@media (max-width: 768px) {
+  /* Section wrapper */
+  .star-reward-section,
+  [class*="star-reward"],
+  [class*="badge-system"],
+  [class*="badge-reward"] {
+    padding: 32px 16px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Cards row → vertical */
+  .star-reward-cards,
+  .badge-cards-row,
+  [class*="reward-cards"],
+  [class*="badge-cards"] {
+    flex-direction: column !important;
+    gap: 16px !important;
+    min-width: unset !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Each badge card → full width */
+  .badge-card,
+  .star-card,
+  .tier-card,
+  [class*="badge-card"],
+  [class*="tier-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 20px !important;
+  }
+
+  /* Badge shield icon */
+  .badge-icon,
+  .shield-icon,
+  [class*="badge-icon"] {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  /* Badge name: show fully */
+  .badge-name,
+  .tier-name,
+  [class*="badge-title"],
+  [class*="tier-title"] {
+    font-size: 18px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    display: block !important;
+  }
+
+  /* Perks list */
+  .perks-list,
+  [class*="perk-item"] {
+    font-size: 13px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+}
+```
+
+---
+
+## FIX 6 — OUR VISION SECTION (Mobile)
+
+**Problem:** CTA "Join Our Team" / "Explore Careers" button not visible on mobile.
+
+```css
+@media (max-width: 768px) {
+  .vision-section,
+  [class*="vision-section"],
+  [class*="growing-together"] {
+    padding: 40px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 20px !important;
+    overflow: visible !important;
+  }
+
+  .vision-heading,
+  [class*="vision-heading"] {
+    font-size: clamp(22px, 6vw, 34px) !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* Pillar cards vertical */
+  .pillar-cards-container,
+  [class*="pillar-cards"],
+  [class*="vision-cards"] {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+    overflow-x: hidden !important;
+  }
+
+  .pillar-card,
+  [class*="pillar-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* CTA Button — force visible */
+  .vision-cta,
+  .join-team-btn,
+  [class*="vision-cta"],
+  [class*="explore-careers"],
+  [class*="cta-button"],
+  a[href="/careers"] > button,
+  button[class*="cta"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    margin-top: 20px !important;
+    padding: 14px 32px !important;
+    width: auto !important;
+    align-self: center !important;
+  }
+}
+```
+
+---
+
+## FIX 7 — APP SHOWCASE SECTION (Mobile)
+
+**Problem:** App section content overflows or doesn't show fully.
+
+```css
+@media (max-width: 768px) {
+  .app-showcase-section,
+  [class*="app-showcase"],
+  [class*="app-section"] {
+    padding: 40px 16px !important;
+    overflow: hidden !important;
+  }
+
+  /* Stack phone and text vertically */
+  .app-showcase-layout,
+  .app-content-row,
+  [class*="app-layout"],
+  [class*="app-row"] {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 28px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Phone mockup smaller */
+  .iphone-mockup,
+  .phone-frame,
+  [class*="phone-mockup"],
+  [class*="iphone"] {
+    width: 185px !important;
+    height: 385px !important;
+    min-width: unset !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Text section */
+  .app-text-content,
+  [class*="app-text"] {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .app-text-content h2 {
+    font-size: clamp(20px, 5vw, 28px) !important;
+  }
+
+  /* Store badges side by side */
+  .store-badges,
+  [class*="store-badges"],
+  [class*="app-badges"] {
+    flex-direction: row !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+}
+```
+
+---
+
+## FIX 8 — TESTIMONIALS: 20 Reviews, 3 at a Time, Auto-Carousel
+
+**Replace ALL existing testimonials with this complete implementation:**
+
+```tsx
+// Complete testimonials data — 20 reviews:
+const allTestimonials = [
+  { id: 1,  name: "Jessica Hart",     role: "Booked Deep Cleaning",     rating: 5, text: "Absolutely floored by how easy and professional this was. My place has never looked better." },
+  { id: 2,  name: "Andre Coleman",    role: "Booked Electrician",        rating: 5, text: "Showed up on time, fixed a wiring issue three other pros couldn't. I'm a customer for life." },
+  { id: 3,  name: "Maria Kalnina",    role: "Booked Pet Grooming",       rating: 5, text: "My dog looked amazing after the session. The groomer was gentle and professional. Will book again." },
+  { id: 4,  name: "Thomas Berg",      role: "Booked Plumber",            rating: 5, text: "Fixed my leak in under an hour. Fair price, clean work, no mess left behind. Highly recommend." },
+  { id: 5,  name: "Sophia Lane",      role: "Booked Makeup Artist",      rating: 5, text: "She made me look stunning for my wedding day. So talented and professional." },
+  { id: 6,  name: "David Ozols",      role: "Booked AC Repair",          rating: 4, text: "AC was dying in summer heat. Got it fixed same day. Absolute lifesaver!" },
+  { id: 7,  name: "Elena Petrová",    role: "Booked Home Tutor",         rating: 5, text: "My son's grades improved significantly after just 4 sessions. Couldn't be happier." },
+  { id: 8,  name: "Marcus Webb",      role: "Booked Furniture Assembly", rating: 5, text: "Set up my entire IKEA bedroom in 2 hours. Quick, careful, and professional throughout." },
+  { id: 9,  name: "Anna Jõgi",        role: "Booked Yoga Coach",         rating: 5, text: "Best yoga instructor I've ever had. She adapted every session to my needs perfectly." },
+  { id: 10, name: "Kevin Strauss",    role: "Booked Car Repair",         rating: 4, text: "Honest mechanic — rare find. Fixed what needed fixing and nothing else. Very fair pricing." },
+  { id: 11, name: "Lina Mazeika",     role: "Booked Photographer",       rating: 5, text: "The photos from my family shoot were breathtaking. A true professional artist." },
+  { id: 12, name: "Robert Tamm",      role: "Booked Locksmith",          rating: 5, text: "Locked out at midnight, arrived in 20 minutes. Friendly, fast and no damage to the door." },
+  { id: 13, name: "Priya Nair",       role: "Booked Massage Therapist",  rating: 5, text: "Best massage I've ever had. My back pain is completely gone after just 2 sessions." },
+  { id: 14, name: "Lukas Bērziņš",   role: "Booked Painter",            rating: 5, text: "Transformed my living room completely. Clean lines, no drips, excellent professional finish." },
+  { id: 15, name: "Sofia Mäkinen",    role: "Booked Babysitter",         rating: 5, text: "Our kids adore her. So responsible and fun. We book her every weekend without fail." },
+  { id: 16, name: "James Okafor",     role: "Booked IT Support",         rating: 5, text: "Fixed my laptop issues in 30 minutes. Knew exactly what to do, very knowledgeable." },
+  { id: 17, name: "Katrina Sild",     role: "Booked Nutritionist",       rating: 4, text: "Created a meal plan that actually works for my lifestyle. Already feeling so much better!" },
+  { id: 18, name: "Henri Virtanen",   role: "Booked Snow Removal",       rating: 5, text: "Showed up before I even woke up. Driveway perfectly clear. Amazing reliable service." },
+  { id: 19, name: "Amara Diallo",     role: "Booked Interior Designer",  rating: 5, text: "She understood my vision instantly. My apartment feels like a completely new space now." },
+  { id: 20, name: "Nikolai Lepp",     role: "Booked Dog Walker",         rating: 5, text: "My dog comes back happy and tired every time. So trustworthy and genuinely caring." },
+]
+
+// Carousel logic:
+function TestimonialsSection() {
+  const [page, setPage] = useState(0)
+  const [direction, setDirection] = useState(1)
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const perPage = isMobile ? 1 : 3
+  const totalPages = Math.ceil(allTestimonials.length / perPage)
+
+  // Auto-advance every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1)
+      setPage(prev => (prev + 1) % totalPages)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [totalPages])
+
+  const goTo = (newPage: number) => {
+    setDirection(newPage > page ? 1 : -1)
+    setPage(newPage)
+  }
+
+  const currentBatch = allTestimonials.slice(page * perPage, page * perPage + perPage)
+
+  return (
+    <section style={{ padding: '80px 24px', overflow: 'hidden' }}>
+      {/* Heading */}
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <p style={{ color: '#2D7A5F', fontWeight: 600, fontSize: '14px', letterSpacing: '1px', marginBottom: '8px' }}>
+          LOVED BY CUSTOMERS
+        </p>
+        <h2 style={{ fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 800, margin: 0 }}>
+          What people are saying
+        </h2>
+      </div>
+
+      {/* Cards with animation — NO FLICKERING */}
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={page}
+          custom={direction}
+          initial={{ opacity: 0, x: direction > 0 ? 60 : -60 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: direction > 0 ? -60 : 60 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: '20px',
+            maxWidth: '1100px',
+            margin: '0 auto',
+          }}
+        >
+          {currentBatch.map(review => (
+            <div
+              key={review.id}
+              style={{
+                background: 'var(--card-bg, white)',
+                border: '1px solid var(--border, #e5e7eb)',
+                borderRadius: '20px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
+              {/* Stars */}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {Array.from({ length: review.rating }).map((_, i) => (
+                  <span key={i} style={{ color: '#F59E0B', fontSize: '18px' }}>★</span>
+                ))}
+                {Array.from({ length: 5 - review.rating }).map((_, i) => (
+                  <span key={i} style={{ color: '#D1D5DB', fontSize: '18px' }}>★</span>
+                ))}
+              </div>
+
+              {/* Review text */}
+              <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, flex: 1, color: 'var(--text-primary, #111)' }}>
+                "{review.text}"
+              </p>
+
+              {/* Reviewer */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: '#2D7A5F', color: 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '14px', flexShrink: 0,
+                }}>
+                  {review.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '14px' }}>{review.name}</p>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{review.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Dot indicators */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '32px' }}>
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <motion.button
+            key={i}
+            onClick={() => goTo(i)}
+            animate={{
+              width: i === page ? 24 : 8,
+              backgroundColor: i === page ? '#2D7A5F' : '#D1D5DB',
+            }}
+            transition={{ duration: 0.3 }}
+            style={{
+              height: '8px', borderRadius: '4px',
+              border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+```
+
+---
+
+## FIX 9 — SERVICES PAGE: Category Buttons on Mobile
+
+```css
+@media (max-width: 768px) {
+  /* Category nav bar — force visible */
+  .category-nav-bar,
+  .services-categories,
+  [class*="category-nav"],
+  [class*="category-tab"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+
+  .category-nav-bar::-webkit-scrollbar { display: none !important; }
+
+  /* Each button */
+  .category-tab-btn,
+  .category-filter-btn,
+  [class*="cat-tab"],
+  [class*="category-btn"] {
+    display: inline-flex !important;
+    visibility: visible !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 50px !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  /* Slider arrow buttons */
+  .slider-prev,
+  .slider-next,
+  .category-arrow,
+  [class*="arrow-btn"] {
+    display: flex !important;
+    visibility: visible !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+  }
+}
+```
+
+---
+
+## FIX 10 — EARN BADGES SECTION (Mobile)
+
+```css
+@media (max-width: 768px) {
+  .elite-rewards-section,
+  .earn-badges-section,
+  [class*="elite-rewards"],
+  [class*="earn-badges"] {
+    padding: 40px 16px !important;
+    overflow-x: hidden !important;
+  }
+
+  .reward-tiers-row,
+  .badge-tiers,
+  [class*="tier-row"],
+  [class*="tiers-container"] {
+    flex-direction: column !important;
+    gap: 16px !important;
+    min-width: unset !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  .tier-card,
+  .elite-card,
+  [class*="tier-card"],
+  [class*="elite-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+  }
+}
+```
+
+---
+
+## CHECKLIST
+
+- [ ] Extra gap between sections removed — no large blank spaces
+- [ ] Mobile sections: `min-height: auto`, `height: auto` (not 100vh)
+- [ ] Hamburger: smaller (36px), smooth 3→X animation
+- [ ] Hamburger: opens RIGHT side drawer with spring animation
+- [ ] Drawer: backdrop blur, staggered nav links, auth buttons at bottom
+- [ ] Drawer: closes on link tap, backdrop tap, X button
+- [ ] All cards on mobile: vertical stack (flex-direction: column)
+- [ ] No horizontal scroll on any mobile section
+- [ ] 5 Steps: vertical on mobile, icon left + text right layout
+- [ ] Star Reward badges: vertical full-width cards, no text cutoff
+- [ ] Our Vision: CTA button force visible on mobile
+- [ ] App Showcase: stacked vertically on mobile
+- [ ] Testimonials: 20 reviews, 3 per page desktop / 1 per page mobile
+- [ ] Testimonials: auto-advance every 4 seconds, zero flickering
+- [ ] Testimonials: AnimatePresence mode="wait" for clean slide transitions
+- [ ] Testimonials: dot indicators, clickable to jump to any page
+- [ ] Services page: category buttons visible and horizontally scrollable on mobile
+- [ ] Earn Badges section: vertical stack on mobile
+- [ ] Dark mode: all mobile fixes look correct in dark theme
+- [ ] Light mode: all mobile fixes look correct in light theme
+- [ ] Desktop: nothing broken — all desktop layouts unchanged
+- [ ] No existing functionality broken

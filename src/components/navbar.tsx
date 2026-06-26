@@ -24,13 +24,12 @@ export function Navbar() {
   ] as const;
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuOpen && !(e.target as Element).closest(".navbar")) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
   return (
@@ -56,6 +55,7 @@ export function Navbar() {
           <Logo />
         </Link>
 
+        {/* Desktop nav links */}
         <nav className="hidden items-center gap-1 lg:flex">
           {navLinks.map((n) => (
             <Link
@@ -74,6 +74,7 @@ export function Navbar() {
           <div className="hidden sm:block">
             <LanguageSelector />
           </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -96,6 +97,7 @@ export function Navbar() {
             </motion.div>
           </Button>
 
+          {/* Desktop CTA buttons */}
           <div className="hidden md:flex items-center gap-2 pl-2">
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth/login">{t("nav.login")}</Link>
@@ -125,36 +127,41 @@ export function Navbar() {
             </Button>
           </div>
 
+          {/* Hamburger button — mobile only */}
           <button
-            className="lg:hidden ml-1 flex flex-col items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition text-foreground"
-            onClick={() => setMenuOpen((prev) => !prev)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMenuOpen((p) => !p)}
+            className="lg:hidden ml-1 flex items-center justify-center rounded-md hover:bg-accent transition text-foreground"
+            style={{ width: 36, height: 36, padding: 6, flexShrink: 0 }}
           >
             <motion.div
               animate={menuOpen ? "open" : "closed"}
-              className="flex flex-col gap-[5px]"
+              style={{ display: "flex", flexDirection: "column", gap: "4px", width: 20 }}
             >
               <motion.span
                 variants={{
                   closed: { rotate: 0, y: 0 },
-                  open: { rotate: 45, y: 7 },
+                  open: { rotate: 45, y: 6 },
                 }}
                 transition={{ duration: 0.25 }}
                 style={{
                   display: "block",
-                  height: "2px",
-                  width: "22px",
+                  height: 2,
+                  width: 20,
                   background: "currentColor",
                   borderRadius: 2,
                 }}
               />
               <motion.span
-                variants={{ closed: { opacity: 1 }, open: { opacity: 0 } }}
+                variants={{
+                  closed: { opacity: 1, scaleX: 1 },
+                  open: { opacity: 0, scaleX: 0 },
+                }}
                 transition={{ duration: 0.2 }}
                 style={{
                   display: "block",
-                  height: "2px",
-                  width: "22px",
+                  height: 2,
+                  width: 20,
                   background: "currentColor",
                   borderRadius: 2,
                 }}
@@ -162,13 +169,13 @@ export function Navbar() {
               <motion.span
                 variants={{
                   closed: { rotate: 0, y: 0 },
-                  open: { rotate: -45, y: -7 },
+                  open: { rotate: -45, y: -6 },
                 }}
                 transition={{ duration: 0.25 }}
                 style={{
                   display: "block",
-                  height: "2px",
-                  width: "22px",
+                  height: 2,
+                  width: 20,
                   background: "currentColor",
                   borderRadius: 2,
                 }}
@@ -178,78 +185,173 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Backdrop */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="bg-white/[0.98] dark:bg-[#090d12]/[0.98]"
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setMenuOpen(false)}
             style={{
-              position: "absolute",
-              top: "72px",
-              left: 0,
+              position: "fixed",
+              inset: 0,
+              top: 0,
+              zIndex: 9997,
+              backgroundColor: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Right-side drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            key="drawer"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 280, damping: 28 }}
+            className="bg-background"
+            style={{
+              position: "fixed",
+              top: 0,
               right: 0,
+              bottom: 0,
+              width: "72vw",
+              maxWidth: 300,
               zIndex: 9998,
-              borderBottom: "1px solid rgba(0,0,0,0.09)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-              overflow: "hidden",
+              boxShadow: "-8px 0 40px rgba(0,0,0,0.18)",
+              display: "flex",
+              flexDirection: "column",
+              padding: 20,
+              overflowY: "auto",
             }}
           >
-            <div
-              style={{
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-              }}
-            >
-              {navLinks.map((link) => (
-                <Link
+            {/* Close button */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
+              <button
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 22,
+                  cursor: "pointer",
+                  color: "currentColor",
+                  lineHeight: 1,
+                  padding: 4,
+                }}
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Logo inside drawer */}
+            <div style={{ marginBottom: 32, paddingLeft: 8 }}>
+              <Logo />
+            </div>
+
+            {/* Nav links */}
+            <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+              {navLinks.map((link, i) => (
+                <motion.div
                   key={link.to}
-                  to={link.to}
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-[10px] px-4 py-3 text-base font-semibold text-[#111111] dark:text-white hover:bg-accent transition"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.2 }}
                 >
-                  {link.label}
-                </Link>
+                  <Link
+                    to={link.to}
+                    onClick={() => setMenuOpen(false)}
+                    activeOptions={{ exact: link.to === "/" }}
+                    className="text-foreground hover:bg-accent"
+                    style={{
+                      display: "block",
+                      padding: "13px 16px",
+                      borderRadius: 12,
+                      fontSize: 16,
+                      fontWeight: 500,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
               ))}
-              <div className="mt-2 px-1">
+
+              <div style={{ marginTop: 8, paddingLeft: 8 }}>
                 <LanguageSelector />
               </div>
-              <div className="mt-3 grid gap-2 px-1">
-                <Button
-                  asChild
-                  variant="outline"
-                  onClick={() => setMenuOpen(false)}
+            </nav>
+
+            {/* Auth buttons at bottom */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
+              <Link to="/auth/login" onClick={() => setMenuOpen(false)}>
+                <button
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 50,
+                    border: "1.5px solid #2D7A5F",
+                    background: "transparent",
+                    color: "#2D7A5F",
+                    fontWeight: 600,
+                    fontSize: 15,
+                    cursor: "pointer",
+                  }}
                 >
-                  <Link to="/auth/login">{t("nav.login")}</Link>
-                </Button>
-                <Button asChild onClick={() => setMenuOpen(false)}>
-                  <Link to="/auth/signup">{t("nav.signup")}</Link>
-                </Button>
-                <Button
-                  asChild
-                  className="gap-1.5 rounded-full bg-[#2D7A5F] text-white hover:bg-[#236B4F]"
-                  onClick={() => setMenuOpen(false)}
+                  {t("nav.login")}
+                </button>
+              </Link>
+              <Link to="/auth/signup" onClick={() => setMenuOpen(false)}>
+                <button
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 50,
+                    background: "#2D7A5F",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: 15,
+                    border: "none",
+                    cursor: "pointer",
+                  }}
                 >
-                  <Link to="/become-a-skillbuddy">
-                    <img
-                      src={iconTransparent}
-                      alt="SkillBuddy"
-                      style={{
-                        width: 18,
-                        height: 18,
-                        objectFit: "contain",
-                        filter: "brightness(0) invert(1)",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span>{t("nav.becomeSkillBuddy")}</span>
-                  </Link>
-                </Button>
-              </div>
+                  {t("nav.signup")}
+                </button>
+              </Link>
+              <Link to="/become-a-skillbuddy" onClick={() => setMenuOpen(false)}>
+                <button
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 50,
+                    background: "#1a5c3a",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  <img
+                    src={iconTransparent}
+                    alt=""
+                    style={{ width: 16, height: 16, objectFit: "contain", filter: "brightness(0) invert(1)" }}
+                  />
+                  {t("nav.becomeSkillBuddy")}
+                </button>
+              </Link>
             </div>
           </motion.div>
         )}

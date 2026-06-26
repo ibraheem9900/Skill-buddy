@@ -122,6 +122,7 @@ function Home() {
     <>
       <div
         ref={containerRef}
+        className="snap-container"
         style={{
           height: "calc(100vh - 72px)",
           overflowY: "scroll",
@@ -151,6 +152,7 @@ function Home() {
           <div
             key={idx}
             ref={setRef(idx)}
+            className="snap-section"
             style={{
               scrollSnapAlign: "start",
               height: idx === 11 ? "auto" : "calc(100vh - 72px)",
@@ -1380,61 +1382,147 @@ function OurVisionSection({ isActive }: { isActive: boolean }) {
 }
 
 /* ── Section 11: Testimonials ────────────────────────────────────────────────── */
+const ALL_TESTIMONIALS = [
+  { id: 1,  name: "Jessica Hart",     role: "Booked Deep Cleaning",     rating: 5, text: "Absolutely floored by how easy and professional this was. My place has never looked better." },
+  { id: 2,  name: "Andre Coleman",    role: "Booked Electrician",        rating: 5, text: "Showed up on time, fixed a wiring issue three other pros couldn't. I'm a customer for life." },
+  { id: 3,  name: "Maria Kalnina",    role: "Booked Pet Grooming",       rating: 5, text: "My dog looked amazing after the session. The groomer was gentle and professional. Will book again." },
+  { id: 4,  name: "Thomas Berg",      role: "Booked Plumber",            rating: 5, text: "Fixed my leak in under an hour. Fair price, clean work, no mess left behind. Highly recommend." },
+  { id: 5,  name: "Sophia Lane",      role: "Booked Makeup Artist",      rating: 5, text: "She made me look stunning for my wedding day. So talented and professional." },
+  { id: 6,  name: "David Ozols",      role: "Booked AC Repair",          rating: 4, text: "AC was dying in summer heat. Got it fixed same day. Absolute lifesaver!" },
+  { id: 7,  name: "Elena Petrová",    role: "Booked Home Tutor",         rating: 5, text: "My son's grades improved significantly after just 4 sessions. Couldn't be happier." },
+  { id: 8,  name: "Marcus Webb",      role: "Booked Furniture Assembly", rating: 5, text: "Set up my entire IKEA bedroom in 2 hours. Quick, careful, and professional throughout." },
+  { id: 9,  name: "Anna Jõgi",        role: "Booked Yoga Coach",         rating: 5, text: "Best yoga instructor I've ever had. She adapted every session to my needs perfectly." },
+  { id: 10, name: "Kevin Strauss",    role: "Booked Car Repair",         rating: 4, text: "Honest mechanic — rare find. Fixed what needed fixing and nothing else. Very fair pricing." },
+  { id: 11, name: "Lina Mazeika",     role: "Booked Photographer",       rating: 5, text: "The photos from my family shoot were breathtaking. A true professional artist." },
+  { id: 12, name: "Robert Tamm",      role: "Booked Locksmith",          rating: 5, text: "Locked out at midnight, arrived in 20 minutes. Friendly, fast and no damage to the door." },
+  { id: 13, name: "Priya Nair",       role: "Booked Massage Therapist",  rating: 5, text: "Best massage I've ever had. My back pain is completely gone after just 2 sessions." },
+  { id: 14, name: "Lukas Bērziņš",   role: "Booked Painter",            rating: 5, text: "Transformed my living room completely. Clean lines, no drips, excellent professional finish." },
+  { id: 15, name: "Sofia Mäkinen",    role: "Booked Babysitter",         rating: 5, text: "Our kids adore her. So responsible and fun. We book her every weekend without fail." },
+  { id: 16, name: "James Okafor",     role: "Booked IT Support",         rating: 5, text: "Fixed my laptop issues in 30 minutes. Knew exactly what to do, very knowledgeable." },
+  { id: 17, name: "Katrina Sild",     role: "Booked Nutritionist",       rating: 4, text: "Created a meal plan that actually works for my lifestyle. Already feeling so much better!" },
+  { id: 18, name: "Henri Virtanen",   role: "Booked Snow Removal",       rating: 5, text: "Showed up before I even woke up. Driveway perfectly clear. Amazing reliable service." },
+  { id: 19, name: "Amara Diallo",     role: "Booked Interior Designer",  rating: 5, text: "She understood my vision instantly. My apartment feels like a completely new space now." },
+  { id: 20, name: "Nikolai Lepp",     role: "Booked Dog Walker",         rating: 5, text: "My dog comes back happy and tired every time. So trustworthy and genuinely caring." },
+];
+
 function TestimonialsSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
+  const [page, setPage] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const perPage = isMobile ? 1 : 3;
+  const totalPages = Math.ceil(ALL_TESTIMONIALS.length / perPage);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1);
+      setPage((prev) => (prev + 1) % totalPages);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [totalPages]);
+
+  const goTo = (newPage: number) => {
+    setDirection(newPage > page ? 1 : -1);
+    setPage(newPage);
+  };
+
+  const currentBatch = ALL_TESTIMONIALS.slice(page * perPage, page * perPage + perPage);
+
   return (
-    <section className="relative flex h-full flex-col justify-center overflow-hidden bg-background pt-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <motion.div className="mx-auto mb-8 max-w-2xl text-center" initial={{ opacity: 0, y: 30 }} animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }} transition={{ duration: 0.6, ease: easeExpo }}>
-          <p className="text-sm font-semibold text-primary">{t("sec.loved")}</p>
-          <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
-        </motion.div>
-        <style>{`
-          .testi-scroll::-webkit-scrollbar{height:4px}
-          .testi-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
-          .testi-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
-          .testi-cards{display:flex;gap:12px;padding:4px 2px 4px;min-width:max-content;scroll-snap-type:x mandatory}
-          .testi-card-wrap{min-width:82vw;flex-shrink:0;scroll-snap-align:start}
-          @media(min-width:640px){
-            .testi-scroll{overflow-x:visible!important}
-            .testi-cards{display:grid;grid-template-columns:repeat(2,1fr);min-width:0;padding:4px 0;scroll-snap-type:none}
-            .testi-card-wrap{min-width:0}
-          }
-          @media(min-width:1024px){
-            .testi-cards{grid-template-columns:repeat(4,1fr)}
-          }
-        `}</style>
-        <div className="testi-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
-          <div className="testi-cards">
-            {TESTIMONIALS.map((tt, i) => (
-              <div key={tt.id} className="testi-card-wrap">
-                <TestimonialCard tt={tt} isActive={isActive} delay={i * 0.14} />
+    <section style={{ padding: "80px 24px", overflow: "hidden", background: "var(--background)" }}>
+      <motion.div
+        className="mx-auto mb-10 max-w-2xl text-center"
+        initial={{ opacity: 0, y: 30 }}
+        animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+        transition={{ duration: 0.6, ease: easeExpo }}
+      >
+        <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-2">{t("sec.loved")}</p>
+        <h2 className="font-display text-2xl font-extrabold sm:text-4xl">{t("sec.testimonials")}</h2>
+      </motion.div>
+
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={`${page}-${perPage}`}
+          custom={direction}
+          initial={{ opacity: 0, x: direction > 0 ? 60 : -60 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: direction > 0 ? -60 : 60 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+            gap: 20,
+            maxWidth: 1100,
+            margin: "0 auto",
+          }}
+        >
+          {currentBatch.map((review) => (
+            <div
+              key={review.id}
+              style={{
+                background: "var(--card, white)",
+                border: "1px solid var(--border, #e5e7eb)",
+                borderRadius: 20,
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
+              <div style={{ display: "flex", gap: 4 }}>
+                {Array.from({ length: review.rating }).map((_, i) => (
+                  <span key={i} style={{ color: "#F59E0B", fontSize: 18 }}>★</span>
+                ))}
+                {Array.from({ length: 5 - review.rating }).map((_, i) => (
+                  <span key={i} style={{ color: "#D1D5DB", fontSize: 18 }}>★</span>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, flex: 1, color: "var(--foreground, #111)" }}>
+                "{review.text}"
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%",
+                  background: "#2D7A5F", color: "white",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 700, fontSize: 14, flexShrink: 0,
+                }}>
+                  {review.name.split(" ").map((n) => n[0]).join("")}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "var(--foreground, #111)" }}>{review.name}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#6B7280" }}>{review.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 32 }}>
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <motion.button
+            key={i}
+            onClick={() => goTo(i)}
+            animate={{
+              width: i === page ? 24 : 8,
+              backgroundColor: i === page ? "#2D7A5F" : "#D1D5DB",
+            }}
+            transition={{ duration: 0.3 }}
+            style={{ height: 8, borderRadius: 4, border: "none", cursor: "pointer", padding: 0 }}
+          />
+        ))}
       </div>
     </section>
-  );
-}
-
-function TestimonialCard({ tt, isActive, delay }: { tt: typeof TESTIMONIALS[0]; isActive: boolean; delay: number }) {
-  return (
-    <motion.div style={{ willChange: "transform" }} initial={{ opacity: 0, scale: 0.88, y: 40 }} animate={isActive ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.88, y: 40 }} transition={{ duration: 0.6, delay: isActive ? delay : 0, ease: easeExpo }} whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }} whileTap={{ scale: 0.98 }}>
-      <motion.div animate={isActive ? { y: [0, -5, 0] } : {}} transition={{ duration: 4, delay: delay * 2, repeat: Infinity, ease: "easeInOut" }} className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-card">
-        <div className="flex gap-0.5 text-warning">
-          {Array.from({ length: tt.rating }).map((_, j) => <Star key={j} className="h-4 w-4 fill-current text-yellow-400" />)}
-        </div>
-        <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/90">"{tt.text}"</p>
-        <div className="mt-4 flex items-center gap-3">
-          <img src={tt.avatar} alt={tt.name} className="h-10 w-10 rounded-full" />
-          <div>
-            <div className="text-sm font-semibold">{tt.name}</div>
-            <div className="text-xs text-muted-foreground">{tt.role}</div>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 

@@ -204,86 +204,378 @@
   }
 }
 
-/* ── Mobile: vertical card stacking ───────────────────────────────────────── */
+/* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
 @media (max-width: 768px) {
-  .badge-tiers-row,
-  .elite-rewards-cards,
-  .star-reward-cards,
-  .badge-reward-cards,
-  .testimonials-container,
-  .testimonials-grid {
-    flex-direction: column !important;
-    overflow-x: hidden !important;
+  body { overflow-x: hidden !important; }
+  * { max-width: 100vw; box-sizing: border-box; }
+
+  /* Disable snap container on mobile */
+  .snap-container {
+    height: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: none !important;
   }
 
-  .badge-tier-card,
-  .testimonial-card {
+  /* Each snap section: auto height, no overflow hidden */
+  .snap-section {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    scroll-snap-align: none !important;
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+
+  /* First section no extra top padding */
+  .snap-section:first-child {
+    padding-top: 0 !important;
+  }
+}
+
+/* Desktop: keep scroll margin for anchor links */
+@media (min-width: 769px) {
+  section, .section { scroll-margin-top: 72px; }
+}
+
+/* ── FIX 2A: Hamburger button size ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  button[aria-label="Open menu"],
+  button[aria-label="Close menu"] {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 6px !important;
+  }
+}
+
+/* ── FIX 3: All cards vertical stack on mobile ────────────────────────────── */
+@media (max-width: 768px) {
+  /* All flex rows become columns */
+  .cards-row,
+  .cards-grid,
+  .badge-cards-container,
+  .tier-cards,
+  .reward-cards,
+  [class*="card-row"],
+  [class*="cards-row"],
+  [class*="cards-container"],
+  [class*="tier-row"],
+  [class*="badge-row"] {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    min-width: unset !important;
+    width: 100% !important;
+    gap: 16px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* All cards full width */
+  .card,
+  .tier-card,
+  .badge-card,
+  .reward-card,
+  [class*="-card"],
+  [class*="card-"] {
     width: 100% !important;
     min-width: unset !important;
+    max-width: 100% !important;
     flex-shrink: unset !important;
   }
+}
 
+/* ── FIX 4: "From idea to done in 5 steps" vertical on mobile ─────────────── */
+@media (max-width: 768px) {
   .steps-container,
-  .how-it-works-steps {
+  .how-it-works-steps,
+  [class*="steps-row"],
+  [class*="steps-container"] {
     flex-direction: column !important;
     overflow-x: hidden !important;
-    gap: 24px !important;
+    gap: 16px !important;
+    width: 100% !important;
   }
 
-  .step-item {
-    width: 100% !important;
+  .step-item,
+  .step-card,
+  [class*="step-item"],
+  [class*="step-card"] {
+    display: flex !important;
     flex-direction: row !important;
     align-items: flex-start !important;
     gap: 16px !important;
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 16px !important;
+    background: var(--card, #fff) !important;
+    border-radius: 16px !important;
+    border: 1px solid var(--border, #e5e7eb) !important;
   }
 
-  .step-connector {
-    width: 2px !important;
-    height: 24px !important;
-    margin-left: 24px !important;
-    background: #2D7A5F !important;
+  .step-icon,
+  .step-circle,
+  [class*="step-icon"],
+  [class*="step-number"] {
+    min-width: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    font-size: 18px !important;
   }
 
-  .app-showcase-layout {
+  .step-title { font-size: 15px !important; font-weight: 700 !important; }
+  .step-description { font-size: 13px !important; }
+
+  .step-connector-horizontal,
+  [class*="connector-line"],
+  [class*="step-line"] {
+    display: none !important;
+  }
+
+  /* Mobile horizontal scroll for steps — convert to vertical */
+  .steps-scroll { overflow-x: hidden !important; }
+  .steps-row {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: unset !important;
+    gap: 12px !important;
+  }
+  .step-mob {
+    min-width: unset !important;
+    width: 100% !important;
+  }
+}
+
+/* ── FIX 5: Star Reward / Badge section vertical on mobile ────────────────── */
+@media (max-width: 768px) {
+  .star-reward-section,
+  [class*="star-reward"],
+  [class*="badge-system"],
+  [class*="badge-reward"] {
+    padding: 32px 16px !important;
+    overflow-x: hidden !important;
+  }
+
+  .star-reward-cards,
+  .badge-cards-row,
+  [class*="reward-cards"],
+  [class*="badge-cards"] {
+    flex-direction: column !important;
+    gap: 16px !important;
+    min-width: unset !important;
+    overflow-x: hidden !important;
+  }
+
+  .badge-card,
+  .star-card,
+  .tier-card,
+  [class*="badge-card"],
+  [class*="tier-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 20px !important;
+  }
+
+  .badge-icon,
+  .shield-icon,
+  [class*="badge-icon"] {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .badge-name,
+  .tier-name,
+  [class*="badge-title"],
+  [class*="tier-title"] {
+    font-size: 18px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    display: block !important;
+  }
+
+  .perks-list,
+  [class*="perk-item"] {
+    font-size: 13px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+}
+
+/* ── FIX 6: Our Vision CTA visible on mobile ──────────────────────────────── */
+@media (max-width: 768px) {
+  .vision-section,
+  [class*="vision-section"],
+  [class*="growing-together"] {
+    padding: 40px 16px !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    overflow-x: hidden !important;
-    gap: 32px !important;
+    gap: 20px !important;
+    overflow: visible !important;
   }
 
-  .iphone-mockup {
-    width: 200px !important;
-    height: 420px !important;
-  }
-
-  .app-text-content {
+  .vision-heading,
+  [class*="vision-heading"] {
+    font-size: clamp(22px, 6vw, 34px) !important;
     text-align: center !important;
-    padding: 0 16px !important;
+    white-space: normal !important;
   }
 
-  .cards-row,
-  .cards-grid,
-  [class*="card-row"],
-  [class*="card-grid"],
-  [class*="cards-container"] {
+  .pillar-cards-container,
+  [class*="pillar-cards"],
+  [class*="vision-cards"] {
     flex-direction: column !important;
-    overflow-x: hidden !important;
-    min-width: unset !important;
     width: 100% !important;
+    gap: 12px !important;
+    overflow-x: hidden !important;
+  }
+
+  .pillar-card,
+  [class*="pillar-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  .vision-cta,
+  .join-team-btn,
+  [class*="vision-cta"],
+  [class*="explore-careers"],
+  [class*="cta-button"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    margin-top: 20px !important;
+    padding: 14px 32px !important;
+    width: auto !important;
+    align-self: center !important;
+  }
+}
+
+/* ── FIX 7: App Showcase vertical on mobile ───────────────────────────────── */
+@media (max-width: 768px) {
+  .app-showcase-section,
+  [class*="app-showcase"],
+  [class*="app-section"] {
+    padding: 40px 16px !important;
+    overflow: hidden !important;
+  }
+
+  .app-showcase-layout,
+  .app-content-row,
+  [class*="app-layout"],
+  [class*="app-row"] {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 28px !important;
+    overflow-x: hidden !important;
+  }
+
+  .iphone-mockup,
+  .phone-frame,
+  [class*="phone-mockup"],
+  [class*="iphone"] {
+    width: 185px !important;
+    height: 385px !important;
+    min-width: unset !important;
+    flex-shrink: 0 !important;
+  }
+
+  .app-text-content,
+  [class*="app-text"] {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .app-text-content h2 { font-size: clamp(20px, 5vw, 28px) !important; }
+
+  .store-badges,
+  [class*="store-badges"],
+  [class*="app-badges"] {
+    flex-direction: row !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+}
+
+/* ── FIX 9: Services page category buttons horizontal scroll on mobile ─────── */
+@media (max-width: 768px) {
+  .category-nav-bar,
+  .services-categories,
+  [class*="category-nav"],
+  [class*="category-tab"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+
+  .category-nav-bar::-webkit-scrollbar { display: none !important; }
+
+  .category-tab-btn,
+  .category-filter-btn,
+  [class*="cat-tab"],
+  [class*="category-btn"] {
+    display: inline-flex !important;
+    visibility: visible !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 50px !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .slider-prev,
+  .slider-next,
+  .category-arrow,
+  [class*="arrow-btn"] {
+    display: flex !important;
+    visibility: visible !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* ── FIX 10: Earn Badges section vertical on mobile ──────────────────────── */
+@media (max-width: 768px) {
+  .elite-rewards-section,
+  .earn-badges-section,
+  [class*="elite-rewards"],
+  [class*="earn-badges"] {
+    padding: 40px 16px !important;
+    overflow-x: hidden !important;
+  }
+
+  .reward-tiers-row,
+  .badge-tiers,
+  [class*="tier-row"],
+  [class*="tiers-container"] {
+    flex-direction: column !important;
     gap: 16px !important;
-  }
-
-  .card,
-  [class*="-card"],
-  [class*="card-"] {
     min-width: unset !important;
+    overflow-x: hidden !important;
     width: 100% !important;
-    flex-shrink: unset !important;
   }
 
-  .mobile-scroll-container,
-  [class*="scroll-container"] {
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
+  .tier-card,
+  .elite-card,
+  [class*="tier-card"],
+  [class*="elite-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    padding: 20px !important;
   }
 }
