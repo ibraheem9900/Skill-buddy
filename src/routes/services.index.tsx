@@ -265,7 +265,7 @@ function CategorySlider({
 
   return (
     <div>
-      <div className="relative px-8 sm:px-10">
+      <div className="relative" style={{ paddingLeft: 44, paddingRight: 44 }}>
         <div ref={emblaRef} className="overflow-hidden">
           <div className="flex gap-2 sm:gap-3">
             {allCategories.map((c) => (
@@ -282,22 +282,38 @@ function CategorySlider({
         </div>
 
         <button
+          type="button"
           onClick={scrollPrev}
           disabled={!canPrev}
           aria-label="Previous categories"
-          className="absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
-          style={{ minWidth: 40, minHeight: 40 }}
+          className="absolute top-1/2 z-10 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
+          style={{
+            left: 0,
+            width: 36,
+            height: 36,
+            minWidth: 36,
+            minHeight: 36,
+            transform: "translateY(-50%)",
+          }}
         >
-          <ChevronLeft className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+          <ChevronLeft className="h-4 w-4 text-primary" />
         </button>
         <button
+          type="button"
           onClick={scrollNext}
           disabled={!canNext}
           aria-label="Next categories"
-          className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition hover:bg-primary/10 disabled:opacity-40 sm:h-10 sm:w-10"
-          style={{ minWidth: 40, minHeight: 40 }}
+          className="absolute top-1/2 z-10 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
+          style={{
+            right: 0,
+            width: 36,
+            height: 36,
+            minWidth: 36,
+            minHeight: 36,
+            transform: "translateY(-50%)",
+          }}
         >
-          <ChevronRight className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+          <ChevronRight className="h-4 w-4 text-primary" />
         </button>
       </div>
 

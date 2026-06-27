@@ -239,31 +239,71 @@
   50% { box-shadow: 0 0 24px rgba(62, 207, 142, 0.7), 0 0 40px rgba(62, 207, 142, 0.2); }
 }
 
+/* ── Snap scroll: desktop defaults (overridden by @media below on mobile) ──── */
+.snap-container {
+  position: relative;
+  z-index: 10;
+  scrollbar-width: none;
+  /* Desktop: fixed-height viewport, mandatory snap */
+  height: calc(100vh - 72px);
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  width: 100%;
+}
+.snap-container::-webkit-scrollbar { display: none; }
+
+.snap-section {
+  scroll-snap-align: start;
+  height: calc(100vh - 72px);
+  min-height: calc(100vh - 72px);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* Footer section always auto height */
+.snap-section-footer {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  scroll-snap-align: none !important;
+}
+
 /* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
 @media (max-width: 768px) {
   body { overflow-x: hidden !important; }
   * { max-width: 100vw; box-sizing: border-box; }
 
-  /* Disable snap container on mobile */
+  /* Snap container: normal document scroll on mobile */
   .snap-container {
     height: auto !important;
     overflow-y: visible !important;
     scroll-snap-type: none !important;
   }
 
-  /* Each snap section: auto height, no overflow hidden */
+  /* Each snap section: natural height, no clipping */
   .snap-section {
     height: auto !important;
-    min-height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     scroll-snap-align: none !important;
-    padding-top: 40px !important;
-    padding-bottom: 40px !important;
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+    width: 100% !important;
   }
 
-  /* First section no extra top padding */
+  /* Hero section: enough height to fill screen */
   .snap-section:first-child {
     padding-top: 0 !important;
+    min-height: 100svh !important;
+  }
+
+  /* Inner sections: remove h-full so they size by content */
+  .snap-section section {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 }
 

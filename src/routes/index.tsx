@@ -81,6 +81,9 @@ function Home() {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(SECTION_COUNT).fill(null));
   const [activeSection, setActiveSection] = useState(0);
   const activeSectionRef = useRef(0);
+  /* On mobile: once a section enters the viewport it stays "active" forever
+     so animations play once and remain visible as the user scrolls. */
+  const [seenSections, setSeenSections] = useState<Set<number>>(new Set([0]));
   const [popularServicesCard, setPopularServicesCard] = useState(0);
   const popularServicesCardRef = useRef(0);
   const isAnimatingRef = useRef(false);
@@ -97,6 +100,7 @@ function Home() {
     setTimeout(() => { isAnimatingRef.current = false; }, 400);
   }, []);
 
+  /* Lock body scroll on desktop only */
   useEffect(() => {
     if (isMobile) return;
     document.documentElement.style.overflow = "hidden";
@@ -109,6 +113,9 @@ function Home() {
     };
   }, [isMobile]);
 
+  /* Intersection observers:
+     - Mobile: add section to seenSections (never remove → animations stay visible)
+     - Desktop: update activeSection (snap-scroll, one section at a time) */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -118,10 +125,21 @@ function Home() {
       const obs = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) setActiveSection(idx);
+            if (isMobile) {
+              if (entry.isIntersecting) {
+                setSeenSections((prev) => {
+                  if (prev.has(idx)) return prev;
+                  return new Set([...prev, idx]);
+                });
+              }
+            } else {
+              if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+                setActiveSection(idx);
+              }
+            }
           });
         },
-        { threshold: 0.5, root: isMobile ? null : container }
+        { threshold: isMobile ? 0.1 : 0.5, root: isMobile ? null : container }
       );
       obs.observe(el);
       observers.push(obs);
@@ -133,49 +151,43 @@ function Home() {
     sectionRefs.current[idx] = el;
   }, []);
 
+  /* isActive: on mobile = "has this section ever been seen", on desktop = "currently snapped" */
+  const getIsActive = useCallback((idx: number): boolean => {
+    return isMobile ? seenSections.has(idx) : activeSection === idx;
+  }, [isMobile, seenSections, activeSection]);
+
   return (
     <>
+      {/* snap-container: desktop = snap-scroll fixed viewport, mobile = normal flow.
+          CSS handles the layout via @media; suppressHydrationWarning avoids
+          SSR/client mismatch from isMobile starting as false on the server. */}
       <div
         ref={containerRef}
         className="snap-container"
-        style={{
-          height: isMobile ? "auto" : "calc(100vh - 72px)",
-          overflowY: isMobile ? "visible" : "scroll",
-          scrollSnapType: isMobile ? "none" : "y mandatory",
-          scrollbarWidth: "none",
-          position: "relative",
-          zIndex: 10,
-        }}
+        suppressHydrationWarning
       >
         <style>{`::-webkit-scrollbar{display:none}`}</style>
         {(
           [
-            <HeroSection isActive={activeSection === 0} />,
-            <CategoriesSection isActive={activeSection === 1} />,
-            <EliteRewardsSection isActive={activeSection === 2} />,
-            <UberRewardsBanner isActive={activeSection === 3} />,
-            <SpecialOffersSection isActive={activeSection === 4} />,
-            <PopularServicesSection isActive={activeSection === 5} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
-            <HowItWorksSection isActive={activeSection === 6} />,
-            <WhatMakesUsSpecialSection isActive={activeSection === 7} />,
-            <AppShowcaseSection isActive={activeSection === 8} />,
-            <OurVisionSection isActive={activeSection === 9} />,
-            <TestimonialsSection isActive={activeSection === 10} />,
-            <FooterSection isActive={activeSection === 11} />,
+            <HeroSection isActive={getIsActive(0)} />,
+            <CategoriesSection isActive={getIsActive(1)} />,
+            <EliteRewardsSection isActive={getIsActive(2)} />,
+            <UberRewardsBanner isActive={getIsActive(3)} />,
+            <SpecialOffersSection isActive={getIsActive(4)} />,
+            <PopularServicesSection isActive={getIsActive(5)} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
+            <HowItWorksSection isActive={getIsActive(6)} />,
+            <WhatMakesUsSpecialSection isActive={getIsActive(7)} />,
+            <AppShowcaseSection isActive={getIsActive(8)} />,
+            <OurVisionSection isActive={getIsActive(9)} />,
+            <TestimonialsSection isActive={getIsActive(10)} />,
+            <FooterSection isActive={getIsActive(11)} />,
           ] as ReactElement[]
         ).map((child, idx) => (
           <div
             key={idx}
             ref={setRef(idx)}
-            className="snap-section"
-            style={{
-              scrollSnapAlign: isMobile ? "none" : "start",
-              height: (isMobile || idx === 11) ? "auto" : "calc(100vh - 72px)",
-              minHeight: (isMobile || idx === 11) ? 0 : "calc(100vh - 72px)",
-              overflow: isMobile ? "visible" : "hidden",
-              position: "relative",
-              flexShrink: 0,
-            }}
+            className={`snap-section${idx === 11 ? " snap-section-footer" : ""}`}
+            suppressHydrationWarning
           >
             {child}
           </div>
@@ -482,7 +494,7 @@ const ELITE_BADGES = [
 function EliteRewardsSection({ isActive }: { isActive: boolean }) {
   const navigate = useNavigate();
   return (
-    <section className="relative flex h-full flex-col justify-center overflow-hidden dark:bg-[#0D1117] bg-[#F0FDF4] pt-16">
+    <section className="relative flex h-full flex-col justify-center overflow-hidden dark:bg-[#0D1117] bg-[#F0FDF4] py-8">
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6">
         <motion.div
           className="mb-3 flex justify-center"
@@ -584,7 +596,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
         </div>
 
         <motion.div
-          className="mt-5 flex justify-center"
+          className="mt-4 flex justify-center pb-2"
           initial={{ opacity: 0, y: 20 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.4, delay: isActive ? 0.5 : 0 }}
@@ -594,11 +606,11 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             animate={isActive ? {
-              boxShadow: ["0 0 20px rgba(45,122,95,0.3)", "0 0 40px rgba(45,122,95,0.6)", "0 0 20px rgba(45,122,95,0.3)"],
+              boxShadow: ["0 0 20px rgba(62,207,142,0.3)", "0 0 40px rgba(62,207,142,0.6)", "0 0 20px rgba(62,207,142,0.3)"],
             } : {}}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             style={{
-              background: "linear-gradient(135deg, #2D7A5F, #4CAF84)", color: "white",
+              background: "linear-gradient(135deg, #3ECF8E, #2DB87A)", color: "white",
               padding: "14px 36px", borderRadius: "50px",
               fontSize: "clamp(14px, 3vw, 16px)", fontWeight: "700", border: "none", cursor: "pointer",
             }}
