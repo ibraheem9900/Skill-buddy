@@ -187,21 +187,56 @@
 
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
 .navbar {
-  background-color: rgba(255, 255, 255, 0.98) !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  background-color: rgba(255, 255, 255, 0.97) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border-bottom: 1.5px solid rgba(0, 0, 0, 0.09) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06) !important;
 }
 
 .dark .navbar {
-  background-color: rgba(9, 13, 18, 0.98) !important;
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.07) !important;
+  background-color: rgba(9, 13, 18, 0.97) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5) !important;
 }
 
 @media (max-width: 768px) {
   .navbar {
     height: 60px !important;
   }
+}
+
+/* ── Accent green (replaces yellow-green) ─────────────────────────────────── */
+:root {
+  --accent-green: #3ECF8E;
+  --accent-green-hover: #2DB87A;
+  --accent-green-glow: rgba(62, 207, 142, 0.35);
+}
+
+/* ── Become a SkillBuddy button ───────────────────────────────────────────── */
+.become-skillbuddy-btn {
+  background: linear-gradient(135deg, #3ECF8E, #2DB87A) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: none !important;
+}
+.become-skillbuddy-btn:hover {
+  transform: scale(1.05) translateY(-1px) !important;
+  background: linear-gradient(135deg, #2DB87A, #3ECF8E) !important;
+}
+
+@keyframes accentGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(62, 207, 142, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(62, 207, 142, 0.7), 0 0 40px rgba(62, 207, 142, 0.2); }
 }
 
 /* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
@@ -545,6 +580,66 @@
     width: 32px !important;
     height: 32px !important;
     flex-shrink: 0 !important;
+  }
+}
+
+/* ── How It Works: step card hover — no transparency in dark mode ─────────── */
+.step-card:hover,
+.step-item:hover,
+[class*="step-card"]:hover {
+  background-color: #f0fdf9 !important;
+  border-color: #3ECF8E !important;
+}
+.dark .step-card:hover,
+.dark .step-item:hover,
+.dark [class*="step-card"]:hover {
+  background-color: #1C2128 !important;
+  border-color: #3ECF8E !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Careers hero: all text white on green background ─────────────────────── */
+.careers-hero *,
+section.careers-hero *,
+[class*="careers-hero"] * {
+  color: white !important;
+}
+[class*="careers-hero"] .stat-number,
+[class*="stat-number"] {
+  color: white !important;
+  font-weight: 800 !important;
+}
+[class*="careers-hero"] .stat-label,
+[class*="stat-label"] {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* ── Earn Badges section: remove top gap ─────────────────────────────────── */
+.earn-badges-section,
+[class*="earn-badges"],
+[class*="elite-rewards"] {
+  margin-top: 0 !important;
+  scroll-margin-top: 72px;
+}
+
+/* ── Mobile: all sections visible, no snap, no overflow hidden ───────────── */
+@media (max-width: 768px) {
+  html, body {
+    scroll-snap-type: none !important;
+  }
+  section,
+  .section,
+  [class*="Scene"],
+  [class*="scene-"] {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  main, .main-content {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 }
 

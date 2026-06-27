@@ -33,23 +33,7 @@ export function Navbar() {
   }, [menuOpen]);
 
   return (
-    <nav
-      className="navbar"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-        height: "72px",
-        display: "flex",
-        alignItems: "center",
-        boxShadow:
-          theme === "dark"
-            ? "0 2px 20px rgba(0,0,0,0.5)"
-            : "0 2px 20px rgba(0,0,0,0.07)",
-      }}
-    >
+    <nav className="navbar">
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center">
           <Logo />
@@ -110,17 +94,17 @@ export function Navbar() {
                 className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"
                 animate={{
                   boxShadow: [
-                    "0 0 12px rgba(200,230,0,0.3)",
-                    "0 0 28px rgba(200,230,0,0.7), 0 0 50px rgba(200,230,0,0.2)",
-                    "0 0 12px rgba(200,230,0,0.3)",
+                    "0 0 12px rgba(62,207,142,0.3)",
+                    "0 0 28px rgba(62,207,142,0.7), 0 0 50px rgba(62,207,142,0.2)",
+                    "0 0 12px rgba(62,207,142,0.3)",
                   ],
                 }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 whileHover={{ scale: 1.06, y: -1 }}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  background: "linear-gradient(135deg, #C8E600, #D4F000)",
-                  color: "#1a2a00",
+                  background: "linear-gradient(135deg, #3ECF8E, #2DB87A)",
+                  color: "white",
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -132,7 +116,7 @@ export function Navbar() {
                     width: 20,
                     height: 20,
                     objectFit: "contain",
-                    filter: "brightness(0)",
+                    filter: "brightness(0) invert(1)",
                     flexShrink: 0,
                   }}
                 />
@@ -143,8 +127,9 @@ export function Navbar() {
 
           {/* Hamburger button — mobile only */}
           <button
+            type="button"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMenuOpen((p) => !p)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((p) => !p); }}
             className="lg:hidden ml-1 flex items-center justify-center rounded-md hover:bg-accent transition text-foreground"
             style={{ width: 36, height: 36, padding: 6, flexShrink: 0 }}
           >

@@ -1,0 +1,652 @@
+# SkillBuddy — V16 Fixes
+
+---
+
+## FIX 1 — HYDRATION ERROR (Console Error Fix)
+
+**Error:** `Hydration failed because the server rendered HTML didn't match the client`
+
+**Root cause:** Code uses `typeof window !== 'undefined'` or `window.innerWidth` during SSR render. This causes server/client mismatch.
+
+**Fix — Replace ALL browser-only checks with proper SSR-safe hooks:**
+
+```tsx
+// ❌ WRONG — causes hydration mismatch:
+const isMobile = window.innerWidth < 768
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
+// ✅ CORRECT — SSR safe:
+const [isMobile, setIsMobile] = useState(false) // false = server default
+
+useEffect(() => {
+  // Only runs on client, after hydration
+  const check = () => setIsMobile(window.innerWidth < 768)
+  check()
+  window.addEventListener('resize', check)
+  return () => window.removeEventListener('resize', check)
+}, [])
+```
+
+**Also fix in Navbar — the style mismatch:**
+```tsx
+// ❌ WRONG — mixing inline style values that differ between server/client:
+style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}
+
+// ✅ CORRECT — use className with CSS instead of inline styles for fixed positioning:
+// Move all navbar positioning to CSS class, not inline style
+// This prevents the server/client style string mismatch
+```
+
+```css
+/* In global CSS: */
+.navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  background-color: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+.dark .navbar {
+  background-color: rgba(9, 13, 18, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+}
+```
+
+**Remove ALL inline position styles from the nav element — use only the className.**
+
+---
+
+## FIX 2 — MOBILE: ALL SECTIONS VISIBLE
+
+**Problem:** Mobile shows only search bar, all other sections hidden. Large blank space.
+
+**The real issue:** Sections have `min-height: 100vh` which pushes them off screen, AND `overflow: hidden` clips their content.
+
+```css
+/* GLOBAL — Apply to index.css or styles.css */
+@media (max-width: 768px) {
+  /* Remove forced full-viewport heights */
+  section,
+  .section,
+  [class*="section"],
+  [class*="Scene"],
+  [class*="scene-"],
+  [class*="snap-"] {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* All content visible */
+  * {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Sections not using scroll-snap on mobile */
+  html, body {
+    scroll-snap-type: none !important;
+  }
+
+  /* All sections stack naturally */
+  main, .main-content, #root > div > main, #root > div > div:not(nav) {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+```
+
+---
+
+## FIX 3 — HAMBURGER MENU: Opens BACK Instead of Right Drawer
+
+**Problem:** Clicking hamburger navigates back to previous page instead of opening menu.
+
+**Root cause:** The hamburger button is wrapped in a `<Link>` or `<a>` tag, causing navigation instead of toggle.
+
+**Fix:**
+```tsx
+// ❌ WRONG:
+<Link to="/">
+  <button onClick={() => setOpen(true)}>☰</button>
+</Link>
+
+// ❌ ALSO WRONG — button inside a tag:
+<a href="/">
+  <button>☰</button>
+</a>
+
+// ✅ CORRECT:
+<button
+  type="button"  // IMPORTANT: prevents form submission
+  onClick={(e) => {
+    e.preventDefault()  // IMPORTANT: prevents any navigation
+    e.stopPropagation() // IMPORTANT: prevents event bubbling
+    setOpen(prev => !prev)
+  }}
+  aria-label="Toggle menu"
+  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', width: 36, height: 36 }}
+>
+  {/* hamburger lines */}
+</button>
+```
+
+**Also make sure the mobile drawer does NOT navigate on open:**
+```tsx
+// State must be LOCAL to Navbar component:
+const [drawerOpen, setDrawerOpen] = useState(false)
+
+// The drawer itself must be portaled to body to avoid z-index issues:
+import { createPortal } from 'react-dom'
+
+// In Navbar return:
+{typeof document !== 'undefined' && createPortal(
+  <AnimatePresence>
+    {drawerOpen && (
+      <>
+        {/* Backdrop */}
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+          }}
+        />
+        {/* Drawer */}
+        <motion.div
+          key="drawer"
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{
+            position: 'fixed', top: 0, right: 0, bottom: 0,
+            width: '75vw', maxWidth: 280, zIndex: 10001,
+            background: 'var(--background, white)',
+            boxShadow: '-8px 0 32px rgba(0,0,0,0.2)',
+            display: 'flex', flexDirection: 'column',
+            padding: '20px', overflowY: 'auto',
+          }}
+        >
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(false)}
+            style={{ alignSelf: 'flex-end', background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', marginBottom: 20, color: 'inherit' }}
+          >✕</button>
+
+          {/* Nav links */}
+          {[['/', 'Home'], ['/services', 'Services'], ['/jobs', 'Jobs'],
+            ['/careers', 'Careers'], ['/faqs', 'FAQs'], ['/contact', 'Contact Us']
+          ].map(([href, label], i) => (
+            <motion.div
+              key={href}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.06 }}
+            >
+              <a
+                href={href}
+                onClick={() => setDrawerOpen(false)}
+                style={{
+                  display: 'block', padding: '14px 16px',
+                  borderRadius: 12, fontSize: 16, fontWeight: 500,
+                  textDecoration: 'none', color: 'inherit',
+                }}
+              >{label}</a>
+            </motion.div>
+          ))}
+
+          {/* Auth buttons */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 24 }}>
+            <a href="/auth/login" onClick={() => setDrawerOpen(false)}>
+              <button type="button" style={{ width: '100%', padding: '12px', borderRadius: 50, border: '1.5px solid #2D7A5F', background: 'transparent', color: '#2D7A5F', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>
+                Log In
+              </button>
+            </a>
+            <a href="/auth/signup" onClick={() => setDrawerOpen(false)}>
+              <button type="button" style={{ width: '100%', padding: '12px', borderRadius: 50, background: '#2D7A5F', color: 'white', fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: 15 }}>
+                Sign Up
+              </button>
+            </a>
+          </div>
+        </motion.div>
+      </>
+    )}
+  </AnimatePresence>,
+  document.body
+)}
+```
+
+---
+
+## FIX 4 — EARN BADGES SECTION: Move Up (Less Gap Above)
+
+**Problem:** Large blank space above the Earn Badges section.
+
+```css
+/* Find the earn badges section and remove top margin/padding */
+.earn-badges-section,
+[class*="earn-badges"],
+[class*="elite-rewards"] {
+  margin-top: 0 !important;
+  padding-top: 60px !important; /* normal section padding */
+}
+
+/* If it's after a snap/scroll section that has extra height: */
+.earn-badges-section {
+  scroll-margin-top: 72px; /* navbar height only */
+}
+```
+
+Also ensure the section above it does not have excessive `padding-bottom` or `margin-bottom`.
+
+---
+
+## FIX 5 — REPLACE YELLOW-GREEN WITH ACCENT GREEN
+
+**Replace ALL instances of yellow-green (#D4E600, #C8E600, #D4F000, #F0FD50) with this new accent color:**
+
+```css
+/* New accent color — lighter vibrant green that matches SkillBuddy theme */
+:root {
+  --accent: #3ECF8E;        /* bright mint green — vibrant, distinct from primary */
+  --accent-hover: #2DB87A;  /* slightly darker on hover */
+  --accent-glow: rgba(62, 207, 142, 0.35);
+}
+```
+
+**Find and replace:**
+- `#D4E600` → `#3ECF8E`
+- `#C8E600` → `#3ECF8E`
+- `#D4F000` → `#3ECF8E`
+- `#F0FD50` → `#3ECF8E`
+- `rgba(200, 230, 0, ...)` → `rgba(62, 207, 142, ...)`
+- `rgba(212, 230, 0, ...)` → `rgba(62, 207, 142, ...)`
+
+**Apply new color to:**
+- Navbar "Become a SkillBuddy" button background
+- Category card icon hover color
+- How It Works step icon hover color
+- RidePerks banner CTA button
+
+---
+
+## FIX 6 — NAVBAR "BECOME A SKILLBUDDY" BUTTON: Accent Green Animated
+
+```css
+.become-skillbuddy-btn,
+nav a[href="/become-a-skillbuddy"] > button,
+nav button[class*="become"] {
+  background: linear-gradient(135deg, #3ECF8E, #2DB87A) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: none !important;
+  animation: accentGlow 2.5s ease-in-out infinite !important;
+}
+
+.become-skillbuddy-btn:hover {
+  transform: scale(1.05) translateY(-1px) !important;
+  background: linear-gradient(135deg, #2DB87A, #3ECF8E) !important;
+}
+
+@keyframes accentGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(62, 207, 142, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(62, 207, 142, 0.7), 0 0 40px rgba(62, 207, 142, 0.2); }
+}
+```
+
+---
+
+## FIX 7 — CATEGORY CARDS: Only ICON Changes Color on Hover (Not Whole Card)
+
+**Problem:** Entire card changes color on hover. Only the icon should change.
+
+```css
+/* Card itself — subtle hover only */
+.category-card:hover,
+.category-item:hover {
+  background-color: transparent !important; /* NO card background change */
+  border-color: rgba(46, 184, 122, 0.3) !important; /* subtle border only */
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* ONLY the icon circle changes color */
+.category-card:hover .category-icon-circle,
+.category-card:hover [class*="icon-bg"],
+.category-card:hover [class*="icon-circle"],
+.category-item:hover .icon-wrapper,
+.category-item:hover svg {
+  background-color: #3ECF8E !important;
+  color: white !important;
+  stroke: white !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Category label color stays same (no color change on hover) */
+.category-card:hover .category-label,
+.category-card:hover p,
+.category-card:hover span {
+  color: inherit !important; /* NO text color change */
+  font-weight: inherit !important;
+}
+```
+
+---
+
+## FIX 8 — HOW IT WORKS: Dark Theme Hover Fix (No Transparent Background)
+
+**Problem:** In dark theme, hovering on step card makes it transparent, showing line behind it.
+
+```css
+/* Step cards in dark mode — solid background on hover */
+.dark .step-card:hover,
+.dark .step-item:hover,
+.dark [class*="step-card"]:hover {
+  background-color: #1C2128 !important; /* solid dark card, NOT transparent */
+  border-color: #3ECF8E !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4) !important;
+  /* NO transparency — keeps content fully visible */
+}
+
+/* Step icon hover in dark mode */
+.dark .step-card:hover [class*="step-icon"],
+.dark .step-card:hover [class*="step-circle"],
+.dark .step-item:hover .icon-circle {
+  background-color: #3ECF8E !important;
+  color: #0D1117 !important;
+  box-shadow: 0 0 20px rgba(62, 207, 142, 0.4) !important;
+}
+
+/* Light mode step card hover */
+.step-card:hover,
+.step-item:hover {
+  background-color: #f0fdf9 !important; /* very light mint — NOT transparent */
+  border-color: #3ECF8E !important;
+  transform: translateY(-4px) !important;
+}
+```
+
+---
+
+## FIX 9 — CAREERS PAGE: Text Color on Green Background
+
+```css
+/* All text on green careers hero must be white */
+.careers-hero *,
+[class*="careers-hero"] *,
+.join-team-hero * {
+  color: white !important;
+}
+
+/* Except stat numbers — make them bolder white */
+.careers-hero .stat-number,
+[class*="stat-number"] {
+  color: white !important;
+  font-weight: 800 !important;
+  font-size: 2rem !important;
+}
+
+.careers-hero .stat-label,
+[class*="stat-label"] {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* Stat cards on green bg */
+.careers-hero .stat-card,
+[class*="stat-card"] {
+  background: rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+/* "We're Hiring" badge */
+.careers-hero .hiring-badge,
+[class*="hiring-badge"],
+[class*="were-hiring"] {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  color: white !important;
+}
+```
+
+---
+
+## FIX 10 — RIDEREWARDS BANNER: Redesign Layout + No Emojis + Accent Green
+
+**Replace the current banner with this corrected version:**
+
+### Desktop layout: Horizontal capsule/pill shape
+```
+[Left: Icon + Text]          [Right: CTA Button]
+```
+
+### Mobile layout: Stacked (square-ish), scrollable if needed
+
+```tsx
+import { Truck, Star, Award } from 'lucide-react' // Use Lucide icons, NO emojis
+
+function RideRewardsBanner() {
+  return (
+    <section style={{
+      padding: '40px 24px',
+      background: 'transparent',
+    }}>
+      {/* Capsule/pill container */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: '24px', // rounded rectangle — NOT full pill
+          background: 'linear-gradient(135deg, #0f3d24 0%, #1a5c3a 50%, #2D7A5F 100%)',
+          padding: '48px 56px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '32px',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          flexWrap: 'wrap',
+        }}
+      >
+        {/* Animated background bubbles */}
+        {[
+          { size: 200, top: '-20%', left: '-5%', delay: 0 },
+          { size: 160, top: '50%', left: '30%', delay: 1.5 },
+          { size: 240, bottom: '-30%', right: '-8%', delay: 0.8 },
+          { size: 120, top: '10%', right: '20%', delay: 2 },
+        ].map((b, i) => (
+          <motion.div
+            key={i}
+            animate={{ x: [0, 15, -10, 0], y: [0, -20, 12, 0], scale: [1, 1.08, 0.96, 1] }}
+            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: 'easeInOut', delay: b.delay }}
+            style={{
+              position: 'absolute',
+              width: b.size, height: b.size,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+              top: b.top, left: b.left,
+              right: b.right, bottom: b.bottom,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+
+        {/* LEFT SIDE: Icon + Text */}
+        <div style={{ position: 'relative', zIndex: 2, flex: 1, minWidth: 280 }}>
+          {/* Label */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 50, padding: '5px 14px',
+            marginBottom: 16,
+          }}>
+            <Award size={14} color="#3ECF8E" />
+            <span style={{ color: '#3ECF8E', fontWeight: 700, fontSize: 11, letterSpacing: '1.5px' }}>
+              SKILLBUDDY RIDEPERKS
+            </span>
+          </div>
+
+          {/* Heading */}
+          <h2 style={{
+            fontSize: 'clamp(22px, 3.5vw, 40px)',
+            fontWeight: 800, color: 'white',
+            margin: '0 0 12px', lineHeight: 1.2,
+          }}>
+            Earn 3 Badges.<br />
+            <span style={{ color: '#3ECF8E' }}>Ride for Free.</span>
+          </h2>
+
+          {/* Description */}
+          <p style={{
+            fontSize: 'clamp(14px, 1.8vw, 16px)',
+            color: 'rgba(255,255,255,0.8)',
+            margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480,
+          }}>
+            Earn your Gold SkillBuddy Badge and unlock FREE pick-up and drop-off rides
+            for every job. No transport costs — just show up and deliver.
+          </p>
+
+          {/* 3 perks row */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {[
+              { icon: <Star size={14} />, text: 'Bronze — 5% discount' },
+              { icon: <Star size={14} />, text: 'Silver — 1 ride/week' },
+              { icon: <Award size={14} />, text: 'Gold — Free every job' },
+            ].map((perk, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 50, padding: '6px 14px',
+                color: 'white', fontSize: 13,
+              }}>
+                <span style={{ color: '#3ECF8E' }}>{perk.icon}</span>
+                {perk.text}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: CTA Button */}
+        <div style={{ position: 'relative', zIndex: 2, flexShrink: 0 }}>
+          <motion.a
+            href="/become-a-skillbuddy"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.97 }}
+            animate={{ boxShadow: ['0 0 15px rgba(62,207,142,0.3)', '0 0 30px rgba(62,207,142,0.6)', '0 0 15px rgba(62,207,142,0.3)'] }}
+            // @ts-ignore
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '16px 32px', borderRadius: '14px',
+              background: 'linear-gradient(135deg, #3ECF8E, #2DB87A)',
+              color: 'white', fontWeight: 700, fontSize: 15,
+              textDecoration: 'none', whiteSpace: 'nowrap',
+            }}
+          >
+            <Truck size={18} />
+            Start Earning Ride Perks
+          </motion.a>
+        </div>
+      </motion.div>
+    </section>
+  )
+}
+```
+
+**Mobile responsive for this banner:**
+```css
+@media (max-width: 768px) {
+  .ride-rewards-banner,
+  [class*="ride-rewards"],
+  [class*="uber-rewards"] {
+    padding: 24px 16px !important;
+  }
+
+  .ride-rewards-inner {
+    flex-direction: column !important; /* stack vertically on mobile */
+    padding: 32px 24px !important;
+    border-radius: 20px !important;
+    gap: 24px !important;
+    overflow-y: auto !important; /* scroll if needed */
+  }
+
+  .ride-rewards-inner h2 {
+    font-size: clamp(20px, 6vw, 28px) !important;
+  }
+
+  .ride-rewards-inner .perks-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .ride-rewards-cta {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+```
+
+**Light mode for the banner:**
+```css
+.light .ride-rewards-inner {
+  background: linear-gradient(135deg, #e8f5f0 0%, #d0ede4 50%, #b8e4d4 100%) !important;
+}
+.light .ride-rewards-inner h2 { color: #0f3d24 !important; }
+.light .ride-rewards-inner p { color: #2d5a40 !important; }
+.light .ride-rewards-inner .perk-chip {
+  background: rgba(45,122,95,0.1) !important;
+  border-color: rgba(45,122,95,0.2) !important;
+  color: #0f3d24 !important;
+}
+```
+
+---
+
+## CHECKLIST
+
+- [ ] Hydration error fixed: navbar styles moved to CSS class, no inline position styles
+- [ ] `isMobile` uses `useState(false)` + `useEffect` — SSR safe
+- [ ] Mobile: all sections visible, `min-height: auto`, `overflow: visible`
+- [ ] Mobile: scroll-snap disabled (`scroll-snap-type: none`)
+- [ ] Hamburger: `type="button"`, `e.preventDefault()`, `e.stopPropagation()`
+- [ ] Hamburger: opens RIGHT drawer via `createPortal(document.body)`
+- [ ] Hamburger: does NOT navigate back
+- [ ] Earn Badges section: `margin-top: 0`, sits right after previous section
+- [ ] Yellow-green (#D4E600, #C8E600) replaced with accent green #3ECF8E everywhere
+- [ ] Navbar "Become a SkillBuddy": accent green animated glow
+- [ ] Category cards: ONLY icon changes color on hover, not whole card
+- [ ] How It Works dark mode: solid card background on hover (no transparency)
+- [ ] Careers page: all text white on green background
+- [ ] RideRewards banner: horizontal capsule desktop, stacked mobile
+- [ ] RideRewards: Lucide icons (NO emojis)
+- [ ] RideRewards: accent green #3ECF8E CTA button
+- [ ] RideRewards: animated background bubbles
+- [ ] RideRewards: light/dark mode both work
+- [ ] No existing functionality broken

@@ -8,6 +8,7 @@ import {
   ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen,
   Mail, Facebook, Instagram, Twitter, Youtube,
   ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Smartphone,
+  Truck, Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -908,11 +909,11 @@ const HOW_STEPS = [
 ];
 
 const STEP_HOVER: Array<{ iconMotion: object; duration: number; iconColor: string; bgColor: string }> = [
-  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "#1a1a1a", bgColor: "#D4E600" },
-  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "#1a1a1a", bgColor: "#D4E600" },
-  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "#1a1a1a", bgColor: "#D4E600" },
-  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "#1a1a1a", bgColor: "#D4E600" },
-  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "#1a1a1a", bgColor: "#D4E600" },
+  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "white", bgColor: "#3ECF8E" },
+  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "white", bgColor: "#3ECF8E" },
+  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "white", bgColor: "#3ECF8E" },
+  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "white", bgColor: "#3ECF8E" },
+  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "white", bgColor: "#3ECF8E" },
 ];
 
 function HowItWorksSection({ isActive }: { isActive: boolean }) {
@@ -1010,7 +1011,7 @@ function StepCard({
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      style={{ willChange: "transform", borderColor: hovered ? "#D4E600" : undefined, background: hovered ? "rgba(212,230,0,0.06)" : undefined }}
+      style={{ willChange: "transform", borderColor: hovered ? "#3ECF8E" : undefined, background: hovered ? "rgba(62,207,142,0.06)" : undefined }}
       initial={{ opacity: 0, y: 30 }}
       animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ delay: isActive ? delay : 0, duration: 0.5, ease: easeExpo }}
@@ -1175,116 +1176,129 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
   return (
     <section
       className="relative flex h-full flex-col justify-center overflow-hidden"
-      style={{
-        background: isDark
-          ? "linear-gradient(135deg, #0f3d24 0%, #1a5c3a 40%, #2D7A5F 100%)"
-          : "linear-gradient(135deg, #e8f5f0 0%, #d0ede4 40%, #b8e4d4 100%)",
-        padding: "80px 24px",
-      }}
+      style={{ padding: "40px 24px", background: "transparent" }}
     >
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{ x: [0, 30, -20, 0], y: [0, -25, 15, 0], scale: [1, 1.1, 0.95, 1] }}
-          transition={{ duration: 8 + i * 2, repeat: Infinity, ease: "easeInOut", delay: i * 1.2 }}
-          style={{
-            position: "absolute",
-            width: 150 + i * 60, height: 150 + i * 60,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.04)",
-            top: `${[10, 60, 30, 70, 20, 50][i]}%`,
-            left: `${[5, 70, 40, 15, 80, 55][i]}%`,
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-          }}
-        />
-      ))}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+        transition={{ duration: 0.6 }}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: 24,
+          background: isDark
+            ? "linear-gradient(135deg, #0f3d24 0%, #1a5c3a 50%, #2D7A5F 100%)"
+            : "linear-gradient(135deg, #e8f5f0 0%, #d0ede4 50%, #b8e4d4 100%)",
+          padding: "48px 56px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 32,
+          maxWidth: 1200,
+          margin: "0 auto",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Animated background bubbles */}
+        {[
+          { size: 200, top: "-20%", left: "-5%" as string | undefined, right: undefined as string | undefined, bottom: undefined as string | undefined, delay: 0 },
+          { size: 160, top: "50%", left: "30%", right: undefined, bottom: undefined, delay: 1.5 },
+          { size: 240, top: undefined, left: undefined, right: "-8%", bottom: "-30%", delay: 0.8 },
+          { size: 120, top: "10%", left: undefined, right: "20%", bottom: undefined, delay: 2 },
+        ].map((b, i) => (
+          <motion.div
+            key={i}
+            animate={{ x: [0, 15, -10, 0], y: [0, -20, 12, 0], scale: [1, 1.08, 0.96, 1] }}
+            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut", delay: b.delay }}
+            style={{
+              position: "absolute",
+              width: b.size, height: b.size,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.05)",
+              top: b.top, left: b.left, right: b.right, bottom: b.bottom,
+              pointerEvents: "none",
+            }}
+          />
+        ))}
 
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={isActive ? { scale: 1 } : { scale: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          style={{
+        {/* LEFT SIDE: Icon + Text */}
+        <div style={{ position: "relative", zIndex: 2, flex: 1, minWidth: 280 }}>
+          <div style={{
             display: "inline-flex", alignItems: "center", gap: 8,
-            background: isDark ? "rgba(255,255,255,0.12)" : "rgba(45,122,95,0.12)",
-            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(45,122,95,0.2)",
-            borderRadius: 50, padding: "6px 16px", marginBottom: 24,
-          }}
-        >
-          <span style={{ fontSize: 18 }}>🚗</span>
-          <span style={{ color: isDark ? "#C8E600" : "#0f3d24", fontWeight: 700, fontSize: 12, letterSpacing: "1.5px" }}>
-            SKILLBUDDY RIDEPERKS
-          </span>
-        </motion.div>
+            background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 50, padding: "5px 14px",
+            marginBottom: 16,
+          }}>
+            <Award size={14} color="#3ECF8E" />
+            <span style={{ color: "#3ECF8E", fontWeight: 700, fontSize: 11, letterSpacing: "1.5px" }}>
+              SKILLBUDDY RIDEPERKS
+            </span>
+          </div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 30 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          style={{ fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 800, color: isDark ? "white" : "#0f3d24", marginBottom: 16 }}
-        >
-          Earn 3 Badges.
-          <br />
-          <span style={{ color: isDark ? "#C8E600" : "#2D7A5F" }}>Ride for Free.</span>
-        </motion.h2>
+          <h2 style={{
+            fontSize: "clamp(22px, 3.5vw, 40px)",
+            fontWeight: 800,
+            color: isDark ? "white" : "#0f3d24",
+            margin: "0 0 12px",
+            lineHeight: 1.2,
+          }}>
+            Earn 3 Badges.<br />
+            <span style={{ color: "#3ECF8E" }}>Ride for Free.</span>
+          </h2>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ fontSize: "clamp(15px, 2.5vw, 18px)", color: isDark ? "rgba(255,255,255,0.8)" : "#2d5a40", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6 }}
-        >
-          Once you earn your Gold SkillBuddy Badge, we personally arrange your pick-up and drop-off for every job — completely free. No transport costs. Just show up and shine.
-        </motion.p>
+          <p style={{
+            fontSize: "clamp(14px, 1.8vw, 16px)",
+            color: isDark ? "rgba(255,255,255,0.8)" : "#2d5a40",
+            margin: "0 0 20px", lineHeight: 1.6, maxWidth: 480,
+          }}>
+            Earn your Gold SkillBuddy Badge and unlock FREE pick-up and drop-off rides
+            for every job. No transport costs — just show up and deliver.
+          </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", marginBottom: 40 }}
-        >
-          {[
-            { icon: "🥉", text: "Bronze — 5% off all jobs" },
-            { icon: "🥈", text: "Silver — Free ride 1×/week" },
-            { icon: "🥇", text: "Gold — FREE rides every job" },
-          ].map((perk, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ scale: 1.05 }}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {[
+              { icon: <Star size={14} />, text: "Bronze — 5% discount" },
+              { icon: <Star size={14} />, text: "Silver — 1 ride/week" },
+              { icon: <Award size={14} />, text: "Gold — Free every job" },
+            ].map((perk, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 6,
                 background: isDark ? "rgba(255,255,255,0.08)" : "rgba(45,122,95,0.1)",
-                border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(45,122,95,0.2)",
-                borderRadius: 50, padding: "10px 20px",
-                color: isDark ? "white" : "#0f3d24", fontSize: 14, fontWeight: 500,
-              }}
-            >
-              <span style={{ fontSize: 20 }}>{perk.icon}</span>
-              {perk.text}
-            </motion.div>
-          ))}
-        </motion.div>
+                border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(45,122,95,0.2)",
+                borderRadius: 50, padding: "6px 14px",
+                color: isDark ? "white" : "#0f3d24", fontSize: 13,
+              }}>
+                <span style={{ color: "#3ECF8E" }}>{perk.icon}</span>
+                {perk.text}
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <motion.a
-          href="/become-a-skillbuddy"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.97 }}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "linear-gradient(135deg, #C8E600, #D4F000)",
-            color: "#1a2a00", fontWeight: 800, fontSize: 16,
-            padding: "16px 40px", borderRadius: 50,
-            textDecoration: "none", cursor: "pointer",
-            boxShadow: "0 0 20px rgba(200,230,0,0.4)",
-          }}
-        >
-          🚗 Start Earning Your Ride Perks →
-        </motion.a>
-      </div>
+        {/* RIGHT SIDE: CTA Button */}
+        <div style={{ position: "relative", zIndex: 2, flexShrink: 0 }}>
+          <motion.a
+            href="/become-a-skillbuddy"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.97 }}
+            animate={isActive ? {
+              boxShadow: ["0 0 15px rgba(62,207,142,0.3)", "0 0 30px rgba(62,207,142,0.6)", "0 0 15px rgba(62,207,142,0.3)"],
+            } : {}}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "16px 32px", borderRadius: 14,
+              background: "linear-gradient(135deg, #3ECF8E, #2DB87A)",
+              color: "white", fontWeight: 700, fontSize: 15,
+              textDecoration: "none", whiteSpace: "nowrap",
+            }}
+          >
+            <Truck size={18} />
+            Start Earning Ride Perks
+          </motion.a>
+        </div>
+      </motion.div>
     </section>
   );
 }
