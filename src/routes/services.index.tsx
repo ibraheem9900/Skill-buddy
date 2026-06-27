@@ -324,14 +324,40 @@ function CategoryPill({ icon, name, active, onClick }: { icon: string; name: str
   return (
     <button
       onClick={onClick}
-      className="group flex shrink-0 flex-col items-center gap-2 px-2 transition"
+      className="group flex shrink-0 flex-col items-center gap-2 px-1 transition-all duration-200"
+      style={{
+        padding: "12px 8px",
+        borderRadius: 16,
+        minWidth: 80,
+        border: active ? "1.5px solid #2D7A5F" : "1.5px solid transparent",
+        background: active ? "#2D7A5F" : "transparent",
+        transform: "translateZ(0)",
+      }}
     >
-      <div className={`grid h-14 w-14 place-items-center rounded-full transition ${
-        active ? "bg-primary text-primary-foreground shadow-elegant" : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-      }`}>
+      <div
+        className="grid place-items-center transition-all duration-200"
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
+          background: active ? "rgba(255,255,255,0.2)" : "rgba(45,122,95,0.1)",
+          color: active ? "white" : "#2D7A5F",
+        }}
+      >
         <Icon className="h-6 w-6" />
       </div>
-      <span className={`whitespace-nowrap text-xs font-medium ${active ? "text-primary font-bold" : "text-foreground/80 group-hover:text-primary"}`}>
+      <span
+        className="whitespace-nowrap text-center leading-tight transition-colors duration-200"
+        style={{
+          fontSize: 12,
+          fontWeight: active ? 700 : 500,
+          color: active ? "white" : undefined,
+          maxWidth: 76,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         {name}
       </span>
     </button>

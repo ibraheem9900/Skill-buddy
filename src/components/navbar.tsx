@@ -105,12 +105,26 @@ export function Navbar() {
             <Button asChild size="sm" className="shadow-elegant">
               <Link to="/auth/signup">{t("nav.signup")}</Link>
             </Button>
-            <Button
-              asChild
-              size="sm"
-              className="gap-1.5 rounded-full bg-[#2D7A5F] text-white shadow-md hover:bg-[#236B4F] hover:shadow-lg"
-            >
-              <Link to="/become-a-skillbuddy">
+            <Link to="/become-a-skillbuddy">
+              <motion.button
+                className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"
+                animate={{
+                  boxShadow: [
+                    "0 0 12px rgba(200,230,0,0.3)",
+                    "0 0 28px rgba(200,230,0,0.7), 0 0 50px rgba(200,230,0,0.2)",
+                    "0 0 12px rgba(200,230,0,0.3)",
+                  ],
+                }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                whileHover={{ scale: 1.06, y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  background: "linear-gradient(135deg, #C8E600, #D4F000)",
+                  color: "#1a2a00",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
                 <img
                   src={iconTransparent}
                   alt="SkillBuddy"
@@ -118,13 +132,13 @@ export function Navbar() {
                     width: 20,
                     height: 20,
                     objectFit: "contain",
-                    filter: "brightness(0) invert(1)",
+                    filter: "brightness(0)",
                     flexShrink: 0,
                   }}
                 />
                 <span>{t("nav.becomeSkillBuddy")}</span>
-              </Link>
-            </Button>
+              </motion.button>
+            </Link>
           </div>
 
           {/* Hamburger button — mobile only */}

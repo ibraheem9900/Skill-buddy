@@ -135,10 +135,10 @@ function CareersPage() {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
               <Briefcase className="h-3.5 w-3.5" /> We're hiring
             </span>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl" style={{ color: "#FFFFFF", textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
               Join the SkillBuddy Team
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-primary-foreground/80 sm:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg" style={{ color: "rgba(255,255,255,0.9)" }}>
               Help us connect the world with skilled professionals. Build something meaningful.
             </p>
           </motion.div>

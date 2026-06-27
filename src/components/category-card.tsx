@@ -27,16 +27,16 @@ export function CategoryCard({ category }: { category: CategoryDef }) {
     <Link
       to="/services"
       search={{ category: category.slug, sort: "popular" }}
-      className="group flex h-full w-full flex-col items-center justify-start gap-3 rounded-2xl border border-border bg-card p-5 text-center transition hover:border-primary hover:bg-primary/5 hover:shadow-card"
+      className="group flex h-full w-full flex-col items-center justify-start gap-3 rounded-2xl border border-border bg-card p-5 text-center transition-all duration-200 hover:border-[#D4E600] hover:bg-[#F0FD50] hover:-translate-y-1 hover:scale-[1.04] hover:shadow-card"
     >
       <motion.div
         whileHover={v.hover}
         transition={v.transition}
-        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground"
+        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#D4E600] group-hover:text-[#1a1a1a]"
       >
         <Icon className="h-7 w-7" />
       </motion.div>
-      <div className="min-h-[2.5rem] text-sm font-semibold leading-tight group-hover:text-primary">{category.name}</div>
+      <div className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200 group-hover:text-[#3a5a00]">{category.name}</div>
     </Link>
   );
 }

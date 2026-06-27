@@ -1,0 +1,849 @@
+# SkillBuddy — V15 Complete Fixes
+
+---
+
+## FIX 1 — MOBILE RESPONSIVE: ALL SECTIONS VISIBLE
+
+**Problem:** All section data disappears on mobile. Sections are hidden.
+
+**Root cause:** Sections likely have `overflow: hidden` + fixed heights that clip content, or `display: none` applied incorrectly on mobile.
+
+**Global mobile fix:**
+```css
+/* Force all sections visible on mobile */
+@media (max-width: 768px) {
+  * {
+    box-sizing: border-box !important;
+  }
+  
+  body, html {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  /* NO section should be hidden or clipped */
+  section,
+  .section,
+  [class*="section"],
+  [class*="-section"],
+  main > div,
+  .page-wrapper > div {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    clip: none !important;
+    clip-path: none !important;
+  }
+
+  /* All flex/grid containers — column layout */
+  [class*="flex"],
+  [class*="grid"],
+  [class*="row"],
+  [class*="cards"],
+  [class*="cols"] {
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    overflow-x: hidden !important;
+    min-width: unset !important;
+    width: 100% !important;
+  }
+
+  /* All cards full width */
+  [class*="card"],
+  [class*="tier"],
+  [class*="badge"],
+  [class*="step"],
+  [class*="pillar"],
+  [class*="reward"] {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    flex-shrink: unset !important;
+  }
+
+  /* All headings visible */
+  h1, h2, h3, h4, h5 {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    font-size: clamp(18px, 5vw, 36px) !important;
+  }
+
+  /* All buttons visible */
+  button, a[role="button"], .btn, [class*="button"], [class*="-btn"] {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Section padding */
+  section, .section {
+    padding: 40px 16px !important;
+    margin: 0 !important;
+  }
+}
+```
+
+---
+
+## FIX 2 — HAMBURGER MENU (Mobile — Right Side Drawer)
+
+```tsx
+// Small hamburger (36px), animates to X, opens RIGHT drawer
+
+const [open, setOpen] = useState(false)
+
+// Close on outside click
+useEffect(() => {
+  if (!open) return
+  const handler = (e: MouseEvent) => {
+    if (!(e.target as Element).closest('.mobile-drawer') &&
+        !(e.target as Element).closest('.hamburger-btn')) {
+      setOpen(false)
+    }
+  }
+  document.addEventListener('mousedown', handler)
+  return () => document.removeEventListener('mousedown', handler)
+}, [open])
+
+// Hamburger button
+<button
+  className="hamburger-btn"
+  onClick={() => setOpen(p => !p)}
+  style={{ width: 36, height: 36, padding: 6, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}
+>
+  <motion.span animate={open ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }} transition={{ duration: 0.25 }}
+    style={{ display: 'block', height: 2, width: 20, background: 'currentColor', borderRadius: 2, transformOrigin: 'center' }} />
+  <motion.span animate={open ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} transition={{ duration: 0.2 }}
+    style={{ display: 'block', height: 2, width: 20, background: 'currentColor', borderRadius: 2 }} />
+  <motion.span animate={open ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }} transition={{ duration: 0.25 }}
+    style={{ display: 'block', height: 2, width: 20, background: 'currentColor', borderRadius: 2, transformOrigin: 'center' }} />
+</button>
+
+// Backdrop
+<AnimatePresence>
+  {open && (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={() => setOpen(false)}
+      style={{ position: 'fixed', inset: 0, zIndex: 9997, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+    />
+  )}
+</AnimatePresence>
+
+// Right drawer
+<AnimatePresence>
+  {open && (
+    <motion.div
+      className="mobile-drawer"
+      initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+      style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0,
+        width: '75vw', maxWidth: 300, zIndex: 9998,
+        background: 'var(--bg, white)',
+        boxShadow: '-8px 0 40px rgba(0,0,0,0.2)',
+        display: 'flex', flexDirection: 'column',
+        padding: '20px',
+        overflowY: 'auto',
+      }}
+    >
+      <button onClick={() => setOpen(false)}
+        style={{ alignSelf: 'flex-end', background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', marginBottom: 24 }}>
+        ✕
+      </button>
+
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        {[['/', 'Home'], ['/services', 'Services'], ['/jobs', 'Jobs'],
+          ['/careers', 'Careers'], ['/faqs', 'FAQs'], ['/contact', 'Contact Us']
+        ].map(([href, label], i) => (
+          <motion.a key={href} href={href} onClick={() => setOpen(false)}
+            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05 }}
+            style={{ display: 'block', padding: '13px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, textDecoration: 'none', color: 'inherit' }}>
+            {label}
+          </motion.a>
+        ))}
+      </nav>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+        <a href="/auth/login" onClick={() => setOpen(false)}>
+          <button style={{ width: '100%', padding: '12px', borderRadius: 50, border: '1.5px solid #2D7A5F', background: 'transparent', color: '#2D7A5F', fontWeight: 600, cursor: 'pointer' }}>
+            Log In
+          </button>
+        </a>
+        <a href="/auth/signup" onClick={() => setOpen(false)}>
+          <button style={{ width: '100%', padding: '12px', borderRadius: 50, background: '#2D7A5F', color: 'white', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            Sign Up
+          </button>
+        </a>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+---
+
+## FIX 3 — EARN BADGES SECTION: "Start Earning Your Badge" Button
+
+**Problem:** Button hidden behind content or below visible area. Not showing on desktop or mobile.
+
+**Fix:**
+```tsx
+// Button must be BELOW the 3 badge cards with proper margin
+// Check that the button is not inside an overflow:hidden container
+
+<div style={{
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '32px',
+  padding: '0 0 60px 0',  // bottom padding so button is visible
+}}>
+  {/* Badge cards row */}
+  <div style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '20px',
+    width: '100%',
+  }}>
+    {badgeCards.map(card => <BadgeCard key={card.id} {...card} />)}
+  </div>
+
+  {/* Button — always visible */}
+  <motion.a
+    href="/become-a-skillbuddy"
+    whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(45,122,95,0.6)' }}
+    whileTap={{ scale: 0.97 }}
+    animate={{
+      boxShadow: ['0 0 15px rgba(45,122,95,0.3)', '0 0 30px rgba(45,122,95,0.6)', '0 0 15px rgba(45,122,95,0.3)'],
+    }}
+    transition={{ duration: 2, repeat: Infinity }}
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '16px 40px',
+      borderRadius: '50px',
+      background: 'linear-gradient(135deg, #2D7A5F, #4CAF84)',
+      color: 'white',
+      fontWeight: 700,
+      fontSize: '16px',
+      textDecoration: 'none',
+      cursor: 'pointer',
+    }}
+  >
+    Start Earning Your Badge →
+  </motion.a>
+</div>
+
+/* Mobile: same layout, cards stack vertically, button still shows */
+@media (max-width: 768px) {
+  .earn-badges-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .earn-badges-section {
+    padding-bottom: 60px !important;  /* ensure button visible */
+    overflow: visible !important;
+  }
+}
+```
+
+---
+
+## FIX 4 — SECTIONS TOO FAR DOWN (Sections Hidden/Shifted)
+
+**Problem:** Many homepage sections are pushed too far down and appear hidden.
+
+```css
+/* Remove any large top margins or paddings causing sections to shift */
+@media (max-width: 768px) {
+  /* Snap sections should not force 100vh */
+  [class*="snap"],
+  [class*="scene"],
+  [class*="slide"] {
+    height: auto !important;
+    min-height: auto !important;
+    scroll-snap-align: unset !important;
+  }
+}
+
+/* Desktop: sections should not have excessive top spacing */
+@media (min-width: 769px) {
+  section + section,
+  .section + .section {
+    margin-top: 0 !important;
+  }
+}
+```
+
+---
+
+## FIX 5 — CATEGORY CARDS: Yellow-Green Hover Color
+
+**Problem:** Categories turn plain green on hover. Should be yellow-green.
+
+```css
+/* Homepage category cards hover */
+.category-card:hover,
+.category-item:hover,
+[class*="category-card"]:hover {
+  background-color: #F0FD50 !important;  /* bright yellow-green */
+  border-color: #D4E600 !important;
+  transform: translateY(-4px) scale(1.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Icon circle on hover */
+.category-card:hover .icon-circle,
+.category-card:hover [class*="icon-bg"],
+.category-item:hover .icon-circle {
+  background-color: #D4E600 !important;
+  color: #1a1a1a !important;
+}
+
+/* Category label on hover */
+.category-card:hover .category-label,
+.category-card:hover p,
+.category-card:hover span {
+  color: #3a5a00 !important;
+  font-weight: 700 !important;
+}
+```
+
+---
+
+## FIX 6 — HOW IT WORKS (5 Steps): Yellow-Green Color on Hover
+
+```css
+/* Step cards hover */
+.step-card:hover,
+.step-item:hover,
+[class*="step-card"]:hover {
+  background-color: rgba(212, 230, 0, 0.08) !important;
+  border-color: #D4E600 !important;
+  transform: translateY(-4px) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Step icon circle on hover */
+.step-card:hover .step-circle,
+.step-card:hover .step-icon,
+.step-item:hover [class*="step-icon"],
+.step-item:hover [class*="step-number"] {
+  background-color: #D4E600 !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 0 20px rgba(212, 230, 0, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Step title on hover */
+.step-card:hover h3,
+.step-card:hover .step-title,
+.step-item:hover h3 {
+  color: #8ab000 !important;
+}
+
+/* Mobile — tap effect instead of hover */
+@media (max-width: 768px) {
+  .step-card:active,
+  .step-item:active {
+    background-color: rgba(212, 230, 0, 0.1) !important;
+    transform: scale(0.98) !important;
+  }
+}
+```
+
+---
+
+## FIX 7 — "BECOME A SKILLBUDDY" NAVBAR BUTTON: Yellow-Green Animated
+
+```css
+/* Navbar "Become a SkillBuddy" button */
+.become-skillbuddy-btn,
+a[href="/become-a-skillbuddy"] button,
+button[class*="become"],
+nav button:last-of-type,
+nav a:last-of-type button {
+  background: linear-gradient(135deg, #C8E600, #D4F000) !important;
+  color: #1a2a00 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: 0 0 16px rgba(200, 230, 0, 0.35) !important;
+  animation: becomeGlow 2.5s ease-in-out infinite !important;
+  transition: transform 0.2s ease !important;
+}
+
+.become-skillbuddy-btn:hover {
+  transform: scale(1.06) translateY(-1px) !important;
+  box-shadow: 0 0 28px rgba(200, 230, 0, 0.6) !important;
+}
+
+@keyframes becomeGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(200, 230, 0, 0.3); }
+  50% { box-shadow: 0 0 28px rgba(200, 230, 0, 0.7), 0 0 50px rgba(200, 230, 0, 0.2); }
+}
+```
+
+---
+
+## FIX 8 — SPECIAL OFFERS: Fix Dark Theme Card Colors
+
+**Problem:** Third card (yellow/orange) looks bad in dark mode. All 3 cards need better dark mode colors.
+
+```tsx
+// Give each card a proper dark mode color that looks good:
+
+const offerCards = [
+  {
+    // Card 1 — Deep Forest Green (dark) / Mint (light)
+    darkBg: 'linear-gradient(135deg, #0a2518, #0f3d24)',
+    darkBorder: '#2D7A5F',
+    lightBg: 'linear-gradient(135deg, #e8f5f0, #d0ede4)',
+    lightBorder: '#2D7A5F',
+    accentColor: '#4CAF84',
+    buttonBg: '#2D7A5F',
+    buttonText: 'white',
+  },
+  {
+    // Card 2 — Deep Indigo (dark) / Soft lavender (light)
+    darkBg: 'linear-gradient(135deg, #0f0f2e, #1a1a4a)',
+    darkBorder: '#6366f1',
+    lightBg: 'linear-gradient(135deg, #eef0ff, #e0e4ff)',
+    lightBorder: '#6366f1',
+    accentColor: '#818cf8',
+    buttonBg: '#6366f1',
+    buttonText: 'white',
+  },
+  {
+    // Card 3 — Deep Teal (dark) / Warm teal (light) — REPLACING the bad yellow/brown
+    darkBg: 'linear-gradient(135deg, #0a2a2a, #0f3d3d)',
+    darkBorder: '#14b8a6',
+    lightBg: 'linear-gradient(135deg, #e6fffe, #ccfbf1)',
+    lightBorder: '#14b8a6',
+    accentColor: '#2dd4bf',
+    buttonBg: '#14b8a6',
+    buttonText: 'white',
+  },
+]
+
+// Apply in dark mode:
+const isDark = document.documentElement.classList.contains('dark')
+const cardStyle = isDark
+  ? { background: card.darkBg, borderColor: card.darkBorder }
+  : { background: card.lightBg, borderColor: card.lightBorder }
+```
+
+---
+
+## FIX 9 — REMOVE "THE SKILLBUDDY STAR REWARD" SECTION
+
+**Remove this section completely from the homepage:**
+- Find the component containing "The SkillBuddy Star Reward" / "THE SKILLBUDDY BADGE SYSTEM"
+- Delete the entire component
+- Remove it from the homepage section list
+- Do NOT remove the "Earn Badges. Unlock Real Rewards." section (keep that one)
+
+---
+
+## FIX 10 — NEW "UBER REWARDS" BANNER SECTION
+
+**Add AFTER the "Earn Badges" section. Replace the removed Star Reward section.**
+
+```tsx
+// Section name: "RideReward" or "SkillBuddy RidePerks"
+
+function UberRewardsBanner() {
+  return (
+    <section style={{
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '80px 24px',
+      background: 'linear-gradient(135deg, #0f3d24 0%, #1a5c3a 40%, #2D7A5F 100%)',
+    }}>
+      {/* Animated background circles */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            x: [0, 30, -20, 0],
+            y: [0, -25, 15, 0],
+            scale: [1, 1.1, 0.95, 1],
+          }}
+          transition={{ duration: 8 + i * 2, repeat: Infinity, ease: 'easeInOut', delay: i * 1.2 }}
+          style={{
+            position: 'absolute',
+            width: 150 + i * 60,
+            height: 150 + i * 60,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.04)',
+            top: `${[10, 60, 30, 70, 20, 50][i]}%`,
+            left: `${[5, 70, 40, 15, 80, 55][i]}%`,
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+
+      <div style={{ position: 'relative', zIndex: 2, maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+
+        {/* Badge */}
+        <motion.div
+          initial={{ scale: 0 }} whileInView={{ scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 50, padding: '6px 16px',
+            marginBottom: 24,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🚗</span>
+          <span style={{ color: '#C8E600', fontWeight: 700, fontSize: 12, letterSpacing: '1.5px' }}>
+            SKILLBUDDY RIDEPERKS
+          </span>
+        </motion.div>
+
+        {/* Heading */}
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}
+          style={{ fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 800, color: 'white', marginBottom: 16 }}
+        >
+          Earn 3 Badges.
+          <br />
+          <span style={{ color: '#C8E600' }}>Ride for Free.</span>
+        </motion.h2>
+
+        {/* Description */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
+          style={{ fontSize: 'clamp(15px, 2.5vw, 18px)', color: 'rgba(255,255,255,0.8)', maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.6 }}
+        >
+          Once you earn your Gold SkillBuddy Badge, we personally arrange your
+          pick-up and drop-off for every job — completely free.
+          No transport costs. Just show up and shine.
+        </motion.p>
+
+        {/* 3 perks */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.3 }}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '24px',
+            flexWrap: 'wrap',
+            marginBottom: '40px',
+          }}
+        >
+          {[
+            { icon: '🥉', text: 'Bronze Badge — 5% discount on all jobs' },
+            { icon: '🥈', text: 'Silver Badge — Free Uber ride 1x/week' },
+            { icon: '🥇', text: 'Gold Badge — FREE rides for every job' },
+          ].map((perk, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.15)' }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 50, padding: '10px 20px',
+                color: 'white', fontSize: 14, fontWeight: 500,
+              }}
+            >
+              <span style={{ fontSize: 20 }}>{perk.icon}</span>
+              {perk.text}
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* CTA Button */}
+        <motion.a
+          href="/become-a-skillbuddy"
+          initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.4 }}
+          whileHover={{ scale: 1.06, boxShadow: '0 0 40px rgba(200,230,0,0.5)' }}
+          whileTap={{ scale: 0.97 }}
+          animate={{ boxShadow: ['0 0 15px rgba(200,230,0,0.3)', '0 0 30px rgba(200,230,0,0.6)', '0 0 15px rgba(200,230,0,0.3)'] }}
+          // @ts-ignore
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg, #C8E600, #D4F000)',
+            color: '#1a2a00', fontWeight: 800, fontSize: 16,
+            padding: '16px 40px', borderRadius: 50,
+            textDecoration: 'none', cursor: 'pointer',
+          }}
+        >
+          🚗 Start Earning Your Ride Perks →
+        </motion.a>
+      </div>
+    </section>
+  )
+}
+```
+
+**Light mode for this banner:**
+```css
+.light .uber-rewards-banner {
+  background: linear-gradient(135deg, #e8f5f0 0%, #d0ede4 40%, #b8e4d4 100%);
+}
+.light .uber-rewards-banner h2 { color: #0f3d24; }
+.light .uber-rewards-banner p { color: #2d5a40; }
+.light .uber-rewards-banner .perk-chip {
+  background: rgba(45,122,95,0.1);
+  border-color: rgba(45,122,95,0.2);
+  color: #0f3d24;
+}
+```
+
+---
+
+## FIX 11 — CAREERS PAGE: Hero Text Color Fix
+
+**Problem:** "Join the SkillBuddy Team" heading text looks bad in both dark and light mode on green background.
+
+```css
+/* Careers hero section */
+.careers-hero,
+[class*="careers-hero"],
+[class*="join-team-hero"] {
+  /* Keep green background */
+}
+
+/* Fix text colors for readability on green bg */
+.careers-hero h1,
+.careers-hero .hero-heading {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+.careers-hero p,
+.careers-hero .hero-subtitle {
+  color: rgba(255,255,255,0.9) !important;
+}
+
+/* "We're hiring" badge */
+.careers-hero .hiring-badge {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  color: white !important;
+}
+
+/* Stats cards on green bg */
+.careers-hero .stat-card {
+  background: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+.careers-hero .stat-number {
+  color: white !important;
+  font-weight: 800 !important;
+}
+
+.careers-hero .stat-label {
+  color: rgba(255,255,255,0.75) !important;
+}
+
+/* Dark mode: same — keep white text on green */
+.dark .careers-hero h1,
+.dark .careers-hero p {
+  color: white !important;
+}
+```
+
+---
+
+## FIX 12 — HERO SEARCH BAR: Actually Perform Search
+
+**Problem:** Search bar in hero section doesn't search anything when user types.
+
+**Fix:**
+```tsx
+// In the hero section search bar component:
+
+const [query, setQuery] = useState('')
+const navigate = useNavigate() // or router.push
+
+const handleSearch = (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!query.trim()) return
+  // Navigate to services page with search query
+  navigate(`/services?search=${encodeURIComponent(query.trim())}`)
+}
+
+const handleKeyDown = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter') handleSearch(e as any)
+}
+
+<form onSubmit={handleSearch}>
+  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <input
+      type="text"
+      value={query}
+      onChange={e => setQuery(e.target.value)}
+      onKeyDown={handleKeyDown}
+      placeholder="What service are you looking for?"
+      style={{ flex: 1, padding: '14px 20px', borderRadius: 50, border: '1px solid #e5e7eb', fontSize: 16 }}
+    />
+    <button type="submit" style={{ padding: '14px 28px', borderRadius: 50, background: '#2D7A5F', color: 'white', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+      Search
+    </button>
+  </div>
+</form>
+
+// On /services page, read the query param and filter:
+const [searchParams] = useSearchParams()
+const initialQuery = searchParams.get('search') || ''
+const [search, setSearch] = useState(initialQuery)
+
+// Filter services by search query:
+const filtered = services.filter(s =>
+  s.name.toLowerCase().includes(search.toLowerCase()) ||
+  s.category.toLowerCase().includes(search.toLowerCase()) ||
+  s.description.toLowerCase().includes(search.toLowerCase())
+)
+```
+
+---
+
+## FIX 13 — SERVICES PAGE: Category Section Alignment & Design
+
+**Problem:** Category slider on services page looks too simple and misaligned.
+
+**Fix:**
+```css
+/* Services page category section */
+.services-category-section,
+[class*="services-categories"] {
+  background: var(--surface, #f8fafb) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  margin: 24px 0 !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+}
+
+/* Category items: better layout */
+.category-item,
+[class*="category-btn"],
+[class*="cat-item"] {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 16px 12px !important;
+  border-radius: 16px !important;
+  min-width: 90px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: 1.5px solid transparent !important;
+}
+
+.category-item:hover,
+[class*="category-btn"]:hover {
+  background: rgba(212, 230, 0, 0.1) !important;
+  border-color: #D4E600 !important;
+  transform: translateY(-3px) !important;
+}
+
+/* Active category */
+.category-item.active,
+[class*="category-btn"].active,
+[class*="cat-item"][data-active="true"] {
+  background: #2D7A5F !important;
+  border-color: #2D7A5F !important;
+  color: white !important;
+}
+
+.category-item.active .category-label {
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+/* Icon circle */
+.category-icon-circle {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(45,122,95,0.1) !important;
+}
+
+.category-item.active .category-icon-circle {
+  background: rgba(255,255,255,0.2) !important;
+}
+
+/* Category label */
+.category-label {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  line-height: 1.3 !important;
+}
+
+/* Mobile: horizontally scrollable, no wrap */
+@media (max-width: 768px) {
+  .services-category-section {
+    padding: 16px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  .services-category-section::-webkit-scrollbar { display: none !important; }
+  
+  .categories-inner-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    min-width: max-content !important;
+  }
+  
+  .category-item {
+    min-width: 80px !important;
+    padding: 12px 8px !important;
+    flex-shrink: 0 !important;
+  }
+}
+```
+
+---
+
+## CHECKLIST
+
+- [ ] Mobile: ALL sections visible, no data hidden or clipped
+- [ ] Mobile: all flex/grid containers stack vertically
+- [ ] Mobile: all sections have `height: auto`, no `min-height: 100vh`
+- [ ] Mobile: all buttons, headings visible
+- [ ] Hamburger: 36px size, smooth 3→X animation
+- [ ] Hamburger: opens RIGHT drawer with blur backdrop
+- [ ] Drawer: staggered links, auth buttons at bottom, closes on outside tap
+- [ ] Earn Badges: "Start Earning Your Badge" button visible below cards (desktop + mobile)
+- [ ] Category cards: yellow-green hover (#D4E600 / #C8E600)
+- [ ] How It Works steps: yellow-green hover on icons and cards
+- [ ] Navbar "Become a SkillBuddy" button: yellow-green animated glow
+- [ ] Special Offers card 3: replaced bad yellow-brown with deep teal (dark mode fix)
+- [ ] All 3 offer cards: unique colors, look good in dark AND light mode
+- [ ] "The SkillBuddy Star Reward" section: REMOVED completely
+- [ ] NEW "SkillBuddy RidePerks" banner: green animated background, 3 perk chips, yellow-green CTA
+- [ ] RidePerks banner: works in both dark and light mode
+- [ ] Careers hero: white text on green background, readable in both modes
+- [ ] Hero search bar: navigates to /services?search=query on submit/Enter
+- [ ] Services page: reads ?search param and filters results
+- [ ] Services category section: better card design, proper alignment, hover effects
+- [ ] Services categories mobile: horizontally scrollable, all visible
+- [ ] No existing functionality broken

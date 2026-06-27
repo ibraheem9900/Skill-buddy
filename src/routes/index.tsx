@@ -31,7 +31,19 @@ export const Route = createFileRoute("/")({
 });
 
 const SECTION_COUNT = 12;
-const POPULAR_SERVICES_IDX = 4;
+const POPULAR_SERVICES_IDX = 5;
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    setMatches(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}
 const easeExpo = [0.22, 1, 0.36, 1] as const;
 
 /* ── Badge SVG (Bronze / Silver / Gold shield) ───────────────────────────────── */
@@ -63,6 +75,7 @@ function BadgeSVG({ tier, size = 64 }: { tier: "bronze" | "silver" | "gold"; siz
 
 /* ── Home ─────────────────────────────────────────────────────────────────────── */
 function Home() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(SECTION_COUNT).fill(null));
   const [activeSection, setActiveSection] = useState(0);
@@ -84,6 +97,7 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    if (isMobile) return;
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     document.body.style.height = "100vh";
@@ -92,7 +106,7 @@ function Home() {
       document.body.style.overflow = "";
       document.body.style.height = "";
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -106,13 +120,13 @@ function Home() {
             if (entry.isIntersecting && entry.intersectionRatio >= 0.5) setActiveSection(idx);
           });
         },
-        { threshold: 0.5, root: container }
+        { threshold: 0.5, root: isMobile ? null : container }
       );
       obs.observe(el);
       observers.push(obs);
     });
     return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  }, [isMobile]);
 
   const setRef = useCallback((idx: number) => (el: HTMLDivElement | null) => {
     sectionRefs.current[idx] = el;
@@ -124,9 +138,9 @@ function Home() {
         ref={containerRef}
         className="snap-container"
         style={{
-          height: "calc(100vh - 72px)",
-          overflowY: "scroll",
-          scrollSnapType: "y mandatory",
+          height: isMobile ? "auto" : "calc(100vh - 72px)",
+          overflowY: isMobile ? "visible" : "scroll",
+          scrollSnapType: isMobile ? "none" : "y mandatory",
           scrollbarWidth: "none",
           position: "relative",
           zIndex: 10,
@@ -138,11 +152,11 @@ function Home() {
             <HeroSection isActive={activeSection === 0} />,
             <CategoriesSection isActive={activeSection === 1} />,
             <EliteRewardsSection isActive={activeSection === 2} />,
-            <SpecialOffersSection isActive={activeSection === 3} />,
-            <PopularServicesSection isActive={activeSection === 4} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
-            <HowItWorksSection isActive={activeSection === 5} />,
-            <WhatMakesUsSpecialSection isActive={activeSection === 6} />,
-            <StarRewardSection isActive={activeSection === 7} />,
+            <UberRewardsBanner isActive={activeSection === 3} />,
+            <SpecialOffersSection isActive={activeSection === 4} />,
+            <PopularServicesSection isActive={activeSection === 5} activeCardIdx={popularServicesCard} onNavigate={navigatePopular} />,
+            <HowItWorksSection isActive={activeSection === 6} />,
+            <WhatMakesUsSpecialSection isActive={activeSection === 7} />,
             <AppShowcaseSection isActive={activeSection === 8} />,
             <OurVisionSection isActive={activeSection === 9} />,
             <TestimonialsSection isActive={activeSection === 10} />,
@@ -154,10 +168,10 @@ function Home() {
             ref={setRef(idx)}
             className="snap-section"
             style={{
-              scrollSnapAlign: "start",
-              height: idx === 11 ? "auto" : "calc(100vh - 72px)",
-              minHeight: idx === 11 ? 0 : "calc(100vh - 72px)",
-              overflow: "hidden",
+              scrollSnapAlign: isMobile ? "none" : "start",
+              height: (isMobile || idx === 11) ? "auto" : "calc(100vh - 72px)",
+              minHeight: (isMobile || idx === 11) ? 0 : "calc(100vh - 72px)",
+              overflow: isMobile ? "visible" : "hidden",
               position: "relative",
               flexShrink: 0,
             }}
@@ -225,24 +239,40 @@ function HeroSection({ isActive }: { isActive: boolean }) {
           </AnimatePresence>
         </div>
 
-        <motion.form
-          onSubmit={(e) => e.preventDefault()}
-          style={{ willChange: "transform" }}
-          initial={{ opacity: 0, y: 20, scale: 0.97 }}
-          animate={isActive ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.97 }}
-          transition={{ duration: 0.5, delay: isActive ? 0.3 : 0, ease: easeExpo }}
-          className="mx-auto mt-8 flex max-w-2xl items-stretch gap-2 rounded-2xl border border-border bg-card p-2 shadow-elegant"
-        >
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input placeholder={t("hero.searchPlaceholder")} className="h-12 border-0 bg-transparent pl-10 focus-visible:ring-0" />
-          </div>
-          <Button asChild size="lg" className="h-12 px-6 shadow-elegant">
-            <Link to="/services">{t("common.search")}</Link>
-          </Button>
-        </motion.form>
+        <HeroSearchBar isActive={isActive} t={t} />
       </div>
     </section>
+  );
+}
+
+function HeroSearchBar({ isActive, t }: { isActive: boolean; t: (k: string) => string }) {
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+  const handleSearch = (e: { preventDefault(): void }) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    navigate({ to: "/services", search: { q: query.trim(), sort: "popular" } });
+  };
+  return (
+    <motion.form
+      onSubmit={handleSearch}
+      style={{ willChange: "transform" }}
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      animate={isActive ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.97 }}
+      transition={{ duration: 0.5, delay: isActive ? 0.3 : 0, ease: easeExpo }}
+      className="mx-auto mt-8 flex max-w-2xl items-stretch gap-2 rounded-2xl border border-border bg-card p-2 shadow-elegant"
+    >
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("hero.searchPlaceholder")}
+          className="h-12 border-0 bg-transparent pl-10 focus-visible:ring-0"
+        />
+      </div>
+      <Button type="submit" size="lg" className="h-12 px-6 shadow-elegant">{t("common.search")}</Button>
+    </motion.form>
   );
 }
 
@@ -591,8 +621,8 @@ const OFFER_COLORS = [
     light: { bg: "#EEF2FF", accent: "#4f46e5", text: "#0D1117", tagBg: "rgba(79,70,229,0.12)", btnBg: "#4f46e5" },
   },
   {
-    dark: { bg: "#2e1a0f", accent: "#fbbf24", text: "white", tagBg: "rgba(251,191,36,0.2)", btnBg: "#f59e0b" },
-    light: { bg: "#FFFBEB", accent: "#d97706", text: "#0D1117", tagBg: "rgba(217,119,6,0.12)", btnBg: "#d97706" },
+    dark: { bg: "linear-gradient(135deg, #0a2a2a, #0f3d3d)", accent: "#2dd4bf", text: "white", tagBg: "rgba(45,212,191,0.2)", btnBg: "#14b8a6" },
+    light: { bg: "linear-gradient(135deg, #e6fffe, #ccfbf1)", accent: "#0d9488", text: "#0D1117", tagBg: "rgba(13,148,136,0.12)", btnBg: "#14b8a6" },
   },
 ];
 
@@ -878,11 +908,11 @@ const HOW_STEPS = [
 ];
 
 const STEP_HOVER: Array<{ iconMotion: object; duration: number; iconColor: string; bgColor: string }> = [
-  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "#2D7A5F", bgColor: "rgba(45,122,95,0.15)" },
-  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "#4CAF84", bgColor: "rgba(76,175,132,0.15)" },
-  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "#2D7A5F", bgColor: "rgba(45,122,95,0.15)" },
-  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "#4CAF84", bgColor: "rgba(76,175,132,0.15)" },
-  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "#FCD34D", bgColor: "rgba(252,211,77,0.15)" },
+  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "#1a1a1a", bgColor: "#D4E600" },
+  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "#1a1a1a", bgColor: "#D4E600" },
+  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "#1a1a1a", bgColor: "#D4E600" },
+  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "#1a1a1a", bgColor: "#D4E600" },
+  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "#1a1a1a", bgColor: "#D4E600" },
 ];
 
 function HowItWorksSection({ isActive }: { isActive: boolean }) {
@@ -980,7 +1010,7 @@ function StepCard({
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      style={{ willChange: "transform" }}
+      style={{ willChange: "transform", borderColor: hovered ? "#D4E600" : undefined, background: hovered ? "rgba(212,230,0,0.06)" : undefined }}
       initial={{ opacity: 0, y: 30 }}
       animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ delay: isActive ? delay : 0, duration: 0.5, ease: easeExpo }}
@@ -988,7 +1018,7 @@ function StepCard({
       whileTap={{ scale: 0.98 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative rounded-2xl border border-border bg-card p-5 text-center shadow-card transition-colors"
+      className="relative rounded-2xl border bg-card p-5 text-center shadow-card transition-all"
     >
       <div className="relative mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full transition-colors"
         style={{ background: hovered ? hoverConfig.bgColor : "linear-gradient(135deg, var(--color-primary), var(--color-primary-glow))" }}>
@@ -1138,117 +1168,122 @@ function FeatureCard({ feat, t, active }: { feat: typeof FEATURES[0]; t: (k: str
   );
 }
 
-/* ── Section 8: Badge Reward System ──────────────────────────────────────────── */
-const PARTICLES = [
-  { id: 0, x: "15%", delay: 0, duration: 2.3 },
-  { id: 1, x: "28%", delay: 0.6, duration: 2.8 },
-  { id: 2, x: "42%", delay: 1.1, duration: 2.1 },
-  { id: 3, x: "55%", delay: 0.3, duration: 3.0 },
-  { id: 4, x: "68%", delay: 0.9, duration: 2.5 },
-  { id: 5, x: "80%", delay: 0.4, duration: 2.7 },
-  { id: 6, x: "22%", delay: 1.5, duration: 2.4 },
-  { id: 7, x: "72%", delay: 1.8, duration: 2.2 },
-];
-
-const BADGE_LEVELS = [
-  { tier: "bronze" as const, label: "Bronze", levelKey: "sec.star.level1", benefitKey: "sec.star.benefit1", anim: { rotate: [-3, 3, 0], duration: 3 } },
-  { tier: "silver" as const, label: "Silver", levelKey: "sec.star.level2", benefitKey: "sec.star.benefit2", anim: { y: [0, -6, 0], duration: 4 } },
-  { tier: "gold" as const,   label: "Gold",   levelKey: "sec.star.level3", benefitKey: "sec.star.benefit3", anim: { scale: [1, 1.05, 1], duration: 2.5 } },
-];
-
-function StarRewardSection({ isActive }: { isActive: boolean }) {
-  const { t } = useI18n();
+/* ── Section 3: UberRewards Banner ───────────────────────────────────────────── */
+function UberRewardsBanner({ isActive }: { isActive: boolean }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
-    <section className="relative flex h-full flex-col justify-center overflow-hidden border-y border-border bg-surface/30 pt-16">
-      <motion.div
-        className="pointer-events-none absolute inset-0 opacity-15"
-        animate={{ background: ["radial-gradient(ellipse at 20% 50%, #2D7A5F 0%, transparent 60%)", "radial-gradient(ellipse at 80% 50%, #0d9488 0%, transparent 60%)", "radial-gradient(ellipse at 20% 50%, #2D7A5F 0%, transparent 60%)"] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {isActive && PARTICLES.map((p) => (
-        <motion.div key={p.id} className="pointer-events-none absolute h-2 w-2 rounded-full bg-yellow-400" style={{ left: p.x, bottom: "10%" }}
-          animate={{ y: [0, -130, 0], opacity: [0, 1, 0] }}
-          transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeOut" }}
+    <section
+      className="relative flex h-full flex-col justify-center overflow-hidden"
+      style={{
+        background: isDark
+          ? "linear-gradient(135deg, #0f3d24 0%, #1a5c3a 40%, #2D7A5F 100%)"
+          : "linear-gradient(135deg, #e8f5f0 0%, #d0ede4 40%, #b8e4d4 100%)",
+        padding: "80px 24px",
+      }}
+    >
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          animate={{ x: [0, 30, -20, 0], y: [0, -25, 15, 0], scale: [1, 1.1, 0.95, 1] }}
+          transition={{ duration: 8 + i * 2, repeat: Infinity, ease: "easeInOut", delay: i * 1.2 }}
+          style={{
+            position: "absolute",
+            width: 150 + i * 60, height: 150 + i * 60,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.04)",
+            top: `${[10, 60, 30, 70, 20, 50][i]}%`,
+            left: `${[5, 70, 40, 15, 80, 55][i]}%`,
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+          }}
         />
       ))}
-      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6">
+
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
         <motion.div
-          className="mb-2 flex justify-center"
-          initial={{ scale: 0, rotate: -10 }}
-          animate={isActive ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -10 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20, delay: isActive ? 0.1 : 0 }}
+          initial={{ scale: 0 }}
+          animate={isActive ? { scale: 1 } : { scale: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: isDark ? "rgba(255,255,255,0.12)" : "rgba(45,122,95,0.12)",
+            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(45,122,95,0.2)",
+            borderRadius: 50, padding: "6px 16px", marginBottom: 24,
+          }}
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-            <BadgeSVG tier="gold" size={16} /> The SkillBuddy Badge System
+          <span style={{ fontSize: 18 }}>🚗</span>
+          <span style={{ color: isDark ? "#C8E600" : "#0f3d24", fontWeight: 700, fontSize: 12, letterSpacing: "1.5px" }}>
+            SKILLBUDDY RIDEPERKS
           </span>
         </motion.div>
+
         <motion.h2
-          className="mb-2 text-center font-display text-2xl font-extrabold sm:text-4xl"
           initial={{ opacity: 0, y: 30 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: isActive ? 0.2 : 0, ease: easeExpo }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          style={{ fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 800, color: isDark ? "white" : "#0f3d24", marginBottom: 16 }}
         >
-          {t("sec.star.title")}
+          Earn 3 Badges.
+          <br />
+          <span style={{ color: isDark ? "#C8E600" : "#2D7A5F" }}>Ride for Free.</span>
         </motion.h2>
+
         <motion.p
-          className="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.4, delay: isActive ? 0.35 : 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          style={{ fontSize: "clamp(15px, 2.5vw, 18px)", color: isDark ? "rgba(255,255,255,0.8)" : "#2d5a40", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6 }}
         >
-          {t("sec.star.subtitle")}
+          Once you earn your Gold SkillBuddy Badge, we personally arrange your pick-up and drop-off for every job — completely free. No transport costs. Just show up and shine.
         </motion.p>
 
-        <style>{`
-          .star-scroll::-webkit-scrollbar{height:4px}
-          .star-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:10px}
-          .star-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
-          .star-cards{display:flex;gap:16px;min-width:max-content;padding:4px 2px 4px}
-          .star-card{min-width:268px;flex-shrink:0}
-          @media(min-width:1024px){
-            .star-scroll{overflow-x:visible!important}
-            .star-cards{display:grid;grid-template-columns:repeat(3,1fr);min-width:0;padding:4px 0}
-            .star-card{min-width:0}
-          }
-        `}</style>
-        <div className="star-scroll" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 12, scrollbarWidth: "thin", scrollbarColor: "#2D7A5F transparent" }}>
-        <div className="star-cards">
-          {BADGE_LEVELS.map(({ tier, levelKey, benefitKey, anim }, i) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", marginBottom: 40 }}
+        >
+          {[
+            { icon: "🥉", text: "Bronze — 5% off all jobs" },
+            { icon: "🥈", text: "Silver — Free ride 1×/week" },
+            { icon: "🥇", text: "Gold — FREE rides every job" },
+          ].map((perk, i) => (
             <motion.div
-              key={tier}
-              className={`star-card relative overflow-hidden rounded-2xl border-2 p-5 sm:p-7 ${
-                tier === "gold" ? "border-yellow-400/60 bg-gradient-to-br from-yellow-400/10 to-transparent dark:border-yellow-500/60" : "border-border bg-card"
-              }`}
-              style={{ willChange: "transform" }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
-              transition={{ duration: 0.7, delay: isActive ? 0.3 + i * 0.3 : 0, type: "spring", stiffness: 200, damping: 15 }}
-              whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
-              whileTap={{ scale: 0.98 }}
+              key={i}
+              whileHover={{ scale: 1.05 }}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: isDark ? "rgba(255,255,255,0.08)" : "rgba(45,122,95,0.1)",
+                border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(45,122,95,0.2)",
+                borderRadius: 50, padding: "10px 20px",
+                color: isDark ? "white" : "#0f3d24", fontSize: 14, fontWeight: 500,
+              }}
             >
-              <div className="mb-5 flex items-center gap-3">
-                <motion.div
-                  animate={isActive ? { ...anim, transition: { duration: anim.duration, repeat: Infinity, ease: "easeInOut" } } : {}}
-                >
-                  <BadgeSVG tier={tier} size={56} />
-                </motion.div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold">{t(levelKey)}</h3>
-                  <p className="text-xs text-muted-foreground capitalize">{tier} tier</p>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">{t(benefitKey)}</p>
-              {tier === "gold" && (
-                <motion.div
-                  className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-yellow-400/20 blur-3xl"
-                  animate={{ opacity: [0.3, 0.7, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              )}
+              <span style={{ fontSize: 20 }}>{perk.icon}</span>
+              {perk.text}
             </motion.div>
           ))}
-        </div>
-        </div>
+        </motion.div>
+
+        <motion.a
+          href="/become-a-skillbuddy"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "linear-gradient(135deg, #C8E600, #D4F000)",
+            color: "#1a2a00", fontWeight: 800, fontSize: 16,
+            padding: "16px 40px", borderRadius: 50,
+            textDecoration: "none", cursor: "pointer",
+            boxShadow: "0 0 20px rgba(200,230,0,0.4)",
+          }}
+        >
+          🚗 Start Earning Your Ride Perks →
+        </motion.a>
       </div>
     </section>
   );
