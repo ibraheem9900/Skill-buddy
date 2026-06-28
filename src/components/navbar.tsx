@@ -131,7 +131,7 @@ export function Navbar() {
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((p) => !p); }}
             className="lg:hidden ml-1 flex items-center justify-center rounded-md hover:bg-accent transition text-foreground"
-            style={{ width: 36, height: 36, padding: 6, flexShrink: 0 }}
+            style={{ width: 44, height: 44, padding: 8, flexShrink: 0, position: "relative", zIndex: 10000, touchAction: "manipulation" }}
           >
             <motion.div
               animate={menuOpen ? "open" : "closed"}

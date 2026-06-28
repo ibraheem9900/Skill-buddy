@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Star, X, ArrowRight, Check, ChevronsUpDown } from "lucide-react";
+import { Search, X, ArrowRight, Check, ChevronsUpDown } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { z } from "zod";
@@ -241,9 +241,9 @@ function CategoryGrid({
   ];
 
   return (
-    <div className="grid gap-2 sm:gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))" }}>
+    <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}>
       {allCategories.map((c) => (
-        <CategoryPill
+        <ServiceCategoryCard
           key={c.slug}
           icon={c.icon}
           name={c.name}
@@ -255,52 +255,34 @@ function CategoryGrid({
   );
 }
 
-function CategoryPill({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
+function ServiceCategoryCard({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[icon] ?? Icons.Sparkles) as IconCmp;
-  const [hovered, setHovered] = useState(false);
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="flex flex-col items-center gap-2 transition-all duration-200 w-full"
+      whileHover={{ y: -3, transition: { duration: 0.15 } }}
+      whileTap={{ scale: 0.97 }}
+      className="group flex w-full flex-col items-center justify-start gap-3 rounded-2xl border bg-card p-4 text-center transition-all duration-200"
       style={{
-        padding: "12px 8px",
-        borderRadius: 16,
-        border: active ? "1.5px solid #2D7A5F" : "1.5px solid transparent",
-        background: active ? "#2D7A5F" : "transparent",
-        transform: "translateZ(0)",
+        borderColor: active ? "#2D7A5F" : "var(--border)",
+        boxShadow: active ? "0 0 0 2px rgba(45,122,95,0.15)" : undefined,
       }}
     >
       <div
-        className="grid place-items-center transition-all duration-200"
+        className="grid h-14 w-14 place-items-center rounded-2xl transition-all duration-200"
         style={{
-          width: 52,
-          height: 52,
-          borderRadius: "50%",
-          background: active ? "rgba(255,255,255,0.2)" : "rgba(45,122,95,0.1)",
-          color: active ? "white" : hovered ? "#F99912" : "#2D7A5F",
+          background: active ? "#2D7A5F" : "rgba(45,122,95,0.1)",
+          color: active ? "white" : "#2D7A5F",
         }}
       >
-        <Icon className="h-6 w-6" />
+        <Icon className="h-7 w-7 transition-colors duration-200 group-hover:text-[#F99912]" />
       </div>
       <span
-        className="text-center leading-tight transition-colors duration-200"
-        style={{
-          fontSize: 11,
-          fontWeight: active ? 700 : 500,
-          color: active ? "white" : undefined,
-          maxWidth: "100%",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          wordBreak: "break-word",
-        }}
+        className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200"
+        style={{ color: active ? "#2D7A5F" : undefined }}
       >
         {name}
       </span>
-    </button>
+    </motion.button>
   );
 }

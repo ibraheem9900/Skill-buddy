@@ -629,16 +629,16 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
 /* ── Section 4: Special Offers — 3D rotateX elevator + unique card colors ───── */
 const OFFER_COLORS = [
   {
-    dark: { bg: "#2a1800", accent: "#F99912", text: "white", tagBg: "rgba(249,153,18,0.2)", btnBg: "#DA983C" },
-    light: { bg: "#FFF8F0", accent: "#DA983C", text: "#0D1117", tagBg: "rgba(218,152,60,0.15)", btnBg: "#DA983C" },
+    dark: { bg: "#0B0E28", accent: "#818CF8", text: "white", tagBg: "rgba(129,140,248,0.18)", btnBg: "#6366F1" },
+    light: { bg: "#EEF2FF", accent: "#6366F1", text: "#0D1117", tagBg: "rgba(99,102,241,0.12)", btnBg: "#6366F1" },
   },
   {
-    dark: { bg: "#0a2518", accent: "#3ECF8E", text: "white", tagBg: "rgba(62,207,142,0.2)", btnBg: "#2D7A5F" },
-    light: { bg: "#E8F5F0", accent: "#2D7A5F", text: "#0D1117", tagBg: "rgba(45,122,95,0.15)", btnBg: "#2D7A5F" },
+    dark: { bg: "#051E14", accent: "#34D399", text: "white", tagBg: "rgba(52,211,153,0.18)", btnBg: "#10B981" },
+    light: { bg: "#ECFDF5", accent: "#10B981", text: "#0D1117", tagBg: "rgba(16,185,129,0.12)", btnBg: "#059669" },
   },
   {
-    dark: { bg: "#1f1008", accent: "#F4DDB8", text: "white", tagBg: "rgba(244,221,184,0.15)", btnBg: "#B87B5C" },
-    light: { bg: "#FDF6EE", accent: "#B87B5C", text: "#0D1117", tagBg: "rgba(184,123,92,0.12)", btnBg: "#B87B5C" },
+    dark: { bg: "#20060C", accent: "#FB7185", text: "white", tagBg: "rgba(251,113,133,0.18)", btnBg: "#F43F5E" },
+    light: { bg: "#FFF1F2", accent: "#F43F5E", text: "#0D1117", tagBg: "rgba(244,63,94,0.12)", btnBg: "#E11D48" },
   },
 ];
 
@@ -1185,128 +1185,173 @@ function FeatureCard({ feat, t, active }: { feat: typeof FEATURES[0]; t: (k: str
 }
 
 /* ── Section 3: UberRewards Banner ───────────────────────────────────────────── */
+const UBER_IMAGES = ["/uber-img-1.png", "/uber-img-2.png", "/uber-img-3.png"];
+
 function UberRewardsBanner({ isActive }: { isActive: boolean }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const [imgIdx, setImgIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setImgIdx((p) => (p + 1) % UBER_IMAGES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
+
+  const contentBg = isDark ? "#1a0f05" : "#FFF8F0";
+
   return (
     <section
-      className="relative flex h-full flex-col justify-center overflow-hidden"
-      style={{ padding: "40px 24px" }}
+      className="relative flex h-full flex-col justify-center"
+      style={{ padding: "clamp(16px,4vw,40px) clamp(12px,3vw,24px)" }}
     >
       <motion.div
-        className="rideperks-inner"
         initial={{ opacity: 0, y: 30 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
         transition={{ duration: 0.6 }}
+        className="uber-banner-card"
         style={{
           position: "relative",
-          overflow: "hidden",
           borderRadius: 24,
-          border: isDark ? "1px solid #B87B5C" : "1px solid #F4DDB8",
-          maxWidth: 1200,
+          overflow: "hidden",
+          maxWidth: 1100,
           margin: "0 auto",
+          width: "100%",
           display: "flex",
-          alignItems: "stretch",
-          flexWrap: "wrap",
+          flexDirection: "row",
+          minHeight: "clamp(300px, 45vw, 480px)",
+          background: contentBg,
+          border: isDark ? "1px solid rgba(218,152,60,0.25)" : "1px solid rgba(218,152,60,0.2)",
+          boxShadow: isDark ? "0 24px 64px rgba(0,0,0,0.5)" : "0 24px 64px rgba(0,0,0,0.1)",
         }}
       >
-        {/* Animated diagonal gradient background */}
-        <motion.div
-          style={{
-            position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-            background: isDark
-              ? "#1a0f05"
-              : "#FFF8F0",
-          }}
-          animate={{ opacity: [0.9, 1, 0.9] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* LEFT SIDE: Uber image (60% width) */}
-        <div className="rideperks-left" style={{
-          position: "relative", zIndex: 1, flex: "0 0 60%", minWidth: 280,
-          minHeight: 360,
+        {/* ── LEFT: Image carousel (58%) ── */}
+        <div className="uber-banner-img" style={{
+          position: "relative",
+          width: "58%",
+          minHeight: "clamp(260px, 42vw, 480px)",
+          flexShrink: 0,
+          overflow: "hidden",
         }}>
-          <img
-            src="/uber-img-2.png"
-            alt="Uber ride"
-            style={{
-              position: "absolute", inset: 0, width: "100%", height: "100%",
-              objectFit: "cover", borderRadius: "24px 0 0 24px",
-            }}
-          />
+          {/* Cycling images with AnimatePresence */}
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={imgIdx}
+              src={UBER_IMAGES[imgIdx]}
+              alt="Uber"
+              initial={{ opacity: 0, scale: 1.06 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.85, ease: "easeInOut" }}
+              style={{
+                position: "absolute", inset: 0,
+                width: "100%", height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </AnimatePresence>
+
+          {/* Right-edge fade into content bg */}
           <div style={{
-            position: "absolute", inset: 0,
-            background: isDark
-              ? "linear-gradient(to right, rgba(26,15,5,0.2) 0%, rgba(26,15,5,0.85) 100%)"
-              : "linear-gradient(to right, rgba(255,248,240,0.1) 0%, rgba(255,248,240,0.88) 100%)",
-            borderRadius: "24px 0 0 24px",
+            position: "absolute", inset: 0, pointerEvents: "none",
+            background: `linear-gradient(to right, transparent 35%, ${contentBg} 100%)`,
           }} />
-          {/* UBER text overlay */}
-          <div style={{
-            position: "absolute", bottom: 24, left: 24, zIndex: 2,
-          }}>
+
+          {/* Bottom-left: "U B E R" spaced + bold UBER */}
+          <div style={{ position: "absolute", top: 20, left: 20, zIndex: 3 }}>
             <span style={{
-              fontFamily: "Helvetica Neue, Arial, sans-serif",
-              fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900,
+              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+              fontSize: "clamp(11px, 2vw, 16px)",
+              fontWeight: 600,
+              letterSpacing: "0.55em",
+              color: "white",
+              textShadow: "0 1px 8px rgba(0,0,0,0.7)",
+              textTransform: "uppercase",
+            }}>
+              U B E R
+            </span>
+          </div>
+          <div style={{ position: "absolute", bottom: 20, left: 20, zIndex: 3 }}>
+            <span style={{
+              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+              fontSize: "clamp(28px, 5vw, 60px)",
+              fontWeight: 900,
               letterSpacing: "-1px",
               color: "white",
-              textShadow: "0 2px 16px rgba(0,0,0,0.6)",
+              textShadow: "0 2px 20px rgba(0,0,0,0.7)",
+              lineHeight: 1,
+              display: "block",
             }}>
               UBER
             </span>
           </div>
+
+          {/* Image indicator dots */}
+          <div style={{
+            position: "absolute", bottom: 20, right: 20, zIndex: 3,
+            display: "flex", gap: 5,
+          }}>
+            {UBER_IMAGES.map((_, i) => (
+              <motion.div
+                key={i}
+                onClick={() => setImgIdx(i)}
+                style={{ cursor: "pointer", height: 6, borderRadius: 99 }}
+                animate={{ width: i === imgIdx ? 18 : 6, backgroundColor: i === imgIdx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)" }}
+                transition={{ duration: 0.3 }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* RIGHT SIDE: Text + CTA (40% width) */}
-        <div className="rideperks-right" style={{
-          position: "relative", zIndex: 1, flex: "0 0 40%",
-          padding: "40px 36px",
-          display: "flex", flexDirection: "column", justifyContent: "center", gap: 16,
+        {/* ── RIGHT: Content (42%) ── */}
+        <div className="uber-banner-content" style={{
+          flex: 1,
+          padding: "clamp(20px,4vw,44px) clamp(16px,3vw,40px)",
+          display: "flex", flexDirection: "column", justifyContent: "center", gap: 14,
+          position: "relative", zIndex: 2,
         }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: isDark ? "rgba(218,152,60,0.15)" : "rgba(218,152,60,0.12)",
+            display: "inline-flex", alignItems: "center", gap: 7,
+            background: isDark ? "rgba(218,152,60,0.15)" : "rgba(218,152,60,0.14)",
             border: "1px solid #DA983C",
-            borderRadius: 50, padding: "5px 14px",
+            borderRadius: 50, padding: "5px 13px",
             alignSelf: "flex-start",
           }}>
-            <Award size={14} color="#DA983C" />
-            <span style={{ color: "#DA983C", fontWeight: 700, fontSize: 11, letterSpacing: "1.5px" }}>
+            <Award size={12} color="#DA983C" />
+            <span style={{ color: "#DA983C", fontWeight: 700, fontSize: 10, letterSpacing: "1.5px" }}>
               SKILLBUDDY × UBER
             </span>
           </div>
 
           <h2 style={{
-            fontSize: "clamp(20px, 3vw, 36px)",
-            fontWeight: 800,
-            color: isDark ? "#DA983C" : "#B87B5C",
+            fontSize: "clamp(18px, 3vw, 38px)",
+            fontWeight: 900,
+            color: isDark ? "#F59E0B" : "#92400E",
             margin: 0,
-            lineHeight: 1.2,
+            lineHeight: 1.15,
+            fontFamily: "'Helvetica Neue', Arial, sans-serif",
           }}>
-            Ride free with Uber
+            Ride free<br />with Uber
           </h2>
 
           <p style={{
-            fontSize: "clamp(13px, 1.5vw, 15px)",
-            color: isDark ? "rgba(255,255,255,0.75)" : "#5a3a1a",
-            margin: 0, lineHeight: 1.6, maxWidth: 320,
+            fontSize: "clamp(12px, 1.5vw, 14px)",
+            color: isDark ? "rgba(255,255,255,0.7)" : "#78350F",
+            margin: 0, lineHeight: 1.65, maxWidth: 280,
           }}>
-            Become a three Badge SkillBuddy to ride free with Uber
+            Become a three Badge SkillBuddy<br />to ride free with Uber
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {[
               { tier: "bronze" as const, text: "Bronze — 5% discount" },
               { tier: "silver" as const, text: "Silver — 1 free ride/week" },
               { tier: "gold" as const, text: "Gold — Free every job" },
             ].map((perk) => (
               <div key={perk.tier} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                fontSize: 13,
-                color: isDark ? "rgba(255,255,255,0.85)" : "#3a2010",
+                display: "flex", alignItems: "center", gap: 8, fontSize: 13,
+                color: isDark ? "rgba(255,255,255,0.85)" : "#44250A",
               }}>
-                <BadgeSVG tier={perk.tier} size={22} />
+                <BadgeSVG tier={perk.tier} size={20} />
                 {perk.text}
               </div>
             ))}
@@ -1314,16 +1359,16 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
 
           <motion.a
             href="/become-a-skillbuddy"
-            className="rideperks-cta"
-            whileHover={{ scale: 1.04, opacity: 0.92 }}
+            whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 28px", borderRadius: 12,
-              background: "#DA983C",
-              color: "white", fontWeight: 700, fontSize: 14,
+              padding: "12px 24px", borderRadius: 10,
+              background: "linear-gradient(135deg,#DA983C,#F99912)",
+              color: "white", fontWeight: 700, fontSize: 13,
               textDecoration: "none", whiteSpace: "nowrap",
-              alignSelf: "flex-start",
+              alignSelf: "flex-start", marginTop: 4,
+              boxShadow: "0 4px 16px rgba(218,152,60,0.35)",
             }}
           >
             Start Earning Your Badge →
@@ -1332,13 +1377,11 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
       </motion.div>
 
       <style>{`
-        @media (max-width: 768px) {
-          .rideperks-inner { flex-direction: column !important; }
-          .rideperks-left { flex: none !important; min-height: 200px !important; width: 100% !important; }
-          .rideperks-left img { border-radius: 24px 24px 0 0 !important; }
-          .rideperks-left > div:last-child { border-radius: 24px 24px 0 0 !important; }
-          .rideperks-right { flex: none !important; width: 100% !important; padding: 24px 20px !important; }
-          .rideperks-cta { align-self: stretch !important; justify-content: center !important; }
+        @media (max-width: 640px) {
+          .uber-card { flex-direction: column !important; }
+          .uber-img-side { width: 100% !important; min-height: 200px !important; }
+          .uber-img-side img { border-radius: 24px 24px 0 0 !important; }
+          .uber-content-side { padding: 20px !important; }
         }
       `}</style>
     </section>
