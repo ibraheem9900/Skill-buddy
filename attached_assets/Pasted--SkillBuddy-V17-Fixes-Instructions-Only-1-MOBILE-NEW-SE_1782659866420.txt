@@ -1,0 +1,147 @@
+# SkillBuddy — V17 Fixes (Instructions Only)
+
+---
+
+## 1. MOBILE: NEW SECTION (RidePerks/UberRewards) LAYOUT FIX
+
+The new RidePerks banner section is breaking the mobile layout. Fix it:
+
+- On mobile, the section must stack vertically: heading/text on top, button below
+- Remove any fixed width or min-width from the banner container on mobile
+- The banner must NOT overflow the screen horizontally
+- Set `width: 100%`, `max-width: 100%`, `overflow: hidden` on mobile
+- The inner content padding must be reduced on mobile: `padding: 28px 20px`
+- The animated background bubbles must use `position: absolute` and `pointer-events: none` so they don't interfere with layout
+- The button on mobile must be full width: `width: 100%`, centered
+- Remove any `min-height` from this section on mobile
+
+---
+
+## 2. MOBILE: ANIMATIONS NOT WORKING
+
+Framer Motion `whileInView` animations are not triggering on mobile. Fix:
+
+- Add `viewport={{ once: true, amount: 0.1 }}` to every `motion` element that uses `whileInView` — the `amount: 0.1` means animation triggers when just 10% of the element is visible (instead of default 50%)
+- Make sure no parent element has `overflow: hidden` that would prevent `IntersectionObserver` from detecting the child
+- Remove `transform: translateZ(0)` from section wrappers on mobile — this can create new stacking contexts that break `whileInView`
+- Reduce animation distances on mobile: use `y: 20` instead of `y: 60` for entrance animations so they feel appropriate for small screens
+
+---
+
+## 3. HAMBURGER MENU: Fix Spacing and Layout
+
+Looking at screenshot 3, the drawer opens correctly but the layout inside needs fixing:
+
+- Reduce the gap between nav links from current large spacing to `gap: 4px` between links
+- Each link padding: `padding: 11px 16px` (less vertical padding)
+- Logo at top: reduce margin below it to `margin-bottom: 20px`
+- Language selector (GB EN) should appear right after the last nav link with `margin-top: 12px`
+- The 3 buttons (Log in, Sign Up, Become a SkillBuddy) at bottom should have `gap: 8px` between them and `padding-top: 16px` with a thin separator line above
+- Overall drawer should fit all content without needing to scroll on a normal phone screen
+
+---
+
+## 4. MOBILE: GAP BETWEEN NAVBAR AND FIRST SECTION (Screenshot 1)
+
+There is a large empty white/gray space between the navbar and the hero section on mobile. Fix:
+
+- The hero section must have `padding-top: 0` — no extra top padding
+- The `main` wrapper's `padding-top` should equal exactly the navbar height (measure it — likely 60px on mobile)
+- Remove any extra `margin-top` from the first section or hero component
+- The red-circled empty area in screenshot 1 must be eliminated
+
+---
+
+## 5. MOBILE: RIGHT SIDE EMPTY SPACE (Screenshot 1)
+
+There is extra empty space on the right side of the hero section on mobile. Fix:
+
+- Set `width: 100%` and `max-width: 100vw` on the hero section
+- Set `overflow-x: hidden` on the hero container
+- Remove any absolute-positioned decorative elements that extend beyond the viewport on mobile
+- Make sure the hero text is `text-align: center` on mobile with proper `padding: 0 20px`
+
+---
+
+## 6. FOOTER NOT SHOWING ON DESKTOP
+
+The footer is not rendering on desktop. Fix:
+
+- Check if the footer component is wrapped in a condition that hides it (like `if (isMobile)`)
+- Make sure the footer is rendered in the root layout for ALL screen sizes
+- If using scroll-snap sections, the footer may be hidden behind a snap section — add `scroll-snap-align: none` to the footer
+- Make sure the footer has `position: relative` and `z-index: 1` so it's not hidden behind other elements
+- Add `display: block !important` and `visibility: visible !important` to the footer element
+
+---
+
+## 7. FOOTER LINKS: TOP SERVICES NOT TRANSLATING
+
+The footer has a "Top Services" or "Services Links" section with service names like "Pet Care" etc. that don't translate. Fix:
+
+- Every service name link in the footer must be wrapped in the `t()` translation function
+- Add translation keys for all footer service links in all 5 language files (en, et, ru, lv, lt):
+  - `footer.links.petCare`, `footer.links.homeCleaning`, `footer.links.plumbing`, etc.
+- The section heading "Services Links" / "Top Services" must also use `t('footer.servicesHeading')`
+- Test by switching to Estonian — all footer text including service names must change
+
+---
+
+## 8. SERVICES PAGE MOBILE: Category Buttons Alignment (Screenshot 4)
+
+Looking at screenshot 4, the category slider on the services page mobile has alignment issues — the arrow button overlaps the category icons. Fix:
+
+- The arrow button (>) must be positioned SEPARATELY from the category icons row — not overlapping
+- Layout should be: `[← arrow]  [scrollable category icons row]  [→ arrow]`
+- Arrow buttons: `width: 32px`, `height: 32px`, `flex-shrink: 0`, aligned vertically centered
+- Category icons row: `flex: 1`, `overflow-x: auto`, `scroll-behavior: smooth`, hidden scrollbar
+- The "All" button must be visible and properly sized on mobile: `min-width: 70px`, `padding: 8px 12px`
+- All category items must have `min-width: 70px` and `flex-shrink: 0` so they don't compress
+- Dot indicators below must be centered and visible
+
+---
+
+## 9. MOBILE: SCROLL ANIMATIONS (Same as Desktop)
+
+Scroll animations must work on mobile exactly like desktop. Fix:
+
+- Every section entrance animation (fade up, scale in, slide in) must trigger on mobile too
+- The key fix: change `viewport={{ once: true, amount: 0.2 }}` to `viewport={{ once: true, amount: 0.05 }}` on all `whileInView` animations — triggers earlier
+- For the RidePerks banner animated bubbles: they must animate on mobile too (the `animate` prop works without scroll, so these should already work — check they're not being disabled)
+- The category cards stagger animation must work on mobile
+- The How It Works steps must animate on mobile
+- The testimonials fade-in must work on mobile
+
+---
+
+## 10. MOBILE DRAWER LOGO & LINK SPACING
+
+From screenshot 3, the drawer has too much vertical space between items. Fix these exact measurements:
+
+- Logo at top: `height: 28px`, `margin-bottom: 16px`
+- Between logo and first link: `24px`
+- Each link: `font-size: 16px`, `padding: 10px 12px`, `border-radius: 10px`
+- Gap between links: `2px`
+- Language selector: appears after last link, `margin-top: 8px`, `margin-bottom: 8px`
+- Thin divider line before the buttons: `1px solid rgba(0,0,0,0.08)`, `margin: 8px 0`
+- Log in button: `padding: 11px`, full width
+- Sign Up button: `padding: 11px`, full width, green
+- Become a SkillBuddy button: `padding: 11px`, full width, dark green
+- Gap between the 3 buttons: `8px`
+
+---
+
+## CHECKLIST
+
+- [ ] RidePerks banner: vertical stack on mobile, no overflow, full-width button
+- [ ] Framer Motion `amount: 0.05-0.1` on all whileInView — triggers on mobile
+- [ ] Animations work on mobile (reduced y distances)
+- [ ] Hamburger drawer: compact spacing, logo → links → language → divider → 3 buttons
+- [ ] Gap between navbar and hero section eliminated on mobile
+- [ ] Right-side overflow on hero section fixed
+- [ ] Footer: visible on desktop, not hidden by any condition or snap section
+- [ ] Footer service links: all wrapped in `t()`, translate in all 5 languages
+- [ ] Services page mobile: arrow buttons not overlapping category icons
+- [ ] Services page mobile: category items `min-width: 70px`, no compression
+- [ ] All scroll animations triggered on mobile
+- [ ] All sections visible on mobile without gaps

@@ -185,6 +185,16 @@
   &::-webkit-scrollbar { display: none; }
 }
 
+/* ── Root content wrapper: matches navbar height ──────────────────────────── */
+.root-content {
+  padding-top: 72px;
+}
+@media (max-width: 768px) {
+  .root-content {
+    padding-top: 60px;
+  }
+}
+
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
 .navbar {
   position: fixed !important;
@@ -244,10 +254,10 @@
   position: relative;
   z-index: 10;
   scrollbar-width: none;
-  /* Desktop: fixed-height viewport, mandatory snap */
+  /* Desktop: fixed-height viewport, proximity snap (allows scrolling to footer) */
   height: calc(100vh - 72px);
   overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   width: 100%;
 }
 .snap-container::-webkit-scrollbar { display: none; }
@@ -310,6 +320,27 @@
 /* Desktop: keep scroll margin for anchor links */
 @media (min-width: 769px) {
   section, .section { scroll-margin-top: 72px; }
+}
+
+/* ── RidePerks banner: mobile stack ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .rideperks-inner {
+    flex-direction: column !important;
+    padding: 28px 20px !important;
+    gap: 20px !important;
+  }
+  .rideperks-left {
+    min-width: unset !important;
+    width: 100% !important;
+  }
+  .rideperks-right {
+    width: 100% !important;
+    flex-shrink: unset !important;
+  }
+  .rideperks-cta {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }
 
 /* ── FIX 2A: Hamburger button size ────────────────────────────────────────── */

@@ -30,7 +30,7 @@ export function Footer() {
           </div>
         </div>
 
-        <FooterCol title={t("footer.topServices")} links={CATEGORIES.slice(0, 6).map((c) => ({ to: "/services", label: c.name, search: { category: c.slug } }))} />
+        <FooterCol title={t("footer.topServices")} links={CATEGORIES.slice(0, 6).map((c) => ({ to: "/services", label: t("cat." + c.slug.replace(/-/g, "_")), search: { category: c.slug } }))} />
         <FooterCol title={t("footer.company")} links={[
           { to: "/about", label: t("footer.about") },
           { to: "/jobs", label: t("nav.jobs") },

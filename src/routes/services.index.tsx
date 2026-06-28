@@ -265,8 +265,19 @@ function CategorySlider({
 
   return (
     <div>
-      <div className="relative" style={{ paddingLeft: 44, paddingRight: 44 }}>
-        <div ref={emblaRef} className="overflow-hidden">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={scrollPrev}
+          disabled={!canPrev}
+          aria-label="Previous categories"
+          className="flex-shrink-0 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
+          style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
+        >
+          <ChevronLeft className="h-4 w-4 text-primary" />
+        </button>
+
+        <div ref={emblaRef} className="overflow-hidden flex-1 min-w-0">
           <div className="flex gap-2 sm:gap-3">
             {allCategories.map((c) => (
               <div key={c.slug} className="shrink-0">
@@ -283,35 +294,11 @@ function CategorySlider({
 
         <button
           type="button"
-          onClick={scrollPrev}
-          disabled={!canPrev}
-          aria-label="Previous categories"
-          className="absolute top-1/2 z-10 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
-          style={{
-            left: 0,
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
-            transform: "translateY(-50%)",
-          }}
-        >
-          <ChevronLeft className="h-4 w-4 text-primary" />
-        </button>
-        <button
-          type="button"
           onClick={scrollNext}
           disabled={!canNext}
           aria-label="Next categories"
-          className="absolute top-1/2 z-10 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
-          style={{
-            right: 0,
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
-            transform: "translateY(-50%)",
-          }}
+          className="flex-shrink-0 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
+          style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
         >
           <ChevronRight className="h-4 w-4 text-primary" />
         </button>

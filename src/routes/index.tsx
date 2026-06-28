@@ -1191,6 +1191,7 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
       style={{ padding: "40px 24px", background: "transparent" }}
     >
       <motion.div
+        className="rideperks-inner"
         initial={{ opacity: 0, y: 30 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
         transition={{ duration: 0.6 }}
@@ -1234,7 +1235,7 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
         ))}
 
         {/* LEFT SIDE: Icon + Text */}
-        <div style={{ position: "relative", zIndex: 2, flex: 1, minWidth: 280 }}>
+        <div className="rideperks-left" style={{ position: "relative", zIndex: 2, flex: 1, minWidth: 280 }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "rgba(255,255,255,0.12)",
@@ -1289,9 +1290,10 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
         </div>
 
         {/* RIGHT SIDE: CTA Button */}
-        <div style={{ position: "relative", zIndex: 2, flexShrink: 0 }}>
+        <div className="rideperks-right" style={{ position: "relative", zIndex: 2, flexShrink: 0 }}>
           <motion.a
             href="/become-a-skillbuddy"
+            className="rideperks-cta"
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.97 }}
             animate={isActive ? {
@@ -1591,7 +1593,7 @@ function TestimonialsSection({ isActive }: { isActive: boolean }) {
 function FooterSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   const cols = [
-    { title: t("footer.topServices"), links: CATEGORIES.slice(0, 6).map((c) => ({ label: c.name, to: "/services" as const })) },
+    { title: t("footer.topServices"), links: CATEGORIES.slice(0, 6).map((c) => ({ label: t("cat." + c.slug.replace(/-/g, "_")), to: "/services" as const })) },
     { title: t("footer.company"), links: [{ label: t("footer.about"), to: "/about" as const }, { label: t("nav.jobs"), to: "/jobs" as const }, { label: t("footer.becomeSB"), to: "/become-a-skillbuddy" as const }, { label: t("nav.contact"), to: "/contact" as const }, { label: t("nav.faqs"), to: "/faqs" as const }] },
     { title: t("footer.legal"), links: [{ label: t("footer.terms"), to: "/terms" as const }, { label: t("footer.privacy"), to: "/privacy" as const }, { label: t("footer.support"), to: "/contact" as const }] },
   ];

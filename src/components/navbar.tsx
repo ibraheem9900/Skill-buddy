@@ -252,12 +252,12 @@ export function Navbar() {
             </div>
 
             {/* Logo inside drawer */}
-            <div style={{ marginBottom: 32, paddingLeft: 8 }}>
+            <div style={{ marginBottom: 16, paddingLeft: 8 }}>
               <Logo />
             </div>
 
             {/* Nav links */}
-            <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+            <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
               {navLinks.map((link, i) => (
                 <motion.div
                   key={link.to}
@@ -272,8 +272,8 @@ export function Navbar() {
                     className="text-foreground hover:bg-accent"
                     style={{
                       display: "block",
-                      padding: "13px 16px",
-                      borderRadius: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
                       fontSize: 16,
                       fontWeight: 500,
                       textDecoration: "none",
@@ -284,13 +284,16 @@ export function Navbar() {
                 </motion.div>
               ))}
 
-              <div style={{ marginTop: 8, paddingLeft: 8 }}>
+              <div style={{ marginTop: 8, marginBottom: 8, paddingLeft: 8 }}>
                 <LanguageSelector />
               </div>
             </nav>
 
+            {/* Divider */}
+            <div style={{ height: 1, background: "var(--border, rgba(0,0,0,0.08))", marginBottom: 16 }} />
+
             {/* Auth buttons at bottom */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 0 }}>
               <Link to="/auth/login" onClick={() => setMenuOpen(false)}>
                 <button
                   style={{

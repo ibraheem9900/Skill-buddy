@@ -113,7 +113,7 @@ export function WhatMakesUsSpecial() {
           variants={sectionVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.05 }}
           className="mb-12 text-center"
         >
           <p className="text-sm font-semibold text-primary">{t("sec.special.badge")}</p>
@@ -126,7 +126,7 @@ export function WhatMakesUsSpecial() {
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.05 }}
           className="grid gap-6 md:grid-cols-2"
         >
           {features.map((feature, i) => (
@@ -165,7 +165,7 @@ export function StarReward() {
           variants={sectionVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.05 }}
           className="mb-12 text-center"
         >
           <p className="text-sm font-semibold text-primary">{t("sec.star.badge")}</p>
@@ -184,7 +184,7 @@ export function StarReward() {
               variants={cardFromBottom}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, amount: 0.15 }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{ delay: i * 0.15 }}
               className={`relative overflow-hidden rounded-2xl border-2 p-8 ${
                 i === 2
@@ -260,7 +260,7 @@ export function OurVision() {
           variants={sectionVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.05 }}
           className="mb-12 text-center"
         >
           <p className="text-sm font-semibold text-primary">{t("sec.vision.badge")}</p>
@@ -282,7 +282,7 @@ export function OurVision() {
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.05 }}
           className="grid gap-6 md:grid-cols-3"
         >
           {pillars.map((pillar, i) => (

@@ -126,7 +126,7 @@ function RootComponent() {
             <SkillBuddyLoader />
             <NavigationLoader />
             <Navbar />
-            <div style={{ paddingTop: "72px" }}>
+            <div className="root-content">
               <Suspense fallback={null}>
                 <Outlet />
               </Suspense>
