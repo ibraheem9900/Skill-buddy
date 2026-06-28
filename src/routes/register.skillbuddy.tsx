@@ -422,7 +422,7 @@ function ProviderRegisterPage() {
   const handleFileUpload = (
     key: keyof FormData,
     file: File,
-    ref: React.RefObject<HTMLInputElement>
+    ref: React.RefObject<HTMLInputElement | null>
   ) => {
     if (file.size > 5 * 1024 * 1024) {
       setErrors((e) => ({ ...e, [key]: t("auth.validation.fileSize") }));
@@ -491,10 +491,7 @@ function ProviderRegisterPage() {
                 key="step3"
                 form={form}
                 errors={errors}
-                skillSearch={skillSearch}
-                filteredSkills={filteredSkills}
                 onUpdate={update}
-                onSkillSearchChange={setSkillSearch}
                 onFileUpload={handleFileUpload}
                 certRef={certRef}
                 onNext={handleNextStep}
@@ -775,9 +772,9 @@ function Step2Form({
 }: {
   form: FormData;
   errors: FormErrors;
-  onUpdate: (key: keyof FormData, value: string) => void;
-  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement>) => void;
-  avatarRef: React.RefObject<HTMLInputElement>;
+  onUpdate: (key: keyof FormData, value: string | File | null) => void;
+  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement | null>) => void;
+  avatarRef: React.RefObject<HTMLInputElement | null>;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -958,10 +955,7 @@ function Step2Form({
 function Step3Form({
   form,
   errors,
-  skillSearch,
-  filteredSkills,
   onUpdate,
-  onSkillSearchChange,
   onFileUpload,
   certRef,
   onNext,
@@ -969,16 +963,25 @@ function Step3Form({
 }: {
   form: FormData;
   errors: FormErrors;
-  skillSearch: string;
-  filteredSkills: typeof SKILLS;
-  onUpdate: (key: keyof FormData, value: string) => void;
-  onSkillSearchChange: (v: string) => void;
-  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement>) => void;
-  certRef: React.RefObject<HTMLInputElement>;
+  onUpdate: (key: keyof FormData, value: string | File | null) => void;
+  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement | null>) => void;
+  certRef: React.RefObject<HTMLInputElement | null>;
   onNext: () => void;
   onBack: () => void;
 }) {
   const { t } = useI18n();
+
+  // Skills filtered by selected category
+  const subcategoryOptions = form.serviceCategory
+    ? SKILLS.filter((s) => s.category === form.serviceCategory)
+    : [];
+
+  // When category changes, clear subcategory
+  const handleCategoryChange = (cat: string) => {
+    onUpdate("serviceCategory", cat);
+    onUpdate("subcategorySkill", "");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -990,78 +993,108 @@ function Step3Form({
         {t("register.step3.subtitle")}
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-5">
+
+        {/* ── Dropdown 1: Category ── */}
         <div>
-          <Label>{t("register.step3.primarySkill")}</Label>
-          <div className="relative mt-1.5">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={skillSearch}
-              onChange={(e) => onSkillSearchChange(e.target.value)}
-              placeholder={t("register.step3.searchSkills")}
-              className="h-11 pl-10"
-            />
-          </div>
-          <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-border p-2">
-            {filteredSkills.length === 0 ? (
-              <p className="p-2 text-sm text-muted-foreground">{t("register.step3.noSkills")}</p>
-            ) : (
-              filteredSkills.map((skill) => (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onClick={() => onUpdate("primarySkill", skill.id)}
-                  className={`w-full rounded-lg p-2 text-left text-sm transition-colors ${
-                    form.primarySkill === skill.id
-                      ? "bg-[#2D7A5F]/10 text-[#2D7A5F]"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  <div className="font-medium">{skill.name}</div>
-                  <div className="text-xs text-muted-foreground">{skill.category}</div>
-                </button>
-              ))
-            )}
-          </div>
-          {errors.primarySkill && (
-            <p className="mt-1 text-xs text-red-500">{errors.primarySkill}</p>
+          <Label className="text-sm font-semibold">
+            {t("register.step3.categoryLabel")} <span className="text-red-500">*</span>
+          </Label>
+          <Select
+            value={form.serviceCategory}
+            onValueChange={handleCategoryChange}
+          >
+            <SelectTrigger
+              className={`mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F] ${
+                errors.serviceCategory ? "border-red-500" : ""
+              }`}
+            >
+              <SelectValue placeholder={t("register.step3.categoryPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {SKILL_CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.serviceCategory && (
+            <p className="mt-1 text-xs text-red-500">{errors.serviceCategory}</p>
           )}
         </div>
 
+        {/* ── Dropdown 2: Subcategory / Specific service (mandatory) ── */}
         <div>
-          <Label>{t("register.step3.secondarySkill")}</Label>
+          <Label className="text-sm font-semibold">
+            {t("register.step3.subcategoryLabel")} <span className="text-red-500">*</span>
+          </Label>
           <Select
-            value={form.secondarySkill}
-            onValueChange={(v) => onUpdate("secondarySkill", v)}
+            value={form.subcategorySkill}
+            onValueChange={(v) => onUpdate("subcategorySkill", v as string)}
+            disabled={!form.serviceCategory}
           >
-            <SelectTrigger className="mt-1.5 h-11">
-              <SelectValue placeholder={t("register.step3.selectSecondary")} />
+            <SelectTrigger
+              className={`mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F] ${
+                errors.subcategorySkill ? "border-red-500" : ""
+              } ${!form.serviceCategory ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <SelectValue
+                placeholder={
+                  form.serviceCategory
+                    ? t("register.step3.subcategoryPlaceholder")
+                    : t("register.step3.subcategoryFirst")
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {SKILLS.filter((s) => s.id !== form.primarySkill).map((s) => (
+              {subcategoryOptions.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {errors.subcategorySkill && (
+            <p className="mt-1 text-xs text-red-500">{errors.subcategorySkill}</p>
+          )}
         </div>
 
+        {/* ── Dropdown 3: Service Preference (optional) ── */}
+        <div>
+          <Label className="text-sm font-semibold">
+            {t("register.step3.preferenceLabel")}
+          </Label>
+          <Select
+            value={form.servicePreference}
+            onValueChange={(v) => onUpdate("servicePreference", v as string)}
+          >
+            <SelectTrigger className="mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F]">
+              <SelectValue placeholder={t("register.step3.preferencePlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {SERVICE_PREFERENCES.map((pref) => (
+                <SelectItem key={pref} value={pref}>
+                  {pref}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* ── Certification upload ── */}
         <div>
           <Label>{t("register.step3.certification")}</Label>
           <div
             onClick={() => certRef.current?.click()}
-            className="mt-1.5 flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:border-[#2D7A5F]"
+            className="mt-1.5 flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:border-[#2D7A5F] transition-colors"
           >
             {form.certification ? (
               <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-[#2D7A5F]" />
-                <span className="text-sm">{form.certification.name}</span>
+                <span className="text-sm">{(form.certification as File).name}</span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdate("certification", null);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onUpdate("certification", null); }}
                   className="rounded-full bg-red-500 p-1 text-white"
                 >
                   <X className="h-3 w-3" />
@@ -1088,7 +1121,7 @@ function Step3Form({
           />
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="flex gap-3">
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("common.back")}
@@ -1117,10 +1150,10 @@ function Step4Form({
   form: FormData;
   errors: FormErrors;
   loading: boolean;
-  onUpdate: (key: keyof FormData, value: string) => void;
-  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement>) => void;
-  frontDocRef: React.RefObject<HTMLInputElement>;
-  backDocRef: React.RefObject<HTMLInputElement>;
+  onUpdate: (key: keyof FormData, value: string | File | null) => void;
+  onFileUpload: (key: keyof FormData, file: File, ref: React.RefObject<HTMLInputElement | null>) => void;
+  frontDocRef: React.RefObject<HTMLInputElement | null>;
+  backDocRef: React.RefObject<HTMLInputElement | null>;
   onSubmit: () => void;
   onBack: () => void;
 }) {

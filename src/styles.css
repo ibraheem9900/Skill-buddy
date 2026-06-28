@@ -285,13 +285,16 @@
 
 /* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
 @media (max-width: 768px) {
-  body { overflow-x: hidden !important; }
-  * { max-width: 100vw; box-sizing: border-box; }
+  /* Use clip instead of hidden — clip doesn't create a new containing block
+     for position:fixed elements, so the mobile menu drawer works correctly */
+  body { overflow-x: clip !important; }
+  html { overflow-x: clip !important; }
 
   /* Snap container: normal document scroll on mobile */
   .snap-container {
     height: auto !important;
     overflow-y: visible !important;
+    overflow-x: clip !important;
     scroll-snap-type: none !important;
   }
 
@@ -304,19 +307,32 @@
     padding-top: 48px !important;
     padding-bottom: 48px !important;
     width: 100% !important;
+    /* Remove any transform/will-change that breaks IntersectionObserver */
+    transform: none !important;
+    will-change: auto !important;
   }
 
-  /* Hero section: enough height to fill screen */
+  /* Hero section: fill remaining viewport below navbar (no padding-top) */
   .snap-section:first-child {
     padding-top: 0 !important;
-    min-height: 100svh !important;
+    min-height: calc(100svh - var(--navbar-height)) !important;
   }
 
-  /* Inner sections: remove h-full so they size by content */
+  /* Inner sections: remove h-full and overflow clipping */
   .snap-section section {
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  /* Ensure no element breaks out horizontally */
+  .snap-section,
+  .snap-section > *,
+  .snap-section section {
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 }
 
