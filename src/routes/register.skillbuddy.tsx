@@ -78,6 +78,16 @@ const SKILLS = [
   { id: "tailor", name: "Tailor", category: "Repair & Customization" },
 ];
 
+// Unique categories derived from SKILLS
+const SKILL_CATEGORIES = Array.from(new Set(SKILLS.map((s) => s.category))).sort();
+
+// Subcategory options mapped to preference dropdown
+const SERVICE_PREFERENCES = [
+  "I can do all services in this subcategory",
+  "I specialize in a specific type",
+  "I am flexible / open to all",
+];
+
 type FormData = {
   username: string;
   email: string;
@@ -92,6 +102,9 @@ type FormData = {
   streetAddress: string;
   houseNumber: string;
   primarySkill: string;
+  serviceCategory: string;
+  subcategorySkill: string;
+  servicePreference: string;
   secondarySkill: string;
   certification: File | null;
   residencePermitFront: File | null;
@@ -127,6 +140,9 @@ function ProviderRegisterPage() {
     streetAddress: "",
     houseNumber: "",
     primarySkill: "",
+    serviceCategory: "",
+    subcategorySkill: "",
+    servicePreference: "",
     secondarySkill: "",
     certification: null,
     residencePermitFront: null,
@@ -172,7 +188,8 @@ function ProviderRegisterPage() {
 
   const validateStep3 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.primarySkill) errs.primarySkill = t("auth.validation.required");
+    if (!form.serviceCategory) errs.serviceCategory = t("auth.validation.required");
+    if (!form.subcategorySkill) errs.subcategorySkill = t("auth.validation.required");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -379,7 +396,7 @@ function ProviderRegisterPage() {
 
       const { error: providerError } = await supabase.from("provider_profiles").insert({
         user_id: user.id,
-        primary_skill: form.primarySkill,
+        primary_skill: form.subcategorySkill || form.primarySkill,
         secondary_skill: form.secondarySkill || null,
         certification_url: certificationUrl,
         residence_permit_front_url: frontDocUrl,

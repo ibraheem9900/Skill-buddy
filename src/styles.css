@@ -186,13 +186,16 @@
 }
 
 /* ── Root content wrapper: matches navbar height ──────────────────────────── */
-.root-content {
-  padding-top: 72px;
+:root {
+  --navbar-height: 72px;
 }
 @media (max-width: 768px) {
-  .root-content {
-    padding-top: 60px;
+  :root {
+    --navbar-height: 60px;
   }
+}
+.root-content {
+  padding-top: var(--navbar-height);
 }
 
 /* ── Navbar ────────────────────────────────────────────────────────────────── */

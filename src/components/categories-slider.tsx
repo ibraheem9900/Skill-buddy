@@ -4,7 +4,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CategoryCard } from "@/components/category-card";
 import { CATEGORIES_FULL } from "@/lib/categories";
 
-export function CategoriesSlider() {
+interface CategoriesSliderProps {
+  /** When provided, one item will render as the active (selected) card */
+  activeSlug?: string;
+  /** Called with the category slug when a card is clicked */
+  onSelect?: (slug: string) => void;
+}
+
+export function CategoriesSlider({ activeSlug, onSelect }: CategoriesSliderProps = {}) {
   const [emblaRef, embla] = useEmblaCarousel({ align: "start", loop: false, slidesToScroll: 1 });
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -45,7 +52,11 @@ export function CategoriesSlider() {
               style={{ minWidth: 0 }}
             >
               <div className="h-full">
-                <CategoryCard category={c} />
+                <CategoryCard
+                  category={c}
+                  active={activeSlug === c.slug}
+                  onSelect={onSelect}
+                />
               </div>
             </div>
           ))}

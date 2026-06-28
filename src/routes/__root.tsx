@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -118,6 +118,22 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navbarRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      const el = document.querySelector(".navbar") as HTMLElement | null;
+      if (el) {
+        navbarRef.current = el;
+        const h = el.getBoundingClientRect().height;
+        document.documentElement.style.setProperty("--navbar-height", `${h}px`);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <LoaderProvider>

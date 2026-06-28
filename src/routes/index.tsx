@@ -142,7 +142,7 @@ function Home() {
             }
           });
         },
-        { threshold: isMobile ? 0.1 : 0.5, root: isMobile ? null : container }
+        { threshold: isMobile ? 0.05 : 0.5, root: isMobile ? null : container }
       );
       obs.observe(el);
       observers.push(obs);
@@ -539,6 +539,11 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
           .elite-scroll::-webkit-scrollbar-thumb{background:#2D7A5F;border-radius:10px}
           .elite-cards{display:flex;gap:16px;min-width:max-content;padding:4px 2px 4px}
           .elite-card{min-width:268px;flex-shrink:0}
+          @media(max-width:768px){
+            .elite-scroll{overflow-x:hidden!important;width:100%}
+            .elite-cards{flex-direction:column;min-width:0;width:100%;padding:4px 0}
+            .elite-card{min-width:0!important;width:100%;max-width:100%;flex-shrink:0}
+          }
           @media(min-width:1024px){
             .elite-scroll{overflow-x:visible!important}
             .elite-cards{display:grid;grid-template-columns:repeat(3,1fr);min-width:0;padding:4px 0}
@@ -599,7 +604,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
         </div>
 
         <motion.div
-          className="mt-4 flex justify-center pb-2"
+          className="mt-4 flex justify-center pb-2 px-1"
           initial={{ opacity: 0, y: 20 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.4, delay: isActive ? 0.5 : 0 }}
@@ -616,6 +621,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
               background: "linear-gradient(135deg, #DA983C, #F99912)", color: "white",
               padding: "14px 36px", borderRadius: "50px",
               fontSize: "clamp(14px, 3vw, 16px)", fontWeight: "700", border: "none", cursor: "pointer",
+              width: "100%", maxWidth: 420,
             }}
           >
             Start Earning Your Badge →

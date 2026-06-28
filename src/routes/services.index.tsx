@@ -2,8 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ArrowRight, Check, ChevronsUpDown } from "lucide-react";
-import * as Icons from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
 import { z } from "zod";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { SiteShell } from "@/components/site-shell";
@@ -12,8 +10,7 @@ import { CATEGORIES, SERVICES } from "@/lib/data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-
-type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
+import { CategoriesSlider } from "@/components/categories-slider";
 
 const searchSchema = z.object({
   category: fallback(z.string().optional(), undefined).default(undefined),
@@ -33,20 +30,6 @@ export const Route = createFileRoute("/services/")({
   }),
   component: ServicesPage,
 });
-
-const MAIN_CATEGORY_ICONS: Record<string, string> = {
-  "creative-design": "Palette",
-  "pet-care": "PawPrint",
-  "beauty-personal": "Sparkles",
-  "health-wellness": "HeartPulse",
-  "home-property": "Home",
-  "household-assistance": "Users",
-  "education-training": "GraduationCap",
-  "event-party": "PartyPopper",
-  "business-pro": "Briefcase",
-  "travel-transport": "Plane",
-  "repair-custom": "Wrench",
-};
 
 type SortOption = "popular" | "price-asc" | "price-desc" | "rating";
 
@@ -106,12 +89,24 @@ function ServicesPage() {
         </div>
       </div>
 
-      {/* Category grid */}
+      {/* Category slider — identical to homepage */}
       <div className="border-b border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-          <CategoryGrid
-            categories={CATEGORIES}
-            active={cat}
+          {/* "All" pill */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => setCat(undefined)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+                !cat
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {t("services.allLabel")}
+            </button>
+          </div>
+          <CategoriesSlider
+            activeSlug={cat}
             onSelect={(slug) => setCat(slug === cat ? undefined : slug)}
           />
         </div>
@@ -222,61 +217,5 @@ function ServicesPage() {
         </div>
       </div>
     </SiteShell>
-  );
-}
-
-function CategoryGrid({
-  categories,
-  active,
-  onSelect,
-}: {
-  categories: typeof CATEGORIES;
-  active: string | undefined;
-  onSelect: (slug: string) => void;
-}) {
-  const { t } = useI18n();
-  const allCategories = [
-    { slug: "", name: t("services.allLabel"), icon: "LayoutGrid" },
-    ...categories.map((c) => ({ ...c, name: t("cat." + c.slug.replace(/-/g, "_")), icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" })),
-  ];
-
-  return (
-    <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}>
-      {allCategories.map((c) => (
-        <ServiceCategoryCard
-          key={c.slug}
-          icon={c.icon}
-          name={c.name}
-          active={c.slug === "" ? !active : active === c.slug}
-          onClick={() => c.slug === "" ? onSelect("") : onSelect(c.slug)}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ServiceCategoryCard({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
-  const Icon = ((Icons as unknown as Record<string, IconCmp>)[icon] ?? Icons.Sparkles) as IconCmp;
-  const [hovered, setHovered] = useState(false);
-  const iconBg = active ? "#2D7A5F" : hovered ? "#F99912" : "rgba(45,122,95,0.1)";
-  const iconColor = (active || hovered) ? "white" : "#2D7A5F";
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group flex w-full flex-col items-center justify-start gap-3 rounded-2xl border border-border bg-card p-5 text-center transition-all duration-200 hover:border-[rgba(46,184,122,0.3)] hover:-translate-y-1 hover:shadow-card"
-      style={{ borderColor: active ? "#2D7A5F" : undefined }}
-    >
-      <div
-        className="grid h-14 w-14 place-items-center rounded-2xl transition-all duration-200"
-        style={{ background: iconBg, color: iconColor }}
-      >
-        <Icon className="h-7 w-7" />
-      </div>
-      <span className="min-h-[2.5rem] text-sm font-semibold leading-tight">
-        {name}
-      </span>
-    </button>
   );
 }

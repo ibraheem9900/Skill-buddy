@@ -20,9 +20,51 @@ const animVariants: Record<AnimKind, { hover: TargetAndTransition; transition?: 
   scale:  { hover: { scale: 1.2 }, transition: { duration: 0.25 } },
 };
 
-export function CategoryCard({ category }: { category: CategoryDef }) {
+interface CategoryCardProps {
+  category: CategoryDef;
+  /** When true, render with a green active state (no navigation — calls onSelect instead) */
+  active?: boolean;
+  /** If provided, clicking calls this instead of navigating */
+  onSelect?: (slug: string) => void;
+}
+
+export function CategoryCard({ category, active, onSelect }: CategoryCardProps) {
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[category.icon] ?? Icons.Sparkles) as IconCmp;
   const v = animVariants[category.anim];
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(category.slug)}
+        className={`group flex h-full w-full flex-col items-center justify-start gap-3 rounded-2xl border bg-card p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-card ${
+          active
+            ? "border-primary shadow-card"
+            : "border-border hover:border-[rgba(46,184,122,0.3)]"
+        }`}
+      >
+        <motion.div
+          whileHover={v.hover}
+          transition={v.transition}
+          className={`grid h-14 w-14 place-items-center rounded-2xl transition-all duration-200 ${
+            active
+              ? "bg-primary text-primary-foreground"
+              : "bg-primary/10 text-primary group-hover:bg-[#F99912] group-hover:text-white"
+          }`}
+        >
+          <Icon className="h-7 w-7" />
+        </motion.div>
+        <div
+          className={`min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200 ${
+            active ? "text-primary" : ""
+          }`}
+        >
+          {category.name}
+        </div>
+      </button>
+    );
+  }
+
   return (
     <Link
       to="/services"

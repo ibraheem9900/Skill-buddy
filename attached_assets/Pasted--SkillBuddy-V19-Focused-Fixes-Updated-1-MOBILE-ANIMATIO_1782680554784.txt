@@ -1,0 +1,106 @@
+# SkillBuddy — V19 Focused Fixes (Updated)
+
+---
+
+## 1. MOBILE ANIMATIONS — Root Fix
+
+The animations are not working on mobile because of three root causes that must be fixed:
+
+**Cause 1:** Parent containers have `overflow: hidden` which prevents IntersectionObserver from detecting child elements entering the viewport. Go through every section wrapper and remove `overflow: hidden` — replace with `overflow: clip` only where strictly needed for layout, or move the overflow constraint to a non-animated inner wrapper.
+
+**Cause 2:** `whileInView` viewport threshold is too high. Change every single `whileInView` animation in the entire codebase to use `viewport={{ once: true, amount: 0.05 }}`. This triggers the animation when just 5% of the element is visible on screen.
+
+**Cause 3:** On mobile, some sections use `position: fixed` or `transform` on parent wrappers which creates new stacking contexts and breaks IntersectionObserver. Remove any `transform` or `will-change` from section wrapper divs on mobile.
+
+After fixing these three causes, all scroll animations should work on mobile identically to desktop.
+
+---
+
+## 2. EARN BADGES / SKILLBUDDY BADGES SECTION — Mobile Responsive Fix
+
+**Problem (visible in screenshot):** The 3 badge cards (Bronze, Silver, Gold) are showing side by side on mobile with content cut off on the right. The Silver and Gold cards are partially hidden. This is also likely causing the section to block IntersectionObserver for elements below it, breaking scroll animations for the whole page.
+
+**Fix:**
+- On mobile (max-width 768px), the 3 badge cards must stack VERTICALLY — one card per row, full width
+- Each card: `width: 100%`, `min-width: unset`, `max-width: 100%`
+- The cards container: `flex-direction: column`, `overflow-x: hidden`, `gap: 16px`
+- No card should extend beyond the viewport width
+- The "Start Earning Your Badge" button below the cards must also be full width on mobile and visible without scrolling
+- Remove any `min-width` or fixed `width` set on the cards row or individual cards
+
+This section's horizontal overflow is the most likely root cause of why scroll animations below it don't trigger on mobile — fixing the overflow here will likely fix the animations issue too.
+
+---
+
+## 3. MOBILE NAVBAR-SECTION GAP — Root Fix
+
+There is a large blank gap between the navbar and the first section on mobile.
+
+The fix: In the root layout file (`__root.tsx` or equivalent), the `<main>` element must have `padding-top` set to exactly the navbar height. On mobile the navbar is shorter (around 60px), on desktop it is taller (around 72px).
+
+Use a CSS variable approach: set `--navbar-height` from JavaScript by measuring the navbar element after mount using `getBoundingClientRect().height`, then apply `padding-top: var(--navbar-height)` to `<main>`. This updates on resize too.
+
+Additionally, make sure no individual page or section component has its own `margin-top` or `padding-top` that adds to this — only the root layout handles it.
+
+---
+
+## 4. SERVICES PAGE — Category Section Must Match Homepage Exactly
+
+The services page category section must be identical to the homepage category slider in terms of:
+- Same card design (circular icon, label below, same size)
+- Same left (←) and right (→) arrow buttons on both sides
+- Same dot indicators below
+- Same hover effect (icon changes to accent color `#F99912`)
+- Same slide animation when clicking arrows
+- Same active state (green background on active category)
+- Same mobile behavior (arrows visible on mobile, touch swipe works)
+
+The simplest approach: extract the homepage category slider into a shared `CategorySlider` component and use it in both the homepage AND the services page. Pass in the categories data as props. This guarantees they look and behave identically.
+
+---
+
+## 5. "BECOME A SKILLBUDDY" FORM — Add Subcategory + Preference Fields
+
+After the existing category dropdown field, add these fields in this exact order:
+
+**Field A — Subcategory (mandatory):**
+- Label: "Select your specific service *"
+- This is a dropdown that updates based on the selected category
+- Required — form cannot submit without this
+- Shows relevant subcategories from the selected parent category
+- Example: if Category = "Home & Property" → show Plumber, Electrician, Home Cleaner, etc.
+
+**Field B — Service Preference (optional):**
+- Label: "Any preference or specialization? (optional)"
+- Dropdown with options:
+  - "I can do all services in this subcategory"
+  - "I specialize in a specific type"
+  - "I am flexible / open to all"
+- Not required — user can leave it blank
+- Appears below the subcategory field
+
+**Styling for both fields:**
+- Custom styled dropdowns (not browser default) — same style as the existing category dropdown
+- Smooth open/close animation on the dropdown list
+- Green focus ring on input
+- Clear label above each field
+- Error message appears below subcategory if left empty on submit
+
+---
+
+## CHECKLIST
+
+- [ ] Mobile animations: remove `overflow: hidden` from section wrappers, set `amount: 0.05` on all whileInView
+- [ ] Mobile animations: remove `transform`/`will-change` from section wrapper divs on mobile
+- [ ] Earn Badges cards: stack vertically on mobile, full width, no horizontal overflow
+- [ ] Earn Badges button: full width on mobile, visible below cards
+- [ ] Navbar gap: root layout measures navbar height dynamically, sets `--navbar-height` CSS variable
+- [ ] Navbar gap: `<main>` uses `padding-top: var(--navbar-height)`
+- [ ] No individual page/section adds its own top margin
+- [ ] Services page: uses same `CategorySlider` component as homepage
+- [ ] Services page categories: same arrows, dots, hover, active state, mobile behavior as homepage
+- [ ] Become a SkillBuddy form: subcategory dropdown added (mandatory), updates based on category selection
+- [ ] Become a SkillBuddy form: preference field added (optional) below subcategory
+- [ ] Both new fields: custom styled dropdowns matching existing form style
+- [ ] Subcategory required validation: error shown if empty on submit
+- [ ] Preference field: not required, no error if empty
