@@ -3,26 +3,27 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 type Theme = "dark" | "light";
 const ThemeCtx = createContext<{ theme: Theme; toggle: () => void }>({ theme: "dark", toggle: () => {} });
 
-function getSystemTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const saved = localStorage.getItem("sb-theme") as Theme | null;
-    if (saved && (saved === "dark" || saved === "light")) {
-      return saved;
-    }
-    return getSystemTheme();
-  });
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem("sb-theme") as Theme | null;
+    if (saved === "dark" || saved === "light") {
+      setTheme(saved);
+    } else {
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(systemDark ? "dark" : "light");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
     try { localStorage.setItem("sb-theme", theme); } catch {}
-  }, [theme]);
+  }, [theme, mounted]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");

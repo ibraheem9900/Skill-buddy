@@ -25,6 +25,7 @@ export function Logo({
         alt="Skillbuddy"
         className={`object-contain shrink-0 ${className}`}
         style={{ height: size, width: "auto", ...filterStyle }}
+        suppressHydrationWarning
       />
     );
   }
@@ -35,6 +36,7 @@ export function Logo({
       alt="Skillbuddy"
       className={`object-contain shrink-0 ${className}`}
       style={{ height: size, width: size, ...filterStyle }}
+      suppressHydrationWarning
     />
   );
 }

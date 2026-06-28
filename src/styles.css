@@ -257,7 +257,7 @@
   /* Desktop: fixed-height viewport, proximity snap (allows scrolling to footer) */
   height: calc(100vh - 72px);
   overflow-y: scroll;
-  scroll-snap-type: y proximity;
+  scroll-snap-type: y mandatory;
   width: 100%;
 }
 .snap-container::-webkit-scrollbar { display: none; }

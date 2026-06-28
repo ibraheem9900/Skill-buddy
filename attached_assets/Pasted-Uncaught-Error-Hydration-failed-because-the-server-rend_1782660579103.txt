@@ -1,0 +1,75 @@
+Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RootComponent>
+      <QueryClientProvider client={{}}>
+        <LoaderProvider>
+          <I18nProvider>
+            <ThemeProvider>
+              <SkillBuddyLoader>
+              <NavigationLoader>
+              <Navbar>
+                <nav className="navbar">
+                  <div className="mx-auto fl...">
+                    <a className="flex items..." href="/" ref={{current:null}} onClick={function} onBlur={function} ...>
+                      <Logo>
+                        <img
+                          src="/src/assets/skillbuddy-logo-transparent.png"
+                          alt="Skillbuddy"
+                          className={"object-contain shrink-0 "}
+                          style={{
++                           height: 36
+-                           height: "36px"
++                           width: "auto"
+-                           width: "auto"
+-                           filter: "brightness(0) invert(1)"
+                          }}
+                        >
+                    <nav>
+                    ...
+                      <button className={"inline-f..."} ref={null} onClick={function toggle} aria-label="Toggle theme">
+                        <motion.div initial={{rotate:-90, ...}} animate={{rotate:0,opacity:1}} exit={{rotate:90, ...}} ...>
+                          <div style={{opacity:0, ...}} ref={function}>
+                            <Moon className="h-5 w-5">
+                              <svg
+                                ref={null}
+                                xmlns="http://www.w3.org/2000/svg"
+                                width={24}
+                                height={24}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
++                               className="lucide lucide-moon h-5 w-5"
+-                               className="lucide lucide-sun h-5 w-5"
+                                aria-hidden="true"
+                              >
++                               <path
++                                 d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.2..."
++                               >
+-                               <circle cx="12" cy="12" r="4">
+                  ...
+              ...
+
+    at throwOnHydrationMismatch (react-dom_client.js?v=62eb6465:3920:13)
+    at beginWork (react-dom_client.js?v=62eb6465:8694:196)
+    at runWithFiberInDEV (react-dom_client.js?v=62eb6465:997:72)
+    at performUnitOfWork (react-dom_client.js?v=62eb6465:12561:98)
+    at workLoopConcurrentByScheduler (react-dom_client.js?v=62eb6465:12557:11)
+    at renderRootConcurrent (react-dom_client.js?v=62eb6465:12539:71)
+    at performWorkOnRoot (react-dom_client.js?v=62eb6465:11766:152)
+    at performWorkOnRootViaSchedulerTask (react-dom_client.js?v=62eb6465:13505:9)
+    at MessagePort.performWorkUntilDeadline (react-dom_client.js?v=62eb6465:36:50)
+(index):1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)

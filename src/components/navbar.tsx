@@ -198,7 +198,7 @@ export function Navbar() {
               position: "fixed",
               inset: 0,
               top: 0,
-              zIndex: 9997,
+              zIndex: 99999,
               backgroundColor: "rgba(0,0,0,0.45)",
               backdropFilter: "blur(4px)",
               WebkitBackdropFilter: "blur(4px)",
@@ -222,38 +222,43 @@ export function Navbar() {
               top: 0,
               right: 0,
               bottom: 0,
-              width: "72vw",
+              width: "80vw",
               maxWidth: 300,
-              zIndex: 9998,
-              boxShadow: "-8px 0 40px rgba(0,0,0,0.18)",
+              zIndex: 100000,
+              boxShadow: "-8px 0 40px rgba(0,0,0,0.22)",
               display: "flex",
               flexDirection: "column",
-              padding: 20,
+              paddingTop: 16,
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingBottom: 24,
               overflowY: "auto",
             }}
           >
-            {/* Close button */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
+            {/* Close button row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <Logo size={28} />
               <button
                 onClick={() => setMenuOpen(false)}
                 style={{
                   background: "none",
-                  border: "none",
-                  fontSize: 22,
+                  border: "1px solid var(--border, rgba(0,0,0,0.12))",
+                  borderRadius: 8,
+                  width: 32,
+                  height: 32,
+                  fontSize: 18,
                   cursor: "pointer",
                   color: "currentColor",
                   lineHeight: 1,
-                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
                 }}
                 aria-label="Close menu"
               >
                 ✕
               </button>
-            </div>
-
-            {/* Logo inside drawer */}
-            <div style={{ marginBottom: 16, paddingLeft: 8 }}>
-              <Logo />
             </div>
 
             {/* Nav links */}
