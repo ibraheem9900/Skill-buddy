@@ -33,6 +33,15 @@ const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
 
 const CATEGORIES_LIST = Object.keys(CATEGORY_SUBCATEGORIES);
 
+const PREFERENCE_OPTIONS = [
+  "I can handle all services in this category",
+  "I specialize in a specific niche",
+  "I am flexible and open to all tasks",
+  "I prefer weekday jobs only",
+  "I prefer weekend jobs only",
+  "I am available for urgent/same-day jobs",
+];
+
 type FormData = {
   firstName: string;
   lastName: string;
@@ -42,6 +51,7 @@ type FormData = {
   personalCode: string;
   category: string;
   subcategory: string;
+  preference: string;
   bio: string;
   terms: boolean;
 };
@@ -143,11 +153,12 @@ function BecomeASkillBuddy() {
     const errors: FormErrors = {};
     if (!data.firstName.trim()) errors.firstName = t("becomeSkillbuddy.firstNameRequired");
     if (!data.lastName.trim()) errors.lastName = t("becomeSkillbuddy.lastNameRequired");
-    if (!data.email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) errors.email = t("becomeSkillbuddy.emailRequired");
+    if (!data.email.trim() || !/^[^\@\s]+@[^\@\s]+\.[^\@\s]+$/.test(data.email)) errors.email = t("becomeSkillbuddy.emailRequired");
     if (!data.phone.trim()) errors.phone = t("becomeSkillbuddy.phoneRequired");
     if (!data.address.trim()) errors.address = t("becomeSkillbuddy.addressRequired");
     if (!/^\d{11}$/.test(data.personalCode)) errors.personalCode = t("becomeSkillbuddy.personalCodeError");
     if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
+    if (data.category && !data.subcategory) errors.subcategory = "Please select your specific service";
     if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
     if (!data.terms) errors.terms = t("becomeSkillbuddy.termsRequired");
     return errors;
@@ -164,13 +175,13 @@ function BecomeASkillBuddy() {
   const [form, setForm] = useState<FormData>({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", personalCode: "", category: "", subcategory: "",
-    bio: "", terms: false,
+    preference: "", bio: "", terms: false,
   });
 
   const set = (key: keyof FormData, value: string | boolean) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
-    if (key === "category") setForm((p) => ({ ...p, category: value as string, subcategory: "" }));
+    if (key === "category") setForm((p) => ({ ...p, category: value as string, subcategory: "", preference: "" }));
   };
 
   const handleFile = (file: File) => {
@@ -402,7 +413,7 @@ function BecomeASkillBuddy() {
                 <CustomSelect
                   value={form.category}
                   onChange={(val) => {
-                    setForm((p) => ({ ...p, category: val, subcategory: "" }));
+                    setForm((p) => ({ ...p, category: val, subcategory: "", preference: "" }));
                     if (errors.category) setErrors((p) => { const n = { ...p }; delete n.category; return n; });
                   }}
                   options={CATEGORIES_LIST}
@@ -412,20 +423,45 @@ function BecomeASkillBuddy() {
                 {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
               </div>
 
-              {/* Subcategory */}
-              <div>
-                <label className={labelClass}>
-                  {t("becomeSkillbuddy.subcategory")}{" "}
-                  <span className="text-muted-foreground font-normal">{t("becomeSkillbuddy.subcategoryOptional")}</span>
-                </label>
-                <CustomSelect
-                  value={form.subcategory}
-                  onChange={(val) => set("subcategory", val)}
-                  options={form.category ? (CATEGORY_SUBCATEGORIES[form.category] ?? []) : []}
-                  placeholder={form.category ? t("becomeSkillbuddy.subcategoryPlaceholder") : t("becomeSkillbuddy.subcategoryFirst")}
-                  disabled={!form.category}
-                />
-              </div>
+              {/* Subcategory + Preference — fade in after category selected */}
+              <AnimatePresence>
+                {form.category && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="space-y-5"
+                  >
+                    {/* Subcategory — MANDATORY */}
+                    <div>
+                      <label className={labelClass}>Select your specific service *</label>
+                      <CustomSelect
+                        value={form.subcategory}
+                        onChange={(val) => {
+                          set("subcategory", val);
+                          if (errors.subcategory) setErrors((p) => { const n = { ...p }; delete n.subcategory; return n; });
+                        }}
+                        options={CATEGORY_SUBCATEGORIES[form.category] ?? []}
+                        placeholder="Choose your specific service"
+                        error={errors.subcategory}
+                      />
+                      {errors.subcategory && <p className="mt-1 text-xs text-red-500">{errors.subcategory}</p>}
+                    </div>
+
+                    {/* Preference — OPTIONAL */}
+                    <div>
+                      <label className={labelClass}>Any preference or specialization? <span className="text-muted-foreground font-normal">(optional)</span></label>
+                      <CustomSelect
+                        value={form.preference}
+                        onChange={(val) => set("preference", val)}
+                        options={PREFERENCE_OPTIONS}
+                        placeholder="Select a preference (optional)"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Bio */}
               <div>

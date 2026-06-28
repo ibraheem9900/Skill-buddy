@@ -5,7 +5,7 @@ import { Shield, Ban, ThumbsUp, Heart, Star } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 const sectionVariants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
@@ -40,7 +40,7 @@ const cardFromRight = {
 };
 
 const cardFromBottom = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
@@ -198,7 +198,7 @@ export function StarReward() {
                     key={j}
                     initial={{ scale: 0, rotate: -180 }}
                     whileInView={{ scale: 1, rotate: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ delay: i * 0.15 + j * 0.1, type: "spring", stiffness: 200 }}
                     className={i === 2 ? "text-[#FCD34D] dark:text-[#F59E0B]" : "text-primary"}
                   >
@@ -270,7 +270,7 @@ export function OurVision() {
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ delay: 0.3 }}
             className="mx-auto mt-6 max-w-3xl text-xl leading-relaxed text-muted-foreground"
           >
@@ -301,7 +301,7 @@ export function OurVision() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.05 }}
           transition={{ delay: 0.5 }}
           className="mt-10 text-center"
         >

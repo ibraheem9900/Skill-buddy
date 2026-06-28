@@ -272,20 +272,15 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Hamburger — mobile & tablet */}
+            {/* Hamburger — mobile & tablet only */}
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((p) => !p)}
-              className="lg:hidden"
+              className="hamburger-btn"
               style={{
-                width: 44, height: 44, padding: 8, marginLeft: 4,
-                flexShrink: 0, display: "flex", alignItems: "center",
-                justifyContent: "center", borderRadius: 8,
-                background: "none", border: "none", cursor: "pointer",
-                color: "inherit", touchAction: "manipulation",
-                position: "relative", zIndex: 1,
+                marginLeft: 4, flexShrink: 0,
               }}
             >
               <motion.div

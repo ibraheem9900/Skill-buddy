@@ -11,7 +11,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, amount: 0.05 }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.3) }}
       className="group h-full"
     >

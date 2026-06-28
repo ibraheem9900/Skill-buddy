@@ -25,7 +25,7 @@ function CategoriesPage() {
             const Icon = ((Icons as unknown as Record<string, IconCmp>)[c.icon] ?? Icons.Sparkles) as IconCmp;
             const count = getServicesByCategory(c.slug).length;
             return (
-              <motion.div key={c.slug} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}>
+              <motion.div key={c.slug} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.05 }} transition={{ delay: i * 0.04 }}>
                 <Link
                   to="/services"
                   search={{ category: c.slug }}

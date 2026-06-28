@@ -54,7 +54,7 @@ function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: ()
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      viewport={{ once: true, amount: 0.05 }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.3) }}
       className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-card transition hover:-translate-y-1 hover:shadow-elegant"
     >

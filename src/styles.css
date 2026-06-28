@@ -269,7 +269,7 @@
   scroll-snap-align: start;
   height: calc(100vh - 72px);
   min-height: calc(100vh - 72px);
-  overflow: hidden;
+  overflow: clip;
   position: relative;
   flex-shrink: 0;
   width: 100%;
@@ -287,8 +287,8 @@
 @media (max-width: 768px) {
   /* Use clip instead of hidden — clip doesn't create a new containing block
      for position:fixed elements, so the mobile menu drawer works correctly */
-  body { overflow-x: clip !important; }
-  html { overflow-x: clip !important; }
+  body { overflow-x: hidden !important; overflow-y: auto !important; }
+  html { overflow-x: hidden !important; overflow-y: auto !important; }
 
   /* Snap container: normal document scroll on mobile */
   .snap-container {
@@ -360,10 +360,13 @@
   }
 }
 
-/* ── FIX 2A: Hamburger button — large tap target, always clickable ─────────── */
+/* ── FIX 1: Hamburger button — hidden on desktop, only on mobile ──────────── */
+.hamburger-btn {
+  display: none !important;
+}
 @media (max-width: 1024px) {
-  button[aria-label="Open menu"],
-  button[aria-label="Close menu"] {
+  .hamburger-btn {
+    display: flex !important;
     width: 44px !important;
     height: 44px !important;
     padding: 8px !important;
@@ -372,10 +375,48 @@
     touch-action: manipulation !important;
     pointer-events: auto !important;
     cursor: pointer !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    background: none !important;
+    border: none !important;
+    color: inherit !important;
   }
 }
 
-/* ── FIX 3: All cards vertical stack on mobile ────────────────────────────── */
+/* ── FIX 3D: Earn Badges cards — force vertical stack on mobile ───────────── */
+@media (max-width: 768px) {
+  .badge-cards-row,
+  .badge-tiers,
+  .tier-cards-row,
+  [class*="badge-tier"],
+  [class*="reward-tier"] {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 16px !important;
+    min-width: unset !important;
+    overflow-x: hidden !important;
+  }
+  .badge-tier-card,
+  .tier-card,
+  [class*="tier-card"] {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ── FIX 3E: reduce y animation distances on mobile ──────────────────────── */
+@media (max-width: 768px) {
+  /* Framer Motion inline y transforms are reduced via JS; this handles CSS fallback */
+  [style*="transform: translateY(40px)"],
+  [style*="transform: translateY(60px)"] {
+    transform: translateY(20px) !important;
+  }
+}
+
+
 @media (max-width: 768px) {
   /* All flex rows become columns */
   .cards-row,
