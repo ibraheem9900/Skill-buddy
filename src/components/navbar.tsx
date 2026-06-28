@@ -263,30 +263,24 @@ export function Navbar() {
 
             {/* Nav links */}
             <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-              {navLinks.map((link, i) => (
-                <motion.div
+              {navLinks.map((link) => (
+                <Link
                   key={link.to}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.2 }}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  activeOptions={{ exact: link.to === "/" }}
+                  className="text-foreground hover:bg-accent"
+                  style={{
+                    display: "block",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    fontSize: 16,
+                    fontWeight: 500,
+                    textDecoration: "none",
+                  }}
                 >
-                  <Link
-                    to={link.to}
-                    onClick={() => setMenuOpen(false)}
-                    activeOptions={{ exact: link.to === "/" }}
-                    className="text-foreground hover:bg-accent"
-                    style={{
-                      display: "block",
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      fontSize: 16,
-                      fontWeight: 500,
-                      textDecoration: "none",
-                    }}
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
+                  {link.label}
+                </Link>
               ))}
 
               <div style={{ marginTop: 8, marginBottom: 8, paddingLeft: 8 }}>

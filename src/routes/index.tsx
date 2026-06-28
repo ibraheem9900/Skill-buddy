@@ -35,7 +35,10 @@ const SECTION_COUNT = 12;
 const POPULAR_SERVICES_IDX = 5;
 
 function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState<boolean>(() => {
+    if (typeof window !== "undefined") return window.matchMedia(query).matches;
+    return false;
+  });
   useEffect(() => {
     const mq = window.matchMedia(query);
     setMatches(mq.matches);

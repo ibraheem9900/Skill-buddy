@@ -272,12 +272,12 @@
   width: 100%;
 }
 
-/* Footer section always auto height */
+/* Footer section: auto height, snap to it so desktop users can reach it */
 .snap-section-footer {
   height: auto !important;
   min-height: 0 !important;
   overflow: visible !important;
-  scroll-snap-align: none !important;
+  scroll-snap-align: start !important;
 }
 
 /* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
