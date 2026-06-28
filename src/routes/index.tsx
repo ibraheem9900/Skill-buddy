@@ -803,6 +803,19 @@ function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isAct
   const { t } = useI18n();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
 
+  /* Auto-advance every 2s; wraps back to start */
+  useEffect(() => {
+    if (!isActive) return;
+    const timer = setInterval(() => {
+      if (activeCardIdx >= popular.length - 1) {
+        onNavigate(-activeCardIdx);
+      } else {
+        onNavigate(1);
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [isActive, activeCardIdx, popular.length, onNavigate]);
+
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     if (info.offset.x < -80 && activeCardIdx < popular.length - 1) onNavigate(1);
     else if (info.offset.x > 80 && activeCardIdx > 0) onNavigate(-1);
@@ -1026,33 +1039,33 @@ function StepCard({
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      style={{ willChange: "transform", borderColor: hovered ? "#F99912" : undefined, background: hovered ? "rgba(249,153,18,0.06)" : undefined }}
+      style={{ willChange: "transform" }}
       initial={{ opacity: 0, y: 30 }}
       animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ delay: isActive ? delay : 0, duration: 0.5, ease: easeExpo }}
-      whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2 } }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative rounded-2xl border bg-card p-5 text-center shadow-card transition-all"
+      className="relative rounded-2xl border bg-card p-5 text-center shadow-card"
     >
-      <div className="relative mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full transition-colors"
-        style={{ background: hovered ? hoverConfig.bgColor : "linear-gradient(135deg, var(--color-primary), var(--color-primary-glow))" }}>
+      {/* Only the icon circle changes on hover — card bg/border/text stay the same */}
+      <div
+        className="relative mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full transition-all duration-200"
+        style={{ background: hovered ? hoverConfig.bgColor : "linear-gradient(135deg, var(--color-primary), var(--color-primary-glow))" }}
+      >
         <motion.div
           animate={hovered ? { ...hoverConfig.iconMotion, transition: { duration: hoverConfig.duration } } : {}}
         >
-          <Icon className="h-6 w-6" style={{ color: hovered ? hoverConfig.iconColor : "white" }} />
+          <Icon className="h-6 w-6 text-white" />
         </motion.div>
         <span
-          className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-background font-mono text-xs font-bold ring-2 transition-colors"
-          style={{ color: hovered ? hoverConfig.iconColor : "#2D7A5F", ringColor: hovered ? hoverConfig.iconColor : "#2D7A5F", borderColor: hovered ? hoverConfig.iconColor : "#2D7A5F", border: `2px solid ${hovered ? hoverConfig.iconColor : "#2D7A5F"}` }}
+          className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-background font-mono text-xs font-bold"
+          style={{ color: "#2D7A5F", border: "2px solid #2D7A5F" }}
         >
           {stepNum}
         </span>
       </div>
-      <h3 className="font-display text-base font-bold transition-colors" style={{ color: hovered ? hoverConfig.iconColor : undefined }}>
-        {t(`step.${stepKey}.title`)}
-      </h3>
+      <h3 className="font-display text-base font-bold">{t(`step.${stepKey}.title`)}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{t(`step.${stepKey}.desc`)}</p>
     </motion.div>
   );
@@ -1232,16 +1245,23 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
           flexShrink: 0,
           overflow: "hidden",
         }}>
-          {/* Cycling images with AnimatePresence */}
-          <AnimatePresence mode="wait">
+          {/* Base image — always visible, no flash on transition */}
+          <img
+            src={UBER_IMAGES[imgIdx]}
+            alt=""
+            aria-hidden
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          {/* Cycling images — cross-fade over the base */}
+          <AnimatePresence mode="sync">
             <motion.img
               key={imgIdx}
               src={UBER_IMAGES[imgIdx]}
               alt="Uber"
-              initial={{ opacity: 0, scale: 1.06 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.85, ease: "easeInOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.9, ease: "easeInOut" }}
               style={{
                 position: "absolute", inset: 0,
                 width: "100%", height: "100%",
@@ -1256,20 +1276,7 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
             background: `linear-gradient(to right, transparent 35%, ${contentBg} 100%)`,
           }} />
 
-          {/* Bottom-left: "U B E R" spaced + bold UBER */}
-          <div style={{ position: "absolute", top: 20, left: 20, zIndex: 3 }}>
-            <span style={{
-              fontFamily: "'Helvetica Neue', Arial, sans-serif",
-              fontSize: "clamp(11px, 2vw, 16px)",
-              fontWeight: 600,
-              letterSpacing: "0.55em",
-              color: "white",
-              textShadow: "0 1px 8px rgba(0,0,0,0.7)",
-              textTransform: "uppercase",
-            }}>
-              U B E R
-            </span>
-          </div>
+          {/* Bold UBER at bottom-left */}
           <div style={{ position: "absolute", bottom: 20, left: 20, zIndex: 3 }}>
             <span style={{
               fontFamily: "'Helvetica Neue', Arial, sans-serif",

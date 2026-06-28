@@ -257,32 +257,26 @@ function CategoryGrid({
 
 function ServiceCategoryCard({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[icon] ?? Icons.Sparkles) as IconCmp;
+  const [hovered, setHovered] = useState(false);
+  const iconBg = active ? "#2D7A5F" : hovered ? "#F99912" : "rgba(45,122,95,0.1)";
+  const iconColor = (active || hovered) ? "white" : "#2D7A5F";
   return (
-    <motion.button
+    <button
       onClick={onClick}
-      whileHover={{ y: -3, transition: { duration: 0.15 } }}
-      whileTap={{ scale: 0.97 }}
-      className="group flex w-full flex-col items-center justify-start gap-3 rounded-2xl border bg-card p-4 text-center transition-all duration-200"
-      style={{
-        borderColor: active ? "#2D7A5F" : "var(--border)",
-        boxShadow: active ? "0 0 0 2px rgba(45,122,95,0.15)" : undefined,
-      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="group flex w-full flex-col items-center justify-start gap-3 rounded-2xl border border-border bg-card p-5 text-center transition-all duration-200 hover:border-[rgba(46,184,122,0.3)] hover:-translate-y-1 hover:shadow-card"
+      style={{ borderColor: active ? "#2D7A5F" : undefined }}
     >
       <div
         className="grid h-14 w-14 place-items-center rounded-2xl transition-all duration-200"
-        style={{
-          background: active ? "#2D7A5F" : "rgba(45,122,95,0.1)",
-          color: active ? "white" : "#2D7A5F",
-        }}
+        style={{ background: iconBg, color: iconColor }}
       >
-        <Icon className="h-7 w-7 transition-colors duration-200 group-hover:text-[#F99912]" />
+        <Icon className="h-7 w-7" />
       </div>
-      <span
-        className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200"
-        style={{ color: active ? "#2D7A5F" : undefined }}
-      >
+      <span className="min-h-[2.5rem] text-sm font-semibold leading-tight">
         {name}
       </span>
-    </motion.button>
+    </button>
   );
 }
