@@ -94,16 +94,16 @@ export function Navbar() {
                 className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"
                 animate={{
                   boxShadow: [
-                    "0 0 12px rgba(62,207,142,0.3)",
-                    "0 0 28px rgba(62,207,142,0.7), 0 0 50px rgba(62,207,142,0.2)",
-                    "0 0 12px rgba(62,207,142,0.3)",
+                    "0 0 10px rgba(218,152,60,0.3)",
+                    "0 0 25px rgba(218,152,60,0.7), 0 0 45px rgba(249,153,18,0.2)",
+                    "0 0 10px rgba(218,152,60,0.3)",
                   ],
                 }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 whileHover={{ scale: 1.06, y: -1 }}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  background: "linear-gradient(135deg, #3ECF8E, #2DB87A)",
+                  background: "linear-gradient(135deg, #DA983C, #F99912)",
                   color: "white",
                   border: "none",
                   cursor: "pointer",
@@ -333,7 +333,7 @@ export function Navbar() {
                     width: "100%",
                     padding: "12px",
                     borderRadius: 50,
-                    background: "#1a5c3a",
+                    background: "linear-gradient(135deg, #DA983C, #F99912)",
                     color: "white",
                     fontWeight: 600,
                     fontSize: 14,

@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Star, X, ArrowRight, ChevronLeft, ChevronRight, Check, ChevronsUpDown } from "lucide-react";
+import { Search, Star, X, ArrowRight, Check, ChevronsUpDown } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { z } from "zod";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
-import useEmblaCarousel from "embla-carousel-react";
 import { SiteShell } from "@/components/site-shell";
 import { ServiceCard } from "@/components/service-card";
 import { CATEGORIES, SERVICES } from "@/lib/data";
@@ -107,10 +106,10 @@ function ServicesPage() {
         </div>
       </div>
 
-      {/* Category slider with arrows */}
+      {/* Category grid */}
       <div className="border-b border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-          <CategorySlider
+          <CategoryGrid
             categories={CATEGORIES}
             active={cat}
             onSelect={(slug) => setCat(slug === cat ? undefined : slug)}
@@ -127,8 +126,8 @@ function ServicesPage() {
               <p className="text-sm text-muted-foreground">{activeCat.description}</p>
             </div>
           )}
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1 max-w-[600px]">
+          <div className="flex flex-col gap-3 sm:flex-row items-start justify-center">
+            <div className="relative w-full max-w-[600px] mx-auto sm:mx-0 sm:flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 value={q}
@@ -226,7 +225,7 @@ function ServicesPage() {
   );
 }
 
-function CategorySlider({
+function CategoryGrid({
   categories,
   active,
   onSelect,
@@ -240,98 +239,34 @@ function CategorySlider({
     { slug: "", name: t("services.allLabel"), icon: "LayoutGrid" },
     ...categories.map((c) => ({ ...c, name: t("cat." + c.slug.replace(/-/g, "_")), icon: MAIN_CATEGORY_ICONS[c.slug] ?? "Sparkles" })),
   ];
-  const [emblaRef, embla] = useEmblaCarousel({ align: "start", loop: false, dragFree: true });
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(true);
-  const [selectedSnap, setSelectedSnap] = useState(0);
-  const [snaps, setSnaps] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (!embla) return;
-    const update = () => {
-      setCanPrev(embla.canScrollPrev());
-      setCanNext(embla.canScrollNext());
-      setSelectedSnap(embla.selectedScrollSnap());
-    };
-    setSnaps(embla.scrollSnapList());
-    update();
-    embla.on("select", update);
-    embla.on("scroll", update);
-    embla.on("reInit", () => { setSnaps(embla.scrollSnapList()); update(); });
-  }, [embla]);
-
-  const scrollPrev = useCallback(() => embla?.scrollPrev(), [embla]);
-  const scrollNext = useCallback(() => embla?.scrollNext(), [embla]);
 
   return (
-    <div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={scrollPrev}
-          disabled={!canPrev}
-          aria-label="Previous categories"
-          className="flex-shrink-0 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
-          style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
-        >
-          <ChevronLeft className="h-4 w-4 text-primary" />
-        </button>
-
-        <div ref={emblaRef} className="overflow-hidden flex-1 min-w-0">
-          <div className="flex gap-2 sm:gap-3">
-            {allCategories.map((c) => (
-              <div key={c.slug} className="shrink-0">
-                <CategoryPill
-                  icon={c.icon}
-                  name={c.name}
-                  active={c.slug === "" ? !active : active === c.slug}
-                  onClick={() => c.slug === "" ? onSelect("") : onSelect(c.slug)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={scrollNext}
-          disabled={!canNext}
-          aria-label="Next categories"
-          className="flex-shrink-0 flex items-center justify-center rounded-full border border-border bg-card shadow-md transition hover:bg-primary/10 disabled:opacity-30"
-          style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
-        >
-          <ChevronRight className="h-4 w-4 text-primary" />
-        </button>
-      </div>
-
-      {snaps.length > 1 && (
-        <div className="mt-5 flex items-center justify-center gap-1.5">
-          {snaps.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => embla?.scrollTo(i)}
-              aria-label={`Go to slide ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all ${
-                i === selectedSnap ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+    <div className="grid gap-2 sm:gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))" }}>
+      {allCategories.map((c) => (
+        <CategoryPill
+          key={c.slug}
+          icon={c.icon}
+          name={c.name}
+          active={c.slug === "" ? !active : active === c.slug}
+          onClick={() => c.slug === "" ? onSelect("") : onSelect(c.slug)}
+        />
+      ))}
     </div>
   );
 }
 
 function CategoryPill({ icon, name, active, onClick }: { icon: string; name: string; active: boolean; onClick: () => void }) {
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[icon] ?? Icons.Sparkles) as IconCmp;
+  const [hovered, setHovered] = useState(false);
   return (
     <button
       onClick={onClick}
-      className="group flex shrink-0 flex-col items-center gap-2 px-1 transition-all duration-200"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="flex flex-col items-center gap-2 transition-all duration-200 w-full"
       style={{
         padding: "12px 8px",
         borderRadius: 16,
-        minWidth: 80,
         border: active ? "1.5px solid #2D7A5F" : "1.5px solid transparent",
         background: active ? "#2D7A5F" : "transparent",
         transform: "translateZ(0)",
@@ -340,25 +275,28 @@ function CategoryPill({ icon, name, active, onClick }: { icon: string; name: str
       <div
         className="grid place-items-center transition-all duration-200"
         style={{
-          width: 56,
-          height: 56,
+          width: 52,
+          height: 52,
           borderRadius: "50%",
           background: active ? "rgba(255,255,255,0.2)" : "rgba(45,122,95,0.1)",
-          color: active ? "white" : "#2D7A5F",
+          color: active ? "white" : hovered ? "#F99912" : "#2D7A5F",
         }}
       >
         <Icon className="h-6 w-6" />
       </div>
       <span
-        className="whitespace-nowrap text-center leading-tight transition-colors duration-200"
+        className="text-center leading-tight transition-colors duration-200"
         style={{
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: active ? 700 : 500,
           color: active ? "white" : undefined,
-          maxWidth: 76,
-          whiteSpace: "nowrap",
+          maxWidth: "100%",
           overflow: "hidden",
           textOverflow: "ellipsis",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          wordBreak: "break-word",
         }}
       >
         {name}

@@ -609,11 +609,11 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             animate={isActive ? {
-              boxShadow: ["0 0 20px rgba(62,207,142,0.3)", "0 0 40px rgba(62,207,142,0.6)", "0 0 20px rgba(62,207,142,0.3)"],
+              boxShadow: ["0 0 20px rgba(218,152,60,0.3)", "0 0 40px rgba(218,152,60,0.6)", "0 0 20px rgba(218,152,60,0.3)"],
             } : {}}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             style={{
-              background: "linear-gradient(135deg, #3ECF8E, #2DB87A)", color: "white",
+              background: "linear-gradient(135deg, #DA983C, #F99912)", color: "white",
               padding: "14px 36px", borderRadius: "50px",
               fontSize: "clamp(14px, 3vw, 16px)", fontWeight: "700", border: "none", cursor: "pointer",
             }}
@@ -629,16 +629,16 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
 /* ── Section 4: Special Offers — 3D rotateX elevator + unique card colors ───── */
 const OFFER_COLORS = [
   {
-    dark: { bg: "#0f2d1a", accent: "#4CAF84", text: "white", tagBg: "rgba(76,175,132,0.2)", btnBg: "#4CAF84" },
+    dark: { bg: "#2a1800", accent: "#F99912", text: "white", tagBg: "rgba(249,153,18,0.2)", btnBg: "#DA983C" },
+    light: { bg: "#FFF8F0", accent: "#DA983C", text: "#0D1117", tagBg: "rgba(218,152,60,0.15)", btnBg: "#DA983C" },
+  },
+  {
+    dark: { bg: "#0a2518", accent: "#3ECF8E", text: "white", tagBg: "rgba(62,207,142,0.2)", btnBg: "#2D7A5F" },
     light: { bg: "#E8F5F0", accent: "#2D7A5F", text: "#0D1117", tagBg: "rgba(45,122,95,0.15)", btnBg: "#2D7A5F" },
   },
   {
-    dark: { bg: "#1a1a2e", accent: "#818cf8", text: "white", tagBg: "rgba(129,140,248,0.2)", btnBg: "#6366f1" },
-    light: { bg: "#EEF2FF", accent: "#4f46e5", text: "#0D1117", tagBg: "rgba(79,70,229,0.12)", btnBg: "#4f46e5" },
-  },
-  {
-    dark: { bg: "linear-gradient(135deg, #0a2a2a, #0f3d3d)", accent: "#2dd4bf", text: "white", tagBg: "rgba(45,212,191,0.2)", btnBg: "#14b8a6" },
-    light: { bg: "linear-gradient(135deg, #e6fffe, #ccfbf1)", accent: "#0d9488", text: "#0D1117", tagBg: "rgba(13,148,136,0.12)", btnBg: "#14b8a6" },
+    dark: { bg: "#1f1008", accent: "#F4DDB8", text: "white", tagBg: "rgba(244,221,184,0.15)", btnBg: "#B87B5C" },
+    light: { bg: "#FDF6EE", accent: "#B87B5C", text: "#0D1117", tagBg: "rgba(184,123,92,0.12)", btnBg: "#B87B5C" },
   },
 ];
 
@@ -849,7 +849,7 @@ function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isAct
                 const xPos = offset * SLOT_OFFSET;
                 const scale = isCurrent ? 1 : isSide ? 0.88 : 0.76;
                 const opacity = isCurrent ? 1 : isSide ? 0.5 : 0;
-                const blur = isCurrent ? 0 : isSide ? 2 : 4;
+                const blur = isCurrent ? 0 : isSide ? 1 : 2;
                 const size = isCurrent ? CUR_W : SIDE_W;
                 return (
                   <motion.div
@@ -924,11 +924,11 @@ const HOW_STEPS = [
 ];
 
 const STEP_HOVER: Array<{ iconMotion: object; duration: number; iconColor: string; bgColor: string }> = [
-  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "white", bgColor: "#3ECF8E" },
-  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "white", bgColor: "#3ECF8E" },
-  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "white", bgColor: "#3ECF8E" },
-  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "white", bgColor: "#3ECF8E" },
-  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "white", bgColor: "#3ECF8E" },
+  { iconMotion: { rotate: [0, -10, 10, 0] }, duration: 0.4, iconColor: "white", bgColor: "#F99912" },
+  { iconMotion: { y: [0, -4, 0] }, duration: 0.3, iconColor: "white", bgColor: "#F99912" },
+  { iconMotion: { scale: [1, 1.2, 1] }, duration: 0.3, iconColor: "white", bgColor: "#F99912" },
+  { iconMotion: { rotate: [0, 360] }, duration: 0.5, iconColor: "white", bgColor: "#F99912" },
+  { iconMotion: { scale: [1, 1.15, 1] }, duration: 0.4, iconColor: "white", bgColor: "#F99912" },
 ];
 
 function HowItWorksSection({ isActive }: { isActive: boolean }) {
@@ -1026,7 +1026,7 @@ function StepCard({
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      style={{ willChange: "transform", borderColor: hovered ? "#3ECF8E" : undefined, background: hovered ? "rgba(62,207,142,0.06)" : undefined }}
+      style={{ willChange: "transform", borderColor: hovered ? "#F99912" : undefined, background: hovered ? "rgba(249,153,18,0.06)" : undefined }}
       initial={{ opacity: 0, y: 30 }}
       animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ delay: isActive ? delay : 0, duration: 0.5, ease: easeExpo }}
@@ -1191,7 +1191,7 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
   return (
     <section
       className="relative flex h-full flex-col justify-center overflow-hidden"
-      style={{ padding: "40px 24px", background: "transparent" }}
+      style={{ padding: "40px 24px" }}
     >
       <motion.div
         className="rideperks-inner"
@@ -1202,120 +1202,145 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
           position: "relative",
           overflow: "hidden",
           borderRadius: 24,
-          background: isDark
-            ? "linear-gradient(135deg, #0f3d24 0%, #1a5c3a 50%, #2D7A5F 100%)"
-            : "linear-gradient(135deg, #e8f5f0 0%, #d0ede4 50%, #b8e4d4 100%)",
-          padding: "48px 56px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 32,
+          border: isDark ? "1px solid #B87B5C" : "1px solid #F4DDB8",
           maxWidth: 1200,
           margin: "0 auto",
+          display: "flex",
+          alignItems: "stretch",
           flexWrap: "wrap",
         }}
       >
-        {/* Animated background bubbles */}
-        {[
-          { size: 200, top: "-20%", left: "-5%" as string | undefined, right: undefined as string | undefined, bottom: undefined as string | undefined, delay: 0 },
-          { size: 160, top: "50%", left: "30%", right: undefined, bottom: undefined, delay: 1.5 },
-          { size: 240, top: undefined, left: undefined, right: "-8%", bottom: "-30%", delay: 0.8 },
-          { size: 120, top: "10%", left: undefined, right: "20%", bottom: undefined, delay: 2 },
-        ].map((b, i) => (
-          <motion.div
-            key={i}
-            animate={{ x: [0, 15, -10, 0], y: [0, -20, 12, 0], scale: [1, 1.08, 0.96, 1] }}
-            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut", delay: b.delay }}
+        {/* Animated diagonal gradient background */}
+        <motion.div
+          style={{
+            position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+            background: isDark
+              ? "#1a0f05"
+              : "#FFF8F0",
+          }}
+          animate={{ opacity: [0.9, 1, 0.9] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* LEFT SIDE: Uber image (60% width) */}
+        <div className="rideperks-left" style={{
+          position: "relative", zIndex: 1, flex: "0 0 60%", minWidth: 280,
+          minHeight: 360,
+        }}>
+          <img
+            src="/uber-img-2.png"
+            alt="Uber ride"
             style={{
-              position: "absolute",
-              width: b.size, height: b.size,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.05)",
-              top: b.top, left: b.left, right: b.right, bottom: b.bottom,
-              pointerEvents: "none",
+              position: "absolute", inset: 0, width: "100%", height: "100%",
+              objectFit: "cover", borderRadius: "24px 0 0 24px",
             }}
           />
-        ))}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: isDark
+              ? "linear-gradient(to right, rgba(26,15,5,0.2) 0%, rgba(26,15,5,0.85) 100%)"
+              : "linear-gradient(to right, rgba(255,248,240,0.1) 0%, rgba(255,248,240,0.88) 100%)",
+            borderRadius: "24px 0 0 24px",
+          }} />
+          {/* UBER text overlay */}
+          <div style={{
+            position: "absolute", bottom: 24, left: 24, zIndex: 2,
+          }}>
+            <span style={{
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
+              fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900,
+              letterSpacing: "-1px",
+              color: "white",
+              textShadow: "0 2px 16px rgba(0,0,0,0.6)",
+            }}>
+              UBER
+            </span>
+          </div>
+        </div>
 
-        {/* LEFT SIDE: Icon + Text */}
-        <div className="rideperks-left" style={{ position: "relative", zIndex: 2, flex: 1, minWidth: 280 }}>
+        {/* RIGHT SIDE: Text + CTA (40% width) */}
+        <div className="rideperks-right" style={{
+          position: "relative", zIndex: 1, flex: "0 0 40%",
+          padding: "40px 36px",
+          display: "flex", flexDirection: "column", justifyContent: "center", gap: 16,
+        }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(255,255,255,0.12)",
-            border: "1px solid rgba(255,255,255,0.2)",
+            background: isDark ? "rgba(218,152,60,0.15)" : "rgba(218,152,60,0.12)",
+            border: "1px solid #DA983C",
             borderRadius: 50, padding: "5px 14px",
-            marginBottom: 16,
+            alignSelf: "flex-start",
           }}>
-            <Award size={14} color="#3ECF8E" />
-            <span style={{ color: "#3ECF8E", fontWeight: 700, fontSize: 11, letterSpacing: "1.5px" }}>
-              SKILLBUDDY RIDEPERKS
+            <Award size={14} color="#DA983C" />
+            <span style={{ color: "#DA983C", fontWeight: 700, fontSize: 11, letterSpacing: "1.5px" }}>
+              SKILLBUDDY × UBER
             </span>
           </div>
 
           <h2 style={{
-            fontSize: "clamp(22px, 3.5vw, 40px)",
+            fontSize: "clamp(20px, 3vw, 36px)",
             fontWeight: 800,
-            color: isDark ? "white" : "#0f3d24",
-            margin: "0 0 12px",
+            color: isDark ? "#DA983C" : "#B87B5C",
+            margin: 0,
             lineHeight: 1.2,
           }}>
-            Earn 3 Badges.<br />
-            <span style={{ color: "#3ECF8E" }}>Ride for Free.</span>
+            Ride free with Uber
           </h2>
 
           <p style={{
-            fontSize: "clamp(14px, 1.8vw, 16px)",
-            color: isDark ? "rgba(255,255,255,0.8)" : "#2d5a40",
-            margin: "0 0 20px", lineHeight: 1.6, maxWidth: 480,
+            fontSize: "clamp(13px, 1.5vw, 15px)",
+            color: isDark ? "rgba(255,255,255,0.75)" : "#5a3a1a",
+            margin: 0, lineHeight: 1.6, maxWidth: 320,
           }}>
-            Earn your Gold SkillBuddy Badge and unlock FREE pick-up and drop-off rides
-            for every job. No transport costs — just show up and deliver.
+            Become a three Badge SkillBuddy to ride free with Uber
           </p>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[
-              { icon: <Star size={14} />, text: "Bronze — 5% discount" },
-              { icon: <Star size={14} />, text: "Silver — 1 ride/week" },
-              { icon: <Award size={14} />, text: "Gold — Free every job" },
-            ].map((perk, i) => (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                background: isDark ? "rgba(255,255,255,0.08)" : "rgba(45,122,95,0.1)",
-                border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(45,122,95,0.2)",
-                borderRadius: 50, padding: "6px 14px",
-                color: isDark ? "white" : "#0f3d24", fontSize: 13,
+              { tier: "bronze" as const, text: "Bronze — 5% discount" },
+              { tier: "silver" as const, text: "Silver — 1 free ride/week" },
+              { tier: "gold" as const, text: "Gold — Free every job" },
+            ].map((perk) => (
+              <div key={perk.tier} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                fontSize: 13,
+                color: isDark ? "rgba(255,255,255,0.85)" : "#3a2010",
               }}>
-                <span style={{ color: "#3ECF8E" }}>{perk.icon}</span>
+                <BadgeSVG tier={perk.tier} size={22} />
                 {perk.text}
               </div>
             ))}
           </div>
-        </div>
 
-        {/* RIGHT SIDE: CTA Button */}
-        <div className="rideperks-right" style={{ position: "relative", zIndex: 2, flexShrink: 0 }}>
           <motion.a
             href="/become-a-skillbuddy"
             className="rideperks-cta"
-            whileHover={{ scale: 1.06 }}
+            whileHover={{ scale: 1.04, opacity: 0.92 }}
             whileTap={{ scale: 0.97 }}
-            animate={isActive ? {
-              boxShadow: ["0 0 15px rgba(62,207,142,0.3)", "0 0 30px rgba(62,207,142,0.6)", "0 0 15px rgba(62,207,142,0.3)"],
-            } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "16px 32px", borderRadius: 14,
-              background: "linear-gradient(135deg, #3ECF8E, #2DB87A)",
-              color: "white", fontWeight: 700, fontSize: 15,
+              padding: "14px 28px", borderRadius: 12,
+              background: "#DA983C",
+              color: "white", fontWeight: 700, fontSize: 14,
               textDecoration: "none", whiteSpace: "nowrap",
+              alignSelf: "flex-start",
             }}
           >
-            <Truck size={18} />
-            Start Earning Ride Perks
+            Start Earning Your Badge →
           </motion.a>
         </div>
       </motion.div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .rideperks-inner { flex-direction: column !important; }
+          .rideperks-left { flex: none !important; min-height: 200px !important; width: 100% !important; }
+          .rideperks-left img { border-radius: 24px 24px 0 0 !important; }
+          .rideperks-left > div:last-child { border-radius: 24px 24px 0 0 !important; }
+          .rideperks-right { flex: none !important; width: 100% !important; padding: 24px 20px !important; }
+          .rideperks-cta { align-self: stretch !important; justify-content: center !important; }
+        }
+      `}</style>
     </section>
   );
 }

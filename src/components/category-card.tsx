@@ -32,7 +32,7 @@ export function CategoryCard({ category }: { category: CategoryDef }) {
       <motion.div
         whileHover={v.hover}
         transition={v.transition}
-        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#3ECF8E] group-hover:text-white"
+        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#F99912] group-hover:text-white"
       >
         <Icon className="h-7 w-7" />
       </motion.div>

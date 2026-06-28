@@ -240,8 +240,8 @@ function BecomeASkillBuddy() {
       <div className="flex min-h-[calc(100vh-72px)] flex-col lg:flex-row">
         {/* LEFT — Info Panel */}
         <div
-          className="flex flex-col justify-center p-8 sm:p-12 lg:p-16 lg:w-[40%] text-white"
-          style={{ background: "linear-gradient(160deg, #2D7A5F 0%, #1a5c3a 100%)" }}
+          className="flex flex-col justify-start p-8 sm:p-12 lg:p-16 lg:w-[40%] text-white"
+          style={{ background: "linear-gradient(160deg, #2D7A5F 0%, #1a5c3a 100%)", alignItems: "flex-start", paddingTop: 48 }}
         >
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
             <div className="mb-6 flex items-center gap-2">

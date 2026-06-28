@@ -1,0 +1,239 @@
+# SkillBuddy — V18 Complete Update
+
+---
+
+## 1. MOBILE: ANIMATIONS + HAMBURGER + NAVBAR GAP (Critical)
+
+**Animations not working on mobile:**
+- Change ALL `whileInView` viewport settings to `{ once: true, amount: 0.05 }` — triggers when only 5% visible
+- Remove `overflow: hidden` from ANY parent wrapper that contains animated children — this breaks IntersectionObserver
+- Reduce all `y` animation values to `y: 20` maximum on mobile (not 60 or 80)
+- Make sure no section has `transform: translateZ(0)` on mobile — creates new stacking context
+
+**Hamburger not opening:**
+- The hamburger button must have `type="button"` and `e.preventDefault()` + `e.stopPropagation()` in onClick
+- It must NOT be inside any `<a>` or `<Link>` tag
+- The drawer must render via `createPortal(content, document.body)` so it's outside all overflow containers
+- Drawer z-index: 10001, backdrop z-index: 10000
+
+**Navbar-hero gap on mobile:**
+- Set `padding-top` on `<main>` equal to EXACTLY the navbar height (measure with `navRef.current.getBoundingClientRect().height`)
+- Hero section itself: `padding-top: 0`, `margin-top: 0`
+- Remove any extra spacing from first child of main on mobile
+
+---
+
+## 2. COMPLETE THEME COLOR UPDATE
+
+**New color palette — replace throughout entire site:**
+
+Primary green (keep): `#2D7A5F` — unchanged, stays as primary brand color
+
+New accent/hover color: `#F99912` (orange-amber) — use for:
+- All hover states (icons, buttons, cards)
+- Active states
+- Highlight accents
+
+Banner/section colors:
+- `#B87B5C` — warm brown (use for banner backgrounds, accents)
+- `#F4DDB8` — light cream/sand (use for light theme banner backgrounds)
+- `#DA983C` — golden amber (use for headings, highlights in banners)
+
+**Color usage rules:**
+- Light theme banners: use `#F4DDB8` as background, `#B87B5C` for borders, `#DA983C` for headings
+- Dark theme banners: use darker versions — `#3d2510` background, `#B87B5C` border, `#DA983C` headings
+- Hover states everywhere: icon/button hover → `#F99912`
+- "Become a SkillBuddy" button: use `#DA983C` with golden glow animation
+- All previously yellow-green (#3ECF8E accent) elements → update to `#F99912`
+
+**Replace existing accent colors:**
+- `#3ECF8E` → `#F99912`
+- `#D4E600` → `#F99912`
+- `#C8E600` → `#F99912`
+
+---
+
+## 3. "BECOME A SKILLBUDDY" BUTTON
+
+- Background: `#DA983C` gradient to `#F99912`
+- Text: white, bold
+- Animation: continuous golden glow pulse
+  - `box-shadow` animates from `0 0 10px rgba(218,152,60,0.3)` to `0 0 25px rgba(218,152,60,0.7)`
+  - Duration: 2.5s infinite
+- On hover: scale 1.05, brighter glow
+- Apply to both navbar button AND any other "Become a SkillBuddy" CTAs on the site
+
+---
+
+## 4. UBER RIDEPERKS SECTION — Complete Redesign
+
+**Use the 3 client-provided images as background/visual elements in this section.**
+
+**Header text:** "Ride free with Uber"
+**Subheading text:** "Become a three Badge SkillBuddy to ride free with Uber"
+
+**Section layout — horizontal banner (desktop), stacked (mobile):**
+
+Left side (60% width):
+- One of the provided Uber images as a background image with dark overlay OR displayed as a styled photo
+- Uber logo must be visible — either use a text "UBER" in Uber's font style OR reference the logo concept from the images
+- The section must make it immediately clear this is Uber-related before reading any text
+
+Right side (40% width):
+- Section label: "SKILLBUDDY × UBER"
+- Heading: "Ride free with Uber" (large, bold)
+- Subtext: "Become a three Badge SkillBuddy to ride free with Uber"
+- 3 tier chips showing Bronze/Silver/Gold perks
+- CTA button: "Start Earning Your Badge →" in `#DA983C`
+
+**Colors for this section:**
+- Dark theme: background `#1a0f05`, border/accent `#B87B5C`, heading `#DA983C`
+- Light theme: background `#FFF8F0`, border `#F4DDB8`, heading `#B87B5C`
+- Uber brand black used as accent in image area
+
+**On mobile:** Stack vertically — image on top (shorter height, 200px), text below
+
+**Animated background:** Subtle moving gradient, NOT bubbles — use a slow diagonal gradient shift:
+- `background-position` animates from `0% 0%` to `100% 100%` over 8s infinite alternate
+
+---
+
+## 5. FROM IDEA TO DONE IN 5 STEPS — Fix (Screenshot 4)
+
+**Problems visible in screenshot:**
+- Step 4 "Choose the SkillBuddy" card has transparent/see-through background
+- Text on step 4 is white but background is transparent so it's unreadable
+- All cards must have solid opaque background
+
+**Fix:**
+- Every step card must have a solid background — in light theme: solid white `#FFFFFF`, in dark theme: solid dark card color `#1C2128`
+- No card background should be transparent or semi-transparent
+- The connecting line between steps must be BEHIND the cards (lower z-index than cards)
+- Cards z-index: 2, connecting line z-index: 1
+
+**Icon hover color:**
+- On hover, step icon circle changes to `#F99912` background with white icon
+- Card gets a subtle `#F99912` border (1px, 20% opacity)
+- NO transparency on hover — solid background stays
+
+---
+
+## 6. SPECIAL OFFERS — 3 Cards New Colors
+
+**Replace current card colors with these (using new palette):**
+
+Card 1 — Warm Amber theme:
+- Dark theme: background `#2a1800`, border `#DA983C`, accent `#F99912`
+- Light theme: background `#FFF8F0`, border `#F4DDB8`, accent `#DA983C`
+- Button: `#DA983C` background
+
+Card 2 — Forest Green theme (keep brand green):
+- Dark theme: background `#0a2518`, border `#2D7A5F`, accent `#3ECF8E`
+- Light theme: background `#E8F5F0`, border `#2D7A5F`, accent `#2D7A5F`
+- Button: `#2D7A5F` background
+
+Card 3 — Warm Brown theme:
+- Dark theme: background `#1f1008`, border `#B87B5C`, accent `#F4DDB8`
+- Light theme: background `#FDF6EE`, border `#B87B5C`, accent `#B87B5C`
+- Button: `#B87B5C` background
+
+---
+
+## 7. POPULAR SERVICES — Auto Carousel + Manual Buttons
+
+**Current:** Static grid
+**New behavior:**
+- After 3 seconds of the section being in view, cards start auto-sliding left every 3 seconds
+- Shows 4 cards at a time on desktop, 2 on tablet, 1 on mobile
+- Left (←) and right (→) arrow buttons always visible on both sides
+- Clicking arrow: immediately slides to prev/next, resets auto-timer
+- Smooth CSS transition: `transform: translateX()` with `transition: 0.4s ease`
+- Loop: after last card, loops back to first
+
+**Blur effect:** Reduce from current value by 50% — keep subtle blur but don't remove entirely
+
+---
+
+## 8. SERVICES PAGE — Category Layout (Like Screenshot 5)
+
+**The services page categories should look like screenshot 5:**
+- Icons displayed in a grid layout, NOT a horizontal slider with arrows
+- Each category: icon on top, label below — clean, spacious
+- On desktop: show all categories in a grid (4 per row or as many as fit)
+- On mobile: 3 per row grid
+- No arrow buttons needed — all categories visible at once
+- Active/selected category: icon and text turn `#2D7A5F` (brand green)
+- Hover: icon turns `#F99912`
+- The layout matches the provided screenshot — clean grid, not cramped
+
+**Search bar on services page:**
+- Center-align the search bar
+- Max-width: 600px
+- Margin: 0 auto
+- On mobile: full width with 16px padding on each side
+
+---
+
+## 9. CAREERS PAGE — Match Homepage Style
+
+**Remove:**
+- Dark green gradient background from the hero section
+- Animated bubble circles
+- Any dark overlay
+
+**Replace with:**
+- Clean white/light background (light mode) or dark `#0D1117` (dark mode) — same as homepage
+- Subtle animated gradient that shifts slowly (like homepage sections)
+- Opening animation: heading slides up + fades in, stats cards stagger in one by one
+- Keep the "Join the SkillBuddy Team" heading and stats
+- Style should feel like the homepage hero — not a separate dark green page
+
+---
+
+## 10. "BECOME A SKILLBUDDY" FORM PAGE — Fix Top Alignment
+
+**Problem:** On desktop, the left-side text/info panel content is vertically centered in the middle of the screen instead of starting from the top.
+
+**Fix:**
+- Left panel: `align-items: flex-start` (not center), `justify-content: flex-start`
+- Top padding of left panel: `padding-top: 48px`
+- The SkillBuddy logo/heading on the left must start near the top of the panel
+- The form on the right should also start from top: `padding-top: 48px`
+- Both sides must be top-aligned, not vertically centered
+- On mobile: no change needed (already stacks fine)
+
+---
+
+## 11. CATEGORY HOVER — Icon Color Only (No Full Card Change)
+
+Apply to both homepage category slider AND services page category grid:
+- On hover: ONLY the icon changes to `#F99912`
+- Card/item background stays the same (no color change)
+- Label text stays the same (no color change)
+- Just the icon SVG/image gets `color: #F99912` or `filter` to show amber color
+- Smooth transition: 0.2s ease
+
+---
+
+## CHECKLIST
+
+- [ ] Mobile animations: `amount: 0.05`, no overflow:hidden blocking, y:20 max
+- [ ] Hamburger: type="button", preventDefault, createPortal, opens right drawer
+- [ ] Navbar-hero gap eliminated on mobile
+- [ ] New accent color `#F99912` applied to all hover states
+- [ ] Banner colors `#B87B5C`, `#F4DDB8`, `#DA983C` applied to banners
+- [ ] "Become a SkillBuddy" button: `#DA983C` → `#F99912` gradient, golden glow animation
+- [ ] Uber section: updated with 3 client images, "Ride free with Uber" heading
+- [ ] Uber section: "Become a three Badge SkillBuddy to ride free with Uber" subtext
+- [ ] Uber section: UBER branding visible, new palette colors
+- [ ] 5 Steps: all cards solid background, no transparency, z-index fixed
+- [ ] 5 Steps: icon hover → `#F99912`, solid card stays visible
+- [ ] Special offers: 3 cards with new color schemes (amber, green, brown)
+- [ ] Popular services: auto-carousel after 3s, left/right buttons, 50% less blur
+- [ ] Services page categories: grid layout matching screenshot 5
+- [ ] Services search bar: centered, max-width 600px
+- [ ] Careers page: removed dark green bg + bubbles, matches homepage style
+- [ ] Become a SkillBuddy form: top-aligned content on desktop
+- [ ] Category hover: only icon color changes to `#F99912`
+- [ ] All changes work in both light and dark mode
+- [ ] Mobile responsive maintained throughout

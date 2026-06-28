@@ -115,30 +115,27 @@ function CareersPage() {
   return (
     <SiteShell>
       {/* HERO */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/80 to-[#1a4a38] py-20 text-primary-foreground sm:py-28">
+      <section className="relative overflow-hidden py-20 sm:py-28 bg-background dark:bg-[#0D1117]">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              animate={{ y: [0, -30, 0], x: [0, 15, 0], rotate: [0, 180, 360] }}
-              transition={{ duration: 8 + i * 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.8 }}
-              className="absolute rounded-full border border-white/10 bg-white/5"
-              style={{
-                width: 40 + i * 30, height: 40 + i * 30,
-                left: `${10 + i * 12}%`, top: `${5 + (i % 4) * 22}%`,
-              }}
-            />
-          ))}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
+            transition={{ duration: 12, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            style={{
+              backgroundImage: "radial-gradient(at 20% 30%, rgba(45,122,95,0.08) 0%, transparent 60%), radial-gradient(at 80% 70%, rgba(45,122,95,0.06) 0%, transparent 60%)",
+              backgroundSize: "200% 200%",
+            }}
+          />
         </div>
         <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
           <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Briefcase className="h-3.5 w-3.5" /> We're hiring
             </span>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl" style={{ color: "#FFFFFF", textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl text-foreground">
               Join the SkillBuddy Team
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg" style={{ color: "rgba(255,255,255,0.9)" }}>
+            <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-muted-foreground">
               Help us connect the world with skilled professionals. Build something meaningful.
             </p>
           </motion.div>
@@ -156,13 +153,13 @@ function CareersPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={statsVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur"
+                className="rounded-2xl border border-border bg-card p-5 shadow-card"
               >
-                <s.icon className="mx-auto mb-2 h-5 w-5 text-primary-foreground/70" />
-                <div className="font-mono text-3xl font-extrabold">
+                <s.icon className="mx-auto mb-2 h-5 w-5 text-primary" />
+                <div className="font-mono text-3xl font-extrabold text-foreground">
                   {s.value}{s.suffix}
                 </div>
-                <div className="mt-1 text-xs text-primary-foreground/70">{s.label}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{s.label}</div>
               </motion.div>
             ))}
           </div>

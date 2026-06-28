@@ -234,19 +234,19 @@
 
 /* ── Become a SkillBuddy button ───────────────────────────────────────────── */
 .become-skillbuddy-btn {
-  background: linear-gradient(135deg, #3ECF8E, #2DB87A) !important;
+  background: linear-gradient(135deg, #DA983C, #F99912) !important;
   color: white !important;
   font-weight: 700 !important;
   border: none !important;
 }
 .become-skillbuddy-btn:hover {
   transform: scale(1.05) translateY(-1px) !important;
-  background: linear-gradient(135deg, #2DB87A, #3ECF8E) !important;
+  background: linear-gradient(135deg, #F99912, #DA983C) !important;
 }
 
 @keyframes accentGlow {
-  0%, 100% { box-shadow: 0 0 10px rgba(62, 207, 142, 0.3); }
-  50% { box-shadow: 0 0 24px rgba(62, 207, 142, 0.7), 0 0 40px rgba(62, 207, 142, 0.2); }
+  0%, 100% { box-shadow: 0 0 10px rgba(218, 152, 60, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(218, 152, 60, 0.7), 0 0 40px rgba(249, 153, 18, 0.2); }
 }
 
 /* ── Snap scroll: desktop defaults (overridden by @media below on mobile) ──── */
@@ -658,14 +658,14 @@
 .step-card:hover,
 .step-item:hover,
 [class*="step-card"]:hover {
-  background-color: #f0fdf9 !important;
-  border-color: #3ECF8E !important;
+  background-color: #FFFBF0 !important;
+  border-color: #F99912 !important;
 }
 .dark .step-card:hover,
 .dark .step-item:hover,
 .dark [class*="step-card"]:hover {
   background-color: #1C2128 !important;
-  border-color: #3ECF8E !important;
+  border-color: #F99912 !important;
   box-shadow: 0 12px 32px rgba(0,0,0,0.4) !important;
 }
 
