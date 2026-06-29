@@ -1,10 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft, MapPin, Clock, Briefcase, Linkedin,
-  Copy, Check, CheckCircle2, ChevronRight, Upload, X, Loader2,
-} from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Briefcase, Linkedin, Copy, Check, CircleCheck as CheckCircle2, ChevronRight, Upload, X, Loader as Loader2 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +10,32 @@ import { toast } from "sonner";
 import {
   JOBS, WHAT_WE_OFFER, DEPT_COLORS, JOB_TYPE_COLORS,
   getJob,
+  type Department, type JobType, type ExperienceLevel,
 } from "@/lib/careers-data";
 import { useI18n } from "@/lib/i18n";
+
+const DEPT_KEY: Record<Department, string> = {
+  "Technology": "careers.dept.technology",
+  "Design": "careers.dept.design",
+  "Marketing": "careers.dept.marketing",
+  "Customer Support": "careers.dept.customerSupport",
+  "Operations": "careers.dept.operations",
+  "Finance": "careers.dept.finance",
+  "Legal": "careers.dept.legal",
+  "People & HR": "careers.dept.peopleHr",
+};
+const JOB_TYPE_KEY: Record<JobType, string> = {
+  "Full-time": "careers.jobType.fullTime",
+  "Part-time": "careers.jobType.partTime",
+  "Contract": "careers.jobType.contract",
+  "Internship": "careers.jobType.internship",
+};
+const LEVEL_KEY: Record<ExperienceLevel, string> = {
+  "Junior": "careers.level.junior",
+  "Mid-level": "careers.level.midLevel",
+  "Senior": "careers.level.senior",
+  "Lead / Manager": "careers.level.lead",
+};
 
 export const Route = createFileRoute("/careers/$id")({
   head: ({ params }) => {
@@ -327,10 +348,10 @@ function JobDetailPage() {
             <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${DEPT_COLORS[job.department]}`}>
-                  {job.department}
+                  {t(DEPT_KEY[job.department])}
                 </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${JOB_TYPE_COLORS[job.jobType]}`}>
-                  {job.jobType}
+                  {t(JOB_TYPE_KEY[job.jobType])}
                 </span>
               </div>
 
@@ -344,9 +365,9 @@ function JobDetailPage() {
               </motion.h1>
 
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4 shrink-0" />{job.department}</span>
+                <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4 shrink-0" />{t(DEPT_KEY[job.department])}</span>
                 <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0" />{job.locations.join(" / ")}</span>
-                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 shrink-0" />{job.jobType} · {job.level}</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 shrink-0" />{t(JOB_TYPE_KEY[job.jobType])} · {t(LEVEL_KEY[job.level])}</span>
               </div>
 
               <p className="mt-2 text-xs text-muted-foreground">
@@ -482,7 +503,7 @@ function JobDetailPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{job.jobType} · {job.level}</span>
+                    <span className="text-muted-foreground">{t(JOB_TYPE_KEY[job.jobType])} · {t(LEVEL_KEY[job.level])}</span>
                   </div>
                 </div>
 
