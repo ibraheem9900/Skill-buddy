@@ -287,8 +287,8 @@
 @media (max-width: 768px) {
   /* Use clip instead of hidden — clip doesn't create a new containing block
      for position:fixed elements, so the mobile menu drawer works correctly */
-  body { overflow-x: hidden !important; overflow-y: auto !important; }
-  html { overflow-x: hidden !important; overflow-y: auto !important; }
+  body { overflow-x: clip !important; overflow-y: auto !important; }
+  html { overflow-x: clip !important; overflow-y: auto !important; }
 
   /* Snap container: normal document scroll on mobile */
   .snap-container {

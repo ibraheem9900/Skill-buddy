@@ -13,6 +13,7 @@ import {
   JOBS, DEPARTMENTS, OFFICE_LOCATIONS, DEPT_COLORS, JOB_TYPE_COLORS,
   type Department, type OfficeLocation, type JobType, type ExperienceLevel,
 } from "@/lib/careers-data";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/careers/")({
   head: () => ({
@@ -43,6 +44,7 @@ function useAnimatedCounter(target: number, duration = 1800, start = false) {
 }
 
 function CareersPage() {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState<Department[]>([]);
   const [locFilter, setLocFilter] = useState<OfficeLocation[]>([]);
@@ -112,6 +114,13 @@ function CareersPage() {
     return counts;
   }, []);
 
+  const stats = useMemo(() => [
+    { icon: Globe, value: c5, label: t("careers.stats.countries"), suffix: "" },
+    { icon: Users, value: c50, label: t("careers.stats.teamMembers"), suffix: "+" },
+    { icon: Briefcase, value: c24, label: t("careers.stats.openPositions"), suffix: "" },
+    { icon: Star, value: `4.${c48 % 10}`, label: t("careers.stats.glassdoor"), suffix: "" },
+  ], [c5, c50, c24, c48, t]);
+
   return (
     <SiteShell>
       {/* HERO */}
@@ -130,24 +139,19 @@ function CareersPage() {
         <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
           <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              <Briefcase className="h-3.5 w-3.5" /> We're hiring
+              <Briefcase className="h-3.5 w-3.5" /> {t("careers.hiring")}
             </span>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl text-foreground">
-              Join the SkillBuddy Team
+              {t("careers.title")}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-muted-foreground">
-              Help us connect the world with skilled professionals. Build something meaningful.
+              {t("careers.subtitle")}
             </p>
           </motion.div>
 
           {/* Stats */}
           <div ref={statsRef} className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { icon: Globe, value: c5, label: "Countries", suffix: "" },
-              { icon: Users, value: c50, label: "Team Members", suffix: "+" },
-              { icon: Briefcase, value: c24, label: "Open Positions", suffix: "" },
-              { icon: Star, value: `4.${c48 % 10}`, label: "Glassdoor Rating", suffix: "" },
-            ].map((s, i) => (
+            {stats.map((s, i) => (
               <motion.div
                 key={s.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -174,7 +178,7 @@ function CareersPage() {
             <Input
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search by job title, skill, or keyword..."
+              placeholder={t("careers.search")}
               className="h-12 rounded-xl pl-11 pr-10 text-sm"
             />
             {query && (
@@ -191,8 +195,8 @@ function CareersPage() {
         <aside className="hidden lg:block">
           <div className="sticky top-36 rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-base font-bold">Filters</h2>
-              <button onClick={resetFilters} className="text-xs text-muted-foreground hover:text-primary">Reset All</button>
+              <h2 className="font-display text-base font-bold">{t("careers.filters")}</h2>
+              <button onClick={resetFilters} className="text-xs text-muted-foreground hover:text-primary">{t("careers.filters.resetAll")}</button>
             </div>
             <FilterContent
               deptFilter={deptFilter} setDeptFilter={setDeptFilter}
@@ -211,20 +215,20 @@ function CareersPage() {
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                <span className="font-mono text-lg font-bold text-foreground">{filtered.length}</span> open positions
+                <span className="font-mono text-lg font-bold text-foreground">{filtered.length}</span> {t("careers.openPositions")}
               </p>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="lg:hidden gap-1.5">
-                    <SlidersHorizontal className="h-4 w-4" /> Filters
+                    <SlidersHorizontal className="h-4 w-4" /> {t("careers.filters")}
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="rounded-t-3xl p-0">
                   <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-muted-foreground/30" />
                   <div className="max-h-[75vh] overflow-y-auto p-5">
                     <div className="mb-4 flex items-center justify-between">
-                      <h2 className="font-display text-base font-bold">Filters</h2>
-                      <button onClick={resetFilters} className="text-xs text-muted-foreground hover:text-primary">Reset All</button>
+                      <h2 className="font-display text-base font-bold">{t("careers.filters")}</h2>
+                      <button onClick={resetFilters} className="text-xs text-muted-foreground hover:text-primary">{t("careers.filters.resetAll")}</button>
                     </div>
                     <FilterContent
                       deptFilter={deptFilter} setDeptFilter={setDeptFilter}
@@ -239,16 +243,16 @@ function CareersPage() {
               </Sheet>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground">Sort by:</label>
+              <label className="text-xs text-muted-foreground">{t("careers.sort")}</label>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as typeof sort)}
                 className="h-9 rounded-md border border-input bg-background px-2 text-xs"
               >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="salary-high">Salary: high to low</option>
-                <option value="salary-low">Salary: low to high</option>
+                <option value="newest">{t("careers.sort.newest")}</option>
+                <option value="oldest">{t("careers.sort.oldest")}</option>
+                <option value="salary-high">{t("careers.sort.salaryHigh")}</option>
+                <option value="salary-low">{t("careers.sort.salaryLow")}</option>
               </select>
             </div>
           </div>
@@ -290,9 +294,9 @@ function CareersPage() {
                 className="rounded-2xl border border-border bg-card p-16 text-center"
               >
                 <Search className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
-                <h3 className="font-display text-xl font-bold">No matching positions</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Try different keywords or remove some filters</p>
-                <Button onClick={resetFilters} variant="outline" className="mt-5">Reset filters</Button>
+                <h3 className="font-display text-xl font-bold">{t("careers.empty.title")}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t("careers.empty.desc")}</p>
+                <Button onClick={resetFilters} variant="outline" className="mt-5">{t("careers.empty.reset")}</Button>
               </motion.div>
             ) : (
               <motion.div key="list" className="space-y-4">
@@ -337,6 +341,14 @@ function CareersPage() {
 }
 
 function JobCard({ job }: { job: (typeof JOBS)[0] }) {
+  const { t } = useI18n();
+
+  function postedLabel(daysAgo: number) {
+    if (daysAgo === 0) return t("careers.card.today");
+    if (daysAgo === 1) return t("careers.card.yesterday");
+    return `${daysAgo} ${t("careers.card.daysAgo")}`;
+  }
+
   return (
     <Link
       to="/careers/$id"
@@ -365,7 +377,7 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="text-base">💰</span>
-          €{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()} / month
+          €{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()} {t("careers.card.month")}
         </span>
         <span className="flex items-center gap-1.5">
           <Clock className="h-4 w-4" />
@@ -389,10 +401,10 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
 
       <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
         <span className="text-xs text-muted-foreground">
-          Posted {job.postedDaysAgo === 1 ? "yesterday" : job.postedDaysAgo === 0 ? "today" : `${job.postedDaysAgo} days ago`}
+          {t("careers.card.posted")} {postedLabel(job.postedDaysAgo)}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition group-hover:bg-primary/90">
-          Apply Now <ArrowRight className="h-3.5 w-3.5" />
+          {t("careers.card.applyNow")} <ArrowRight className="h-3.5 w-3.5" />
         </span>
       </div>
     </Link>
@@ -414,6 +426,7 @@ type FilterProps = {
 };
 
 function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typeFilter, setTypeFilter, levelFilter, setLevelFilter, deptCounts, locCounts }: FilterProps) {
+  const { t } = useI18n();
   const toggleDept = (d: Department) => setDeptFilter((p) => p.includes(d) ? p.filter((x) => x !== d) : [...p, d]);
   const toggleLoc = (l: OfficeLocation) => setLocFilter((p) => p.includes(l) ? p.filter((x) => x !== l) : [...p, l]);
   const toggleLevel = (l: ExperienceLevel) => setLevelFilter((p) => p.includes(l) ? p.filter((x) => x !== l) : [...p, l]);
@@ -421,7 +434,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
   return (
     <div className="space-y-6 text-sm">
       <div>
-        <h3 className="mb-3 font-semibold text-foreground/80">Department</h3>
+        <h3 className="mb-3 font-semibold text-foreground/80">{t("careers.filters.department")}</h3>
         <div className="space-y-2">
           {DEPARTMENTS.map((d) => (
             <label key={d} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
@@ -434,7 +447,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
       </div>
 
       <div>
-        <h3 className="mb-3 font-semibold text-foreground/80">Location</h3>
+        <h3 className="mb-3 font-semibold text-foreground/80">{t("careers.filters.location")}</h3>
         <div className="space-y-2">
           {OFFICE_LOCATIONS.map((l) => (
             <label key={l} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
@@ -447,19 +460,19 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
       </div>
 
       <div>
-        <h3 className="mb-3 font-semibold text-foreground/80">Job Type</h3>
+        <h3 className="mb-3 font-semibold text-foreground/80">{t("careers.filters.jobType")}</h3>
         <div className="space-y-2">
-          {(["", "Full-time", "Part-time", "Contract", "Internship"] as const).map((t) => (
-            <label key={t || "all"} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
-              <input type="radio" name="jobType" checked={typeFilter === t} onChange={() => setTypeFilter(t)} className="accent-primary" />
-              <span>{t || "All Types"}</span>
+          {(["", "Full-time", "Part-time", "Contract", "Internship"] as const).map((tp) => (
+            <label key={tp || "all"} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
+              <input type="radio" name="jobType" checked={typeFilter === tp} onChange={() => setTypeFilter(tp)} className="accent-primary" />
+              <span>{tp || t("careers.filters.allTypes")}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div>
-        <h3 className="mb-3 font-semibold text-foreground/80">Experience Level</h3>
+        <h3 className="mb-3 font-semibold text-foreground/80">{t("careers.filters.level")}</h3>
         <div className="space-y-2">
           {(["Junior", "Mid-level", "Senior", "Lead / Manager"] as ExperienceLevel[]).map((l) => (
             <label key={l} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">

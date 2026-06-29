@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -21,16 +22,17 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-const schema = z.object({
-  email: z.string().trim().email("Enter a valid email").max(255),
-  subject: z.string().trim().min(2, "Subject is required").max(120),
-  message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000),
-  phone: z.string().trim().max(30).optional().or(z.literal("")),
-});
-
 function ContactPage() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const schema = z.object({
+    email: z.string().trim().email(t("contact.validation.email")).max(255),
+    subject: z.string().trim().min(2, t("contact.validation.subject")).max(120),
+    message: z.string().trim().min(10, t("contact.validation.message")).max(2000),
+    phone: z.string().trim().max(30).optional().or(z.literal("")),
+  });
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,7 +48,7 @@ function ContactPage() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 700));
     setLoading(false);
-    toast.success("✅ Thank you! We'll get back to you within 24–72 hours.");
+    toast.success(`✅ ${t("contact.success")}`);
     e.currentTarget.reset();
   }
 
@@ -54,25 +56,25 @@ function ContactPage() {
     <SiteShell>
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.1fr_1fr]">
         <form onSubmit={onSubmit} className="rounded-3xl border border-border bg-card p-7 shadow-card">
-          <h1 className="font-display text-3xl font-extrabold">Talk to us</h1>
-          <p className="mt-1 text-sm text-muted-foreground">We read every message and respond within 24–72 hours.</p>
+          <h1 className="font-display text-3xl font-extrabold">{t("contact.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("contact.subtitle")}</p>
 
           <div className="mt-6 space-y-4">
-            <Field name="email" label="Email Address" required>
-              <Input name="email" type="email" placeholder="you@email.com" className="mt-1.5 h-11" />
+            <Field name="email" label={t("contact.email")} required>
+              <Input name="email" type="email" placeholder={t("contact.emailPlaceholder")} className="mt-1.5 h-11" />
             </Field>
-            <Field name="subject" label="Subject" required>
-              <Input name="subject" placeholder="What's this about?" className="mt-1.5 h-11" />
+            <Field name="subject" label={t("contact.subject")} required>
+              <Input name="subject" placeholder={t("contact.subjectPlaceholder")} className="mt-1.5 h-11" />
             </Field>
-            <Field name="message" label="Message" required>
-              <Textarea name="message" rows={5} placeholder="Tell us more..." className="mt-1.5" />
+            <Field name="message" label={t("contact.message")} required>
+              <Textarea name="message" rows={5} placeholder={t("contact.messagePlaceholder")} className="mt-1.5" />
             </Field>
             <Field
               name="phone"
-              label="Phone Number"
-              helper="Optional — we'll use this to notify you of our response."
+              label={t("contact.phone")}
+              helper={t("contact.phoneHelper")}
             >
-              <Input name="phone" type="tel" placeholder="+372 ..." className="mt-1.5 h-11" />
+              <Input name="phone" type="tel" placeholder={t("contact.phonePlaceholder")} className="mt-1.5 h-11" />
             </Field>
 
             {Object.values(errors).map((m, i) => (
@@ -81,18 +83,18 @@ function ContactPage() {
 
             <Button type="submit" disabled={loading} className="h-11 w-full shadow-elegant">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Message
+              {t("contact.send")}
             </Button>
           </div>
         </form>
 
         <aside className="space-y-6">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            <h2 className="font-display text-xl font-bold">Company info</h2>
+            <h2 className="font-display text-xl font-bold">{t("contact.company")}</h2>
             <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>Tornimäe 5, 10145 Tallinn, Estonia</span></div>
+              <div className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{t("contact.address")}</span></div>
               <div className="flex items-start gap-3"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><a href="mailto:support@skillbuddy.app" className="hover:underline">support@skillbuddy.app</a></div>
-              <div className="flex items-start gap-3"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>Support hours: Mon–Sun · 9:00–21:00 EET</span></div>
+              <div className="flex items-start gap-3"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{t("contact.supportHours")}</span></div>
             </div>
           </div>
           <div className="aspect-video overflow-hidden rounded-3xl border border-border bg-muted">

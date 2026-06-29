@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JOBS, type Job } from "@/lib/jobs";
 import { QRDownloadModal } from "@/components/qr-download-modal";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({
@@ -21,14 +22,15 @@ export const Route = createFileRoute("/jobs")({
 });
 
 function JobsPage() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <SiteShell>
       <div className="border-b border-border bg-surface/30">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Available Jobs</h1>
+          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">{t("jobs.title")}</h1>
           <p className="mt-2 text-muted-foreground">
-            <span className="font-mono font-bold text-foreground">{JOBS.length}</span> open jobs across the Baltics.
+            <span className="font-mono font-bold text-foreground">{JOBS.length}</span> {t("jobs.openJobs")}
           </p>
         </div>
       </div>
@@ -42,14 +44,15 @@ function JobsPage() {
       <QRDownloadModal
         open={open}
         onOpenChange={setOpen}
-        title="📱 Apply via the SkillBuddy App"
-        message="To apply for jobs and submit your bid, please download the SkillBuddy app."
+        title={`📱 ${t("jobs.qr.title")}`}
+        message={t("jobs.qr.message")}
       />
     </SiteShell>
   );
 }
 
 function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: () => void }) {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -74,25 +77,25 @@ function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: ()
       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{job.description}</p>
       <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{job.location}</div>
-        <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />Posted {formatAgo(job.postedHoursAgo)}</div>
-        <div className="flex items-center gap-2"><Users className="h-3.5 w-3.5 text-primary" />{job.bids} bid{job.bids === 1 ? "" : "s"} so far</div>
+        <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{t("jobs.posted")} {formatAgo(job.postedHoursAgo, t)}</div>
+        <div className="flex items-center gap-2"><Users className="h-3.5 w-3.5 text-primary" />{job.bids} {job.bids === 1 ? t("jobs.bidSingular") : t("jobs.bids")} {t("jobs.bidsSoFar")}</div>
       </div>
       <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
         <div>
-          <div className="text-xs text-muted-foreground">Budget</div>
+          <div className="text-xs text-muted-foreground">{t("jobs.budget")}</div>
           <div className="font-mono text-lg font-bold text-primary">€{job.budgetMin}–€{job.budgetMax}</div>
         </div>
         <Button size="sm" onClick={onApply} className="gap-1">
-          Apply <ArrowRight className="h-3.5 w-3.5" />
+          {t("jobs.apply")} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
     </motion.div>
   );
 }
 
-function formatAgo(h: number) {
-  if (h < 1) return "just now";
-  if (h < 24) return `${h}h ago`;
+function formatAgo(h: number, t: (k: string) => string) {
+  if (h < 1) return t("jobs.justNow");
+  if (h < 24) return `${h}${t("jobs.hoursAgo")}`;
   const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return `${d}${t("jobs.daysAgo")}`;
 }
