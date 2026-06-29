@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
-import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
+import iconDark from "@/assets/skillbuddy-icon-dark.png";
 import { useTheme } from "@/components/theme-provider";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
@@ -169,7 +169,7 @@ export function Navbar() {
                   border: "none", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 }}>
-                  <img src={iconTransparent} alt="" style={{ width: 16, height: 16, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+                  <img src={iconDark} alt="" style={{ width: 16, height: 16, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
                   {t("nav.becomeSkillBuddy")}
                 </button>
               </Link>
@@ -260,7 +260,7 @@ export function Navbar() {
                   }}
                 >
                   <img
-                    src={iconTransparent}
+                    src={iconDark}
                     alt="SkillBuddy"
                     style={{
                       width: 20, height: 20, objectFit: "contain",

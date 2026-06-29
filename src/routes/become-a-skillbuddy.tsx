@@ -3,8 +3,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Upload, Loader2, ArrowLeft, ChevronDown, Check } from "lucide-react";
-import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
+import { CircleCheck as CheckCircle, Upload, Loader as Loader2, ArrowLeft, ChevronDown, Check } from "lucide-react";
+import iconTransparent from "@/assets/skillbuddy-icon-dark.png";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
