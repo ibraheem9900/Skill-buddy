@@ -14,6 +14,7 @@ import {
   JOBS, WHAT_WE_OFFER, DEPT_COLORS, JOB_TYPE_COLORS,
   getJob,
 } from "@/lib/careers-data";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/careers/$id")({
   head: ({ params }) => {
@@ -50,6 +51,7 @@ function ApplicationModal({
   jobTitle: string;
   department: string;
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState<FormState>({
     name: "", email: "", phone: "", linkedin: "", coverLetter: "", cv: null,
   });
@@ -63,11 +65,11 @@ function ApplicationModal({
 
   const validate = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.name.trim()) errs.name = "Full name is required.";
-    if (!form.email.trim()) errs.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Please enter a valid email address.";
-    if (!form.coverLetter.trim()) errs.coverLetter = "Cover letter is required.";
-    if (!form.cv) errs.cv = "Please attach your CV/Resume.";
+    if (!form.name.trim()) errs.name = t("careers.detail.err.nameRequired");
+    if (!form.email.trim()) errs.email = t("careers.detail.err.emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = t("careers.detail.err.emailInvalid");
+    if (!form.coverLetter.trim()) errs.coverLetter = t("careers.detail.err.coverRequired");
+    if (!form.cv) errs.cv = t("careers.detail.err.cvRequired");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -76,7 +78,7 @@ function ApplicationModal({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, cv: "File size must be under 5 MB." }));
+      setErrors((prev) => ({ ...prev, cv: t("careers.detail.err.cvSize") }));
       return;
     }
     setErrors((prev) => ({ ...prev, cv: undefined }));
@@ -118,7 +120,7 @@ function ApplicationModal({
       window.location.href = mailto;
       setSuccess(true);
     } catch {
-      toast.error("Failed to send application. Please try again.");
+      toast.error(t("careers.detail.err.sendFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +154,7 @@ function ApplicationModal({
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl border-b border-border bg-card px-6 py-4">
               <div>
-                <h2 className="font-display text-xl font-extrabold">Apply for this role</h2>
+                <h2 className="font-display text-xl font-extrabold">{t("careers.detail.applyFor")}</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{jobTitle}</p>
               </div>
               <button onClick={handleClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent">
@@ -187,61 +189,61 @@ function ApplicationModal({
                     </svg>
                   </motion.div>
                   <div>
-                    <h3 className="font-display text-2xl font-extrabold text-primary">Application Received!</h3>
-                    <p className="mt-2 text-muted-foreground">We'll be in touch within 5 business days.</p>
+                    <h3 className="font-display text-2xl font-extrabold text-primary">{t("careers.detail.successTitle")}</h3>
+                    <p className="mt-2 text-muted-foreground">{t("careers.detail.successMsg")}</p>
                   </div>
-                  <Button onClick={handleClose} className="mt-2 w-full">Close</Button>
+                  <Button onClick={handleClose} className="mt-2 w-full">{t("careers.detail.close")}</Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="app-name">Full Name <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="app-name">{t("careers.detail.fullName")} <span className="text-destructive">*</span></Label>
                     <Input
                       id="app-name" value={form.name} onChange={set("name")}
-                      placeholder="Jane Cooper" className={`mt-1.5 h-11 ${errors.name ? "border-destructive" : ""}`}
+                      placeholder={t("careers.detail.ph.name")} className={`mt-1.5 h-11 ${errors.name ? "border-destructive" : ""}`}
                     />
                     {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="app-email">Email Address <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="app-email">{t("careers.detail.emailAddress")} <span className="text-destructive">*</span></Label>
                     <Input
                       id="app-email" type="email" value={form.email} onChange={set("email")}
-                      placeholder="you@email.com" className={`mt-1.5 h-11 ${errors.email ? "border-destructive" : ""}`}
+                      placeholder={t("careers.detail.ph.email")} className={`mt-1.5 h-11 ${errors.email ? "border-destructive" : ""}`}
                     />
                     {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="app-phone">Phone Number <span className="text-xs text-muted-foreground">(optional)</span></Label>
+                    <Label htmlFor="app-phone">{t("careers.detail.phone")} <span className="text-xs text-muted-foreground">{t("careers.detail.optional")}</span></Label>
                     <Input
                       id="app-phone" type="tel" value={form.phone} onChange={set("phone")}
-                      placeholder="+372 5555 5555" className="mt-1.5 h-11"
+                      placeholder={t("careers.detail.ph.phone")} className="mt-1.5 h-11"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="app-linkedin">LinkedIn Profile URL <span className="text-xs text-muted-foreground">(optional)</span></Label>
+                    <Label htmlFor="app-linkedin">{t("careers.detail.linkedin")} <span className="text-xs text-muted-foreground">{t("careers.detail.optional")}</span></Label>
                     <Input
                       id="app-linkedin" type="url" value={form.linkedin} onChange={set("linkedin")}
-                      placeholder="https://linkedin.com/in/yourname" className="mt-1.5 h-11"
+                      placeholder={t("careers.detail.ph.linkedin")} className="mt-1.5 h-11"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="app-cover">Cover Letter <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="app-cover">{t("careers.detail.coverLetter")} <span className="text-destructive">*</span></Label>
                     <textarea
                       id="app-cover" value={form.coverLetter}
                       onChange={(e) => setForm((f) => ({ ...f, coverLetter: e.target.value }))}
-                      rows={5} placeholder="Tell us why you're a great fit for this role..."
+                      rows={5} placeholder={t("careers.detail.coverPlaceholder")}
                       className={`mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none ${errors.coverLetter ? "border-destructive" : "border-input"}`}
                     />
                     {errors.coverLetter && <p className="mt-1 text-xs text-destructive">{errors.coverLetter}</p>}
                   </div>
 
                   <div>
-                    <Label>CV / Resume <span className="text-destructive">*</span></Label>
-                    <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">PDF or DOC, max 5 MB</p>
+                    <Label>{t("careers.detail.cvResume")} <span className="text-destructive">*</span></Label>
+                    <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">{t("careers.detail.cvHint")}</p>
                     <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFile} className="hidden" />
                     <button
                       type="button"
@@ -249,18 +251,18 @@ function ApplicationModal({
                       className={`flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-3 text-sm transition hover:bg-accent ${errors.cv ? "border-destructive" : "border-border"}`}
                     >
                       <Upload className="h-4 w-4" />
-                      {form.cv ? form.cv.name : "Choose File"}
+                      {form.cv ? form.cv.name : t("careers.detail.chooseFile")}
                     </button>
                     {errors.cv && <p className="mt-1 text-xs text-destructive">{errors.cv}</p>}
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1 h-11">Cancel</Button>
+                    <Button type="button" variant="outline" onClick={handleClose} className="flex-1 h-11">{t("careers.detail.cancel")}</Button>
                     <Button type="submit" disabled={submitting} className="flex-1 h-11 gap-2 shadow-elegant">
                       {submitting ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</>
+                        <><Loader2 className="h-4 w-4 animate-spin" /> {t("careers.detail.submitting")}</>
                       ) : (
-                        <>Submit Application <ChevronRight className="h-4 w-4" /></>
+                        <>{t("careers.detail.submit")} <ChevronRight className="h-4 w-4" /></>
                       )}
                     </Button>
                   </div>
@@ -275,6 +277,7 @@ function ApplicationModal({
 }
 
 function JobDetailPage() {
+  const { t } = useI18n();
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const job = getJob(id);
@@ -285,8 +288,8 @@ function JobDetailPage() {
     return (
       <SiteShell>
         <div className="mx-auto max-w-2xl px-4 py-24 text-center">
-          <h1 className="text-2xl font-bold">Position not found</h1>
-          <Button asChild className="mt-6"><Link to="/careers">Back to Careers</Link></Button>
+          <h1 className="text-2xl font-bold">{t("careers.detail.notFound")}</h1>
+          <Button asChild className="mt-6"><Link to="/careers">{t("careers.detail.backToCareers")}</Link></Button>
         </div>
       </SiteShell>
     );
@@ -300,6 +303,12 @@ function JobDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const postedLabel = job.postedDaysAgo === 0
+    ? t("careers.detail.today")
+    : job.postedDaysAgo === 1
+    ? t("careers.detail.yesterday")
+    : `${job.postedDaysAgo} ${t("careers.detail.daysAgo")}`;
+
   return (
     <SiteShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -308,7 +317,7 @@ function JobDetailPage() {
           onClick={() => navigate({ to: "/careers" })}
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Careers
+          <ArrowLeft className="h-4 w-4" /> {t("careers.detail.backToCareers")}
         </button>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -341,13 +350,13 @@ function JobDetailPage() {
               </div>
 
               <p className="mt-2 text-xs text-muted-foreground">
-                Posted {job.postedDaysAgo === 0 ? "today" : job.postedDaysAgo === 1 ? "yesterday" : `${job.postedDaysAgo} days ago`}
+                {t("careers.detail.posted")} {postedLabel}
               </p>
 
               {/* Mobile Apply + Share */}
               <div className="mt-5 flex flex-wrap gap-2 lg:hidden">
                 <Button onClick={() => setModalOpen(true)} className="flex-1 gap-2 shadow-elegant">
-                  Apply Now <ChevronRight className="h-4 w-4" />
+                  {t("careers.detail.applyNow")} <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="icon" onClick={copyLink}>
                   {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
@@ -359,7 +368,7 @@ function JobDetailPage() {
             <div className="mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3">
               <span className="text-2xl">💰</span>
               <div>
-                <div className="text-xs text-muted-foreground">Monthly Salary</div>
+                <div className="text-xs text-muted-foreground">{t("careers.detail.monthlySalary")}</div>
                 <div className="font-mono text-lg font-bold text-primary">
                   €{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()}
                 </div>
@@ -368,11 +377,11 @@ function JobDetailPage() {
 
             {/* Body sections */}
             <div className="mt-8 space-y-8">
-              <Section title="About This Role">
+              <Section title={t("careers.detail.aboutRole")}>
                 <p className="leading-relaxed text-foreground/90">{job.longDescription}</p>
               </Section>
 
-              <Section title="What You'll Do">
+              <Section title={t("careers.detail.whatYoullDo")}>
                 <ul className="space-y-2">
                   {job.whatYoullDo.map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
@@ -383,7 +392,7 @@ function JobDetailPage() {
                 </ul>
               </Section>
 
-              <Section title="Requirements">
+              <Section title={t("careers.detail.requirements")}>
                 <ul className="space-y-2">
                   {job.requirements.map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
@@ -395,7 +404,7 @@ function JobDetailPage() {
               </Section>
 
               {job.niceToHave.length > 0 && (
-                <Section title="Nice to Have">
+                <Section title={t("careers.detail.niceToHave")}>
                   <ul className="space-y-2">
                     {job.niceToHave.map((item) => (
                       <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
@@ -407,7 +416,7 @@ function JobDetailPage() {
                 </Section>
               )}
 
-              <Section title="What We Offer">
+              <Section title={t("careers.detail.whatWeOffer")}>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {WHAT_WE_OFFER.map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
@@ -418,7 +427,7 @@ function JobDetailPage() {
                 </ul>
               </Section>
 
-              <Section title="Skills Required">
+              <Section title={t("careers.detail.skillsRequired")}>
                 <div className="flex flex-wrap gap-2">
                   {job.skills.map((s) => (
                     <span key={s} className="rounded-full bg-[#DCFCE7] px-3 py-1 text-sm font-medium text-[#166534] dark:bg-emerald-900/40 dark:text-emerald-300">
@@ -431,7 +440,7 @@ function JobDetailPage() {
               {/* Mobile similar roles */}
               {similar.length > 0 && (
                 <div className="lg:hidden">
-                  <h3 className="mb-4 font-display text-lg font-bold">Similar Roles</h3>
+                  <h3 className="mb-4 font-display text-lg font-bold">{t("careers.detail.similarRoles")}</h3>
                   <div className="space-y-3">
                     {similar.map((j) => (
                       <Link
@@ -463,7 +472,7 @@ function JobDetailPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-lg">💰</span>
                     <div>
-                      <div className="text-xs text-muted-foreground">Monthly Salary</div>
+                      <div className="text-xs text-muted-foreground">{t("careers.detail.monthlySalary")}</div>
                       <div className="font-mono font-bold text-primary">€{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()}</div>
                     </div>
                   </div>
@@ -482,12 +491,12 @@ function JobDetailPage() {
                   className="mt-4 w-full gap-2 shadow-elegant"
                   size="lg"
                 >
-                  Apply Now <ChevronRight className="h-4 w-4" />
+                  {t("careers.detail.applyNow")} <ChevronRight className="h-4 w-4" />
                 </Button>
 
                 {/* Share */}
                 <div className="mt-4 border-t border-border pt-4">
-                  <div className="mb-2 text-xs font-semibold text-muted-foreground">Share this role</div>
+                  <div className="mb-2 text-xs font-semibold text-muted-foreground">{t("careers.detail.shareRole")}</div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank")}
@@ -500,7 +509,7 @@ function JobDetailPage() {
                       className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
                     >
                       {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copied ? "Copied!" : "Copy Link"}
+                      {copied ? t("careers.detail.copied") : t("careers.detail.copyLink")}
                     </button>
                   </div>
                 </div>
@@ -509,7 +518,7 @@ function JobDetailPage() {
               {/* Similar roles */}
               {similar.length > 0 && (
                 <div className="rounded-2xl border border-border bg-card p-4">
-                  <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Similar Roles</h3>
+                  <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">{t("careers.detail.similarRoles")}</h3>
                   <div className="space-y-2">
                     {similar.map((j) => (
                       <Link
@@ -541,7 +550,7 @@ function JobDetailPage() {
           className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden"
         >
           <Button onClick={() => setModalOpen(true)} className="w-full gap-2 shadow-elegant">
-            Apply Now — {job.title} <ChevronRight className="h-4 w-4" />
+            {t("careers.detail.applyNow")} — {job.title} <ChevronRight className="h-4 w-4" />
           </Button>
         </motion.div>
       </div>

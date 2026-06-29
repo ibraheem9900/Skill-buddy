@@ -312,10 +312,10 @@
     will-change: auto !important;
   }
 
-  /* Hero section: fill remaining viewport below navbar (no padding-top) */
+  /* Hero section: no extra padding-top, let the inner section fill height */
   .snap-section:first-child {
     padding-top: 0 !important;
-    min-height: calc(100svh - var(--navbar-height)) !important;
+    min-height: 0 !important;
   }
 
   /* Inner sections: remove h-full and overflow clipping */
@@ -325,6 +325,15 @@
     overflow: visible !important;
     transform: none !important;
     will-change: auto !important;
+  }
+
+  /* Hero inner section: fill viewport so justify-center works correctly */
+  .snap-section:first-child > section {
+    min-height: calc(100svh - var(--navbar-height)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   /* Ensure no element breaks out horizontally */

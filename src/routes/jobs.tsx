@@ -9,6 +9,22 @@ import { JOBS, type Job } from "@/lib/jobs";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
 
+// Maps English category label → i18n key
+const CAT_KEY: Record<string, string> = {
+  "Cleaning": "jobs.cat.cleaning",
+  "Plumbing": "jobs.cat.plumbing",
+  "Shifting & Moving": "jobs.cat.shifting",
+  "Painting": "jobs.cat.painting",
+  "AC Repair": "jobs.cat.ac-repair",
+  "Makeup Artist": "jobs.cat.makeup",
+  "Home Tutor": "jobs.cat.tutor",
+  "Pet Care": "jobs.cat.pet-care",
+  "Phone Repair": "jobs.cat.phone-repair",
+  "Photography": "jobs.cat.photography",
+  "Electrician": "jobs.cat.electrician",
+  "Locksmith": "jobs.cat.locksmith",
+};
+
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
@@ -62,7 +78,7 @@ function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: ()
       className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-card transition hover:-translate-y-1 hover:shadow-elegant"
     >
       <div className="flex items-start justify-between gap-3">
-        <Badge variant="secondary">{job.category}</Badge>
+        <Badge variant="secondary">{t(CAT_KEY[job.category] ?? job.category)}</Badge>
         <Badge
           className={
             job.urgency === "URGENT"
@@ -70,7 +86,7 @@ function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: ()
               : "bg-primary/15 text-primary"
           }
         >
-          {job.urgency}
+          {t(`jobs.urgency.${job.urgency.toLowerCase()}`)}
         </Badge>
       </div>
       <h3 className="mt-3 font-display text-lg font-bold leading-snug">{job.title}</h3>
