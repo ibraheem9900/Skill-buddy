@@ -15,6 +15,26 @@ import {
 } from "@/lib/careers-data";
 import { useI18n } from "@/lib/i18n";
 
+const DEPT_KEY: Record<string, string> = {
+  "Technology": "careers.dept.technology", "Design": "careers.dept.design",
+  "Marketing": "careers.dept.marketing", "Customer Support": "careers.dept.customerSupport",
+  "Operations": "careers.dept.operations", "Finance": "careers.dept.finance",
+  "Legal": "careers.dept.legal", "People & HR": "careers.dept.peopleHR",
+};
+const LOC_KEY: Record<string, string> = {
+  "Remote": "careers.loc.remote", "Tallinn, Estonia": "careers.loc.tallinn",
+  "Riga, Latvia": "careers.loc.riga", "Vilnius, Lithuania": "careers.loc.vilnius",
+  "London, UK": "careers.loc.london",
+};
+const TYPE_KEY: Record<string, string> = {
+  "Full-time": "careers.type.fullTime", "Part-time": "careers.type.partTime",
+  "Contract": "careers.type.contract", "Internship": "careers.type.internship",
+};
+const LEVEL_KEY: Record<string, string> = {
+  "Junior": "careers.level.junior", "Mid-level": "careers.level.midLevel",
+  "Senior": "careers.level.senior", "Lead / Manager": "careers.level.leadManager",
+};
+
 export const Route = createFileRoute("/careers/")({
   head: () => ({
     meta: [
@@ -358,10 +378,10 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${DEPT_COLORS[job.department]}`}>
-            {job.department}
+            {t(DEPT_KEY[job.department] ?? job.department)}
           </span>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${JOB_TYPE_COLORS[job.jobType]}`}>
-            {job.jobType}
+            {t(TYPE_KEY[job.jobType] ?? job.jobType)}
           </span>
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -439,7 +459,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {DEPARTMENTS.map((d) => (
             <label key={d} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="checkbox" checked={deptFilter.includes(d)} onChange={() => toggleDept(d)} className="accent-primary" />
-              <span className="flex-1">{d}</span>
+              <span className="flex-1">{t(DEPT_KEY[d] ?? d)}</span>
               <span className="text-xs text-muted-foreground">({deptCounts[d] ?? 0})</span>
             </label>
           ))}
@@ -452,7 +472,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {OFFICE_LOCATIONS.map((l) => (
             <label key={l} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="checkbox" checked={locFilter.includes(l)} onChange={() => toggleLoc(l)} className="accent-primary" />
-              <span className="flex-1">{l}</span>
+              <span className="flex-1">{t(LOC_KEY[l] ?? l)}</span>
               <span className="text-xs text-muted-foreground">({locCounts[l] ?? 0})</span>
             </label>
           ))}
@@ -465,7 +485,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {(["", "Full-time", "Part-time", "Contract", "Internship"] as const).map((tp) => (
             <label key={tp || "all"} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="radio" name="jobType" checked={typeFilter === tp} onChange={() => setTypeFilter(tp)} className="accent-primary" />
-              <span>{tp || t("careers.filters.allTypes")}</span>
+              <span>{tp ? t(TYPE_KEY[tp] ?? tp) : t("careers.filters.allTypes")}</span>
             </label>
           ))}
         </div>
@@ -477,7 +497,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {(["Junior", "Mid-level", "Senior", "Lead / Manager"] as ExperienceLevel[]).map((l) => (
             <label key={l} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="checkbox" checked={levelFilter.includes(l)} onChange={() => toggleLevel(l)} className="accent-primary" />
-              <span>{l}</span>
+              <span>{t(LEVEL_KEY[l] ?? l)}</span>
             </label>
           ))}
         </div>

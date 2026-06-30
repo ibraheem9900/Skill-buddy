@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import type { CategoryDef, AnimKind } from "@/lib/categories";
+import { useI18n } from "@/lib/i18n";
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
@@ -29,8 +30,10 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, active, onSelect }: CategoryCardProps) {
+  const { t } = useI18n();
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[category.icon] ?? Icons.Sparkles) as IconCmp;
   const v = animVariants[category.anim];
+  const displayName = category.nameKey ? t(category.nameKey) : category.name;
 
   if (onSelect) {
     return (
@@ -59,7 +62,7 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
             active ? "text-primary" : ""
           }`}
         >
-          {category.name}
+          {displayName}
         </div>
       </button>
     );
@@ -78,7 +81,7 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
       >
         <Icon className="h-7 w-7" />
       </motion.div>
-      <div className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200">{category.name}</div>
+      <div className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200">{displayName}</div>
     </Link>
   );
 }

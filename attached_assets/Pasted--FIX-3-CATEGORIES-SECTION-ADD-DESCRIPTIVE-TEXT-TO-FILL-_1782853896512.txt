@@ -1,0 +1,501 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3 — CATEGORIES SECTION: ADD DESCRIPTIVE TEXT TO FILL GAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Empty gap at top of categories section looks awkward.
+
+FIX:
+- Below the "Our Services" heading and above the category cards grid, add a short descriptive subtitle text
+- Text content (English): "From home cleaning to creative design — find the right expert for every task, right in your neighbourhood."
+- Style: text-muted-foreground, text-sm or text-base, max-width 600px, centered or left-aligned matching the heading
+- Add translation key to ALL 5 language files:
+  "sec.categories.subtitle": "From home cleaning to creative design — find the right expert for every task, right in your neighbourhood."
+  Estonian: "Koristamisest loova disainini — leia õige ekspert iga ülesande jaoks, just sinu naabruses."
+  Russian: "От уборки до креативного дизайна — найдите нужного специалиста для любой задачи прямо в вашем районе."
+  Latvian: "No mājas tīrīšanas līdz radošam dizainam — atrodiet īsto speciālistu katram uzdevumam tieši savā apkaimē."
+  Lithuanian: "Nuo namų valymo iki kūrybinio dizaino — raskite tinkamą specialistą kiekvienai užduočiai savo kaimynystėje."
+- Use t("sec.categories.subtitle") in the component
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4 — CATEGORY CARD NAMES: PROPER TRANSLATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Category card names show in English even when language is changed.
+
+ROOT CAUSE INVESTIGATION:
+- Find where category data is defined (likely in src/lib/data.ts or src/lib/categories.ts)
+- The category names are probably hardcoded strings like { name: "Pet Care", slug: "pet-care" }
+- The CategoryCard component probably renders cat.name directly instead of t(cat.nameKey)
+
+FIX:
+Step 1 — Update category data structure:
+Add a nameKey field to every category object:
+  { name: "Creative & Design", slug: "creative-design", nameKey: "cat.creativeDesign" }
+  { name: "Pet Care", slug: "pet-care", nameKey: "cat.petCare" }
+  { name: "Beauty & Personal Care", slug: "beauty-personal-care", nameKey: "cat.beautyPersonalCare" }
+  { name: "Health & Wellness", slug: "health-wellness", nameKey: "cat.healthWellness" }
+  { name: "Home & Property", slug: "home-property", nameKey: "cat.homeProperty" }
+  { name: "Personal & Household", slug: "personal-household", nameKey: "cat.personalHousehold" }
+  { name: "Education & Training", slug: "education-training", nameKey: "cat.educationTraining" }
+  { name: "Event & Party", slug: "event-party", nameKey: "cat.eventParty" }
+  { name: "Cleaning", slug: "cleaning", nameKey: "cat.cleaning" }
+  { name: "Repair", slug: "repair", nameKey: "cat.repair" }
+  { name: "Moving", slug: "moving", nameKey: "cat.moving" }
+  { name: "Tutoring", slug: "tutoring", nameKey: "cat.tutoring" }
+  { name: "All", slug: "all", nameKey: "cat.all" }
+
+Step 2 — Update CategoryCard component:
+  import { useI18n } from "@/lib/i18n"
+  const { t } = useI18n()
+  Replace: <span>{category.name}</span>
+  With:    <span>{category.nameKey ? t(category.nameKey) : category.name}</span>
+
+Step 3 — Add ALL translation keys to all 5 language files:
+  English (en):
+    "cat.all": "All"
+    "cat.creativeDesign": "Creative & Design"
+    "cat.petCare": "Pet Care"
+    "cat.beautyPersonalCare": "Beauty & Personal Care"
+    "cat.healthWellness": "Health & Wellness"
+    "cat.homeProperty": "Home & Property"
+    "cat.personalHousehold": "Personal & Household"
+    "cat.educationTraining": "Education & Training"
+    "cat.eventParty": "Event & Party"
+    "cat.cleaning": "Cleaning"
+    "cat.repair": "Repair"
+    "cat.moving": "Moving"
+    "cat.tutoring": "Tutoring"
+
+  Estonian (et):
+    "cat.all": "Kõik"
+    "cat.creativeDesign": "Loovus & Disain"
+    "cat.petCare": "Lemmikloomade hooldus"
+    "cat.beautyPersonalCare": "Ilu & Isiklik hooldus"
+    "cat.healthWellness": "Tervis & Heaolu"
+    "cat.homeProperty": "Kodu & Kinnisvara"
+    "cat.personalHousehold": "Isiklik & Majapidamine"
+    "cat.educationTraining": "Haridus & Koolitus"
+    "cat.eventParty": "Üritused & Peod"
+    "cat.cleaning": "Puhastus"
+    "cat.repair": "Remont"
+    "cat.moving": "Kolimine"
+    "cat.tutoring": "Õpetamine"
+
+  Russian (ru):
+    "cat.all": "Все"
+    "cat.creativeDesign": "Творчество и дизайн"
+    "cat.petCare": "Уход за животными"
+    "cat.beautyPersonalCare": "Красота и уход"
+    "cat.healthWellness": "Здоровье и благополучие"
+    "cat.homeProperty": "Дом и недвижимость"
+    "cat.personalHousehold": "Личное и домашнее"
+    "cat.educationTraining": "Образование и обучение"
+    "cat.eventParty": "Мероприятия и праздники"
+    "cat.cleaning": "Уборка"
+    "cat.repair": "Ремонт"
+    "cat.moving": "Переезд"
+    "cat.tutoring": "Репетиторство"
+
+  Latvian (lv):
+    "cat.all": "Visi"
+    "cat.creativeDesign": "Radošums & Dizains"
+    "cat.petCare": "Mājdzīvnieku kopšana"
+    "cat.beautyPersonalCare": "Skaistums & Personīgā kopšana"
+    "cat.healthWellness": "Veselība & Labsajūta"
+    "cat.homeProperty": "Māja & Īpašums"
+    "cat.personalHousehold": "Personīgais & Mājsaimniecība"
+    "cat.educationTraining": "Izglītība & Apmācība"
+    "cat.eventParty": "Pasākumi & Ballītes"
+    "cat.cleaning": "Tīrīšana"
+    "cat.repair": "Remonts"
+    "cat.moving": "Pārcelšanās"
+    "cat.tutoring": "Mācīšana"
+
+  Lithuanian (lt):
+    "cat.all": "Visi"
+    "cat.creativeDesign": "Kūryba & Dizainas"
+    "cat.petCare": "Gyvūnų priežiūra"
+    "cat.beautyPersonalCare": "Grožis & Asmeninė priežiūra"
+    "cat.healthWellness": "Sveikata & Gerovė"
+    "cat.homeProperty": "Namai & Nekilnojamasis turtas"
+    "cat.personalHousehold": "Asmeninis & Namų ūkis"
+    "cat.educationTraining": "Švietimas & Mokymai"
+    "cat.eventParty": "Renginiai & Vakarėliai"
+    "cat.cleaning": "Valymas"
+    "cat.repair": "Remontas"
+    "cat.moving": "Kraustymasis"
+    "cat.tutoring": "Mokymas"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 5 — JOBS PAGE: TRANSLATE JOB TITLES, DESCRIPTIONS, ALL CONTENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Job page heading translates but job card titles, descriptions, category badges, urgency badges, location, bids count, budget, apply button stay in English.
+
+ROOT CAUSE: Job data is hardcoded in English in the data file.
+
+FIX:
+Step 1 — Find job data (likely src/lib/data.ts or similar)
+Each job object probably looks like:
+  { id: 1, title: "Deep clean for 3-bedroom apartment", description: "Move-out clean...", category: "Cleaning", urgency: "URGENT", location: "Tallinn, Kesklinn", budget: "€80–€140", bids: 7 }
+
+Step 2 — Add titleKey and descKey to each job:
+  { id: 1, titleKey: "job.1.title", descKey: "job.1.desc", categoryKey: "cat.cleaning", urgencyKey: "job.urgent", ... }
+
+Step 3 — Add translations for ALL jobs in all 5 language files.
+For each job translate the title and description:
+
+English jobs (add these keys):
+  "job.1.title": "Deep clean for 3-bedroom apartment"
+  "job.1.desc": "Move-out clean, kitchen and 2 bathrooms included."
+  "job.2.title": "Fix leaking kitchen sink"
+  "job.2.desc": "Drip under the trap, probably needs gasket replacement."
+  "job.3.title": "Help moving 1-bedroom flat"
+  "job.3.desc": "Saturday afternoon, ~15 boxes plus sofa and bed."
+  (continue for all jobs that exist in the data)
+
+  "job.urgent": "URGENT"
+  "job.normal": "NORMAL"
+  "job.bids": "bids so far"
+  "job.budget": "Budget"
+  "job.apply": "Apply →"
+  "job.addedAgo": "Added"
+  "job.hoursAgo": "h ago"
+  "job.daysAgo": "d ago"
+
+Estonian translations for same keys:
+  "job.1.title": "Põhjalik puhastus 3-toalisele korterile"
+  "job.1.desc": "Väljakolimispuhastus, köök ja 2 vannituba kaasa arvatud."
+  "job.2.title": "Lekiva köögivalduse parandamine"
+  "job.2.desc": "Tilkumine lõksu all, tõenäoliselt vajab tihendi vahetust."
+  "job.3.title": "Abi 1-toalise korteri kolimisega"
+  "job.3.desc": "Laupäeva pärastlõunal, ~15 kasti pluss diivan ja voodi."
+  "job.urgent": "KIIRE"
+  "job.normal": "TAVALINE"
+  "job.bids": "pakkumist siiani"
+  "job.budget": "Eelarve"
+  "job.apply": "Kandideeri →"
+  "job.addedAgo": "Lisatud"
+  "job.hoursAgo": "t tagasi"
+  "job.daysAgo": "p tagasi"
+
+Russian translations:
+  "job.1.title": "Генеральная уборка 3-комнатной квартиры"
+  "job.1.desc": "Уборка при выезде, кухня и 2 ванные комнаты включены."
+  "job.2.title": "Починить протекающую кухонную раковину"
+  "job.2.desc": "Капает под сифоном, вероятно нужна замена прокладки."
+  "job.3.title": "Помощь с переездом из 1-комнатной квартиры"
+  "job.3.desc": "Субботний полдень, ~15 коробок плюс диван и кровать."
+  "job.urgent": "СРОЧНО"
+  "job.normal": "ОБЫЧНОЕ"
+  "job.bids": "предложений"
+  "job.budget": "Бюджет"
+  "job.apply": "Подать заявку →"
+  "job.addedAgo": "Добавлено"
+  "job.hoursAgo": "ч назад"
+  "job.daysAgo": "д назад"
+
+Latvian translations:
+  "job.1.title": "Padziļināta tīrīšana 3-istabu dzīvoklim"
+  "job.1.desc": "Izbraukšanas tīrīšana, virtuve un 2 vannas istabas iekļautas."
+  "job.2.title": "Salabot tekošu virtuves izlietni"
+  "job.2.desc": "Pil zem sifona, iespējams vajag blīvējuma nomaiņu."
+  "job.3.title": "Palīdzība pārcelšanās no 1-istabu dzīvokļa"
+  "job.3.desc": "Sestdienas pēcpusdienā, ~15 kastes plus dīvāns un gulta."
+  "job.urgent": "STEIDZAMI"
+  "job.normal": "PARASTS"
+  "job.bids": "piedāvājumi"
+  "job.budget": "Budžets"
+  "job.apply": "Pieteikties →"
+  "job.addedAgo": "Pievienots"
+  "job.hoursAgo": "st atpakaļ"
+  "job.daysAgo": "d atpakaļ"
+
+Lithuanian translations:
+  "job.1.title": "Generalinis valymas 3 kambarių bute"
+  "job.1.desc": "Išsikraustymo valymas, virtuvė ir 2 vonios kambariai įtraukti."
+  "job.2.title": "Pataisyti tekančią virtuvės kriauklę"
+  "job.2.desc": "Lašėja po sifonu, tikriausiai reikia tarpiklio pakeitimo."
+  "job.3.title": "Pagalba kraustantis iš 1 kambario buto"
+  "job.3.desc": "Šeštadienio popietę, ~15 dėžių plius sofa ir lova."
+  "job.urgent": "SKUBU"
+  "job.normal": "ĮPRASTAS"
+  "job.bids": "pasiūlymų"
+  "job.budget": "Biudžetas"
+  "job.apply": "Kandidatuoti →"
+  "job.addedAgo": "Pridėta"
+  "job.hoursAgo": "val atgal"
+  "job.daysAgo": "d atgal"
+
+Step 4 — Update the Jobs page component:
+Replace all hardcoded text rendering with t() calls:
+  job.title → t(job.titleKey)
+  job.description → t(job.descKey)
+  job.category → t(job.categoryKey)
+  urgency badge → t(job.urgencyKey)
+  "bids so far" → t("job.bids")
+  "Budget" label → t("job.budget")
+  Apply button → t("job.apply")
+  time ago → t("job.addedAgo") + number + t("job.hoursAgo")
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 6 — CAREERS PAGE: TRANSLATE EVERYTHING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Careers page filters, job titles, descriptions, tags, badges all stay in English.
+
+FIX — SIDEBAR FILTERS:
+Add translation keys to ALL 5 language files:
+
+English:
+  "careers.filters": "Filters"
+  "careers.resetAll": "Reset all"
+  "careers.department": "Department"
+  "careers.dept.technology": "Technology"
+  "careers.dept.design": "Design"
+  "careers.dept.marketing": "Marketing"
+  "careers.dept.customerSupport": "Customer Support"
+  "careers.dept.operations": "Operations"
+  "careers.dept.finance": "Finance"
+  "careers.dept.legal": "Legal"
+  "careers.dept.peopleHr": "People & HR"
+  "careers.location": "Location"
+  "careers.loc.remote": "Remote"
+  "careers.loc.tallinn": "Tallinn, Estonia"
+  "careers.loc.riga": "Riga, Latvia"
+  "careers.loc.vilnius": "Vilnius, Lithuania"
+  "careers.jobType": "Job Type"
+  "careers.type.fullTime": "Full-time"
+  "careers.type.partTime": "Part-time"
+  "careers.type.contract": "Contract"
+  "careers.openPositions": "open positions"
+  "careers.sortBy": "Sort by:"
+  "careers.sort.newest": "Newest first"
+  "careers.postedYesterday": "Added yesterday"
+  "careers.perMonth": "/ month"
+  "careers.apply": "Apply →"
+
+Estonian:
+  "careers.filters": "Filtrid"
+  "careers.resetAll": "Lähtesta kõik"
+  "careers.department": "Osakond"
+  "careers.dept.technology": "Technology"
+  "careers.dept.design": "Design"
+  "careers.dept.marketing": "Marketing"
+  "careers.dept.customerSupport": "Customer Support"
+  "careers.dept.operations": "Operations"
+  "careers.dept.finance": "Finance"
+  "careers.dept.legal": "Legal"
+  "careers.dept.peopleHr": "People & HR"
+  "careers.location": "Asukoht"
+  "careers.loc.remote": "Remote"
+  "careers.loc.tallinn": "Tallinn, Eesti"
+  "careers.loc.riga": "Riia, Läti"
+  "careers.loc.vilnius": "Vilnius, Leedu"
+  "careers.jobType": "Töö tüüp"
+  "careers.type.fullTime": "Täiskoormus"
+  "careers.type.partTime": "Osakoormus"
+  "careers.type.contract": "Leping"
+  "careers.openPositions": "avatud kohta"
+  "careers.sortBy": "Sorteeri:"
+  "careers.sort.newest": "Uuemad ees"
+  "careers.postedYesterday": "Lisatud eile"
+  "careers.perMonth": "/ kuu"
+  "careers.apply": "Kandideeri →"
+
+Russian:
+  "careers.filters": "Фильтры"
+  "careers.resetAll": "Сбросить всё"
+  "careers.department": "Отдел"
+  "careers.dept.technology": "Технологии"
+  "careers.dept.design": "Дизайн"
+  "careers.dept.marketing": "Маркетинг"
+  "careers.dept.customerSupport": "Поддержка клиентов"
+  "careers.dept.operations": "Операции"
+  "careers.dept.finance": "Финансы"
+  "careers.dept.legal": "Юридический"
+  "careers.dept.peopleHr": "Кадры и HR"
+  "careers.location": "Местоположение"
+  "careers.loc.remote": "Удалённо"
+  "careers.loc.tallinn": "Таллин, Эстония"
+  "careers.loc.riga": "Рига, Латвия"
+  "careers.loc.vilnius": "Вильнюс, Литва"
+  "careers.jobType": "Тип работы"
+  "careers.type.fullTime": "Полная занятость"
+  "careers.type.partTime": "Частичная занятость"
+  "careers.type.contract": "Контракт"
+  "careers.openPositions": "открытых вакансий"
+  "careers.sortBy": "Сортировать:"
+  "careers.sort.newest": "Сначала новые"
+  "careers.postedYesterday": "Добавлено вчера"
+  "careers.perMonth": "/ мес"
+  "careers.apply": "Подать заявку →"
+
+Latvian:
+  "careers.filters": "Filtri"
+  "careers.resetAll": "Atiestatīt visu"
+  "careers.department": "Nodaļa"
+  "careers.dept.technology": "Tehnoloģija"
+  "careers.dept.design": "Dizains"
+  "careers.dept.marketing": "Mārketings"
+  "careers.dept.customerSupport": "Klientu atbalsts"
+  "careers.dept.operations": "Operācijas"
+  "careers.dept.finance": "Finanses"
+  "careers.dept.legal": "Juridiskais"
+  "careers.dept.peopleHr": "Cilvēki un HR"
+  "careers.location": "Atrašanās vieta"
+  "careers.loc.remote": "Attālināti"
+  "careers.loc.tallinn": "Tallina, Igaunija"
+  "careers.loc.riga": "Rīga, Latvija"
+  "careers.loc.vilnius": "Viļņa, Lietuva"
+  "careers.jobType": "Darba veids"
+  "careers.type.fullTime": "Pilna slodze"
+  "careers.type.partTime": "Nepilna slodze"
+  "careers.type.contract": "Līgums"
+  "careers.openPositions": "atvērtas pozīcijas"
+  "careers.sortBy": "Kārtot:"
+  "careers.sort.newest": "Jaunākie pirmie"
+  "careers.postedYesterday": "Pievienots vakar"
+  "careers.perMonth": "/ mēn"
+  "careers.apply": "Pieteikties →"
+
+Lithuanian:
+  "careers.filters": "Filtrai"
+  "careers.resetAll": "Atstatyti viską"
+  "careers.department": "Skyrius"
+  "careers.dept.technology": "Technologijos"
+  "careers.dept.design": "Dizainas"
+  "careers.dept.marketing": "Marketingas"
+  "careers.dept.customerSupport": "Klientų palaikymas"
+  "careers.dept.operations": "Operacijos"
+  "careers.dept.finance": "Finansai"
+  "careers.dept.legal": "Teisinis"
+  "careers.dept.peopleHr": "Žmonės ir HR"
+  "careers.location": "Vieta"
+  "careers.loc.remote": "Nuotoliniu būdu"
+  "careers.loc.tallinn": "Talinas, Estija"
+  "careers.loc.riga": "Ryga, Latvija"
+  "careers.loc.vilnius": "Vilnius, Lietuva"
+  "careers.jobType": "Darbo tipas"
+  "careers.type.fullTime": "Visą darbo dieną"
+  "careers.type.partTime": "Ne visą darbo dieną"
+  "careers.type.contract": "Sutartis"
+  "careers.openPositions": "atviros pozicijos"
+  "careers.sortBy": "Rūšiuoti:"
+  "careers.sort.newest": "Naujausi pirmiausia"
+  "careers.postedYesterday": "Pridėta vakar"
+  "careers.perMonth": "/ mėn"
+  "careers.apply": "Kandidatuoti →"
+
+FIX — CAREER LISTING CONTENT:
+Find careers data file. Each career listing has title, description, tags.
+Add titleKey, descKey to each career:
+  "career.juniorFrontend.title": "Junior Frontend Developer"
+  "career.juniorFrontend.desc": "Start your career at a fast-growing Baltic tech startup, building real features that thousands of users interact with daily."
+  "career.devops.title": "DevOps / Cloud Engineer"
+  (continue for all career listings)
+
+Estonian career titles/descriptions:
+  "career.juniorFrontend.title": "Junior Frontend arendaja"
+  "career.juniorFrontend.desc": "Alusta oma karjääri kiiresti kasvavast Balti tehnoloogiastardis, ehitades reaalseid funktsioone, mida kasutavad tuhanded kasutajad."
+  "career.devops.title": "DevOps / Pilvetehnik"
+
+Russian:
+  "career.juniorFrontend.title": "Junior Frontend разработчик"
+  "career.juniorFrontend.desc": "Начните карьеру в быстрорастущем балтийском технологическом стартапе, создавая реальные функции для тысяч пользователей."
+  "career.devops.title": "DevOps / Облачный инженер"
+
+Latvian:
+  "career.juniorFrontend.title": "Junior Frontend izstrādātājs"
+  "career.juniorFrontend.desc": "Sāciet karjeru strauji augošā Baltijas tehnoloģiju jaunuzņēmumā, veidojot reālas funkcijas, kuras katru dienu izmanto tūkstošiem lietotāju."
+  "career.devops.title": "DevOps / Mākoņinženieris"
+
+Lithuanian:
+  "career.juniorFrontend.title": "Junior Frontend kūrėjas"
+  "career.juniorFrontend.desc": "Pradėkite karjerą sparčiai augančiame Baltijos technologijų startuolyje, kurdami realias funkcijas, kuriomis kasdien naudojasi tūkstančiai vartotojų."
+  "career.devops.title": "DevOps / Debesų inžinierius"
+
+Update Careers page component to use t(career.titleKey) and t(career.descKey).
+Update all filter labels with t() calls using the keys above.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 7 — UBER / SPECIAL OFFERS SECTION: TRANSLATE FULLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: The "Ride Free with Uber" offer card on homepage does not translate.
+
+FIX:
+Find the OFFERS data array in src/lib/data.ts.
+Each offer has titleKey, subKey, ctaKey pointing to translation keys.
+Make sure these keys exist AND have translations in all 5 language files:
+
+English:
+  "offer.uber.title": "Ride Free with Uber"
+  "offer.uber.sub": "Complete 3 jobs and earn a free Uber ride up to €15"
+  "offer.uber.cta": "Claim Offer"
+  "offer.discount.title": "20% Off Your First Service"
+  "offer.discount.sub": "New clients get 20% discount on their first booking"
+  "offer.discount.cta": "Book Now"
+  "offer.premium.title": "Go Premium This Month"
+  "offer.premium.sub": "Unlock priority matching and featured profile for 30 days"
+  "offer.premium.cta": "Upgrade Now"
+  "sec.limited": "Limited Offer"
+
+Estonian:
+  "offer.uber.title": "Sõida tasuta Uberiga"
+  "offer.uber.sub": "Lõpeta 3 tööd ja teeni tasuta Uberi sõit kuni 15€"
+  "offer.uber.cta": "Nõua pakkumist"
+  "offer.discount.title": "20% soodustus esimesele teenusele"
+  "offer.discount.sub": "Uued kliendid saavad 20% allahindlust esimesele broneeringule"
+  "offer.discount.cta": "Broneeri kohe"
+  "offer.premium.title": "Mine Premium sel kuul"
+  "offer.premium.sub": "Ava prioriteetne sobitamine ja esiletõstetud profiil 30 päevaks"
+  "offer.premium.cta": "Uuenda kohe"
+  "sec.limited": "Piiratud pakkumine"
+
+Russian:
+  "offer.uber.title": "Бесплатная поездка с Uber"
+  "offer.uber.sub": "Выполните 3 заказа и получите бесплатную поездку Uber до 15€"
+  "offer.uber.cta": "Получить предложение"
+  "offer.discount.title": "Скидка 20% на первую услугу"
+  "offer.discount.sub": "Новые клиенты получают скидку 20% на первое бронирование"
+  "offer.discount.cta": "Забронировать"
+  "offer.premium.title": "Перейти на Премиум в этом месяце"
+  "offer.premium.sub": "Разблокируйте приоритетный подбор и выделенный профиль на 30 дней"
+  "offer.premium.cta": "Обновить сейчас"
+  "sec.limited": "Ограниченное предложение"
+
+Latvian:
+  "offer.uber.title": "Brauciet bezmaksas ar Uber"
+  "offer.uber.sub": "Pabeidziet 3 darbus un nopelniet bezmaksas Uber braucienu līdz 15€"
+  "offer.uber.cta": "Saņemt piedāvājumu"
+  "offer.discount.title": "20% atlaide pirmajam pakalpojumam"
+  "offer.discount.sub": "Jauni klienti saņem 20% atlaidi pirmajam rezervējumam"
+  "offer.discount.cta": "Rezervēt tagad"
+  "offer.premium.title": "Kļūsti Premium šomēnes"
+  "offer.premium.sub": "Atbloķē prioritāro saskaņošanu un izcelto profilu uz 30 dienām"
+  "offer.premium.cta": "Jaunināt tagad"
+  "sec.limited": "Ierobežots piedāvājums"
+
+Lithuanian:
+  "offer.uber.title": "Važiuokite nemokamai su Uber"
+  "offer.uber.sub": "Atlikite 3 darbus ir užsidirbkite nemokamą Uber kelionę iki 15€"
+  "offer.uber.cta": "Gauti pasiūlymą"
+  "offer.discount.title": "20% nuolaida pirmai paslaugai"
+  "offer.discount.sub": "Nauji klientai gauna 20% nuolaidą pirmam užsakymui"
+  "offer.discount.cta": "Rezervuoti dabar"
+  "offer.premium.title": "Tapkite Premium šį mėnesį"
+  "offer.premium.sub": "Atrakinkite prioritetinį suderinimą ir išryškintą profilį 30 dienų"
+  "offer.premium.cta": "Atnaujinti dabar"
+  "sec.limited": "Ribotas pasiūlymas"
+
+Make sure SpecialOffersSection renders t(offer.titleKey), t(offer.subKey), t(offer.ctaKey) and t("sec.limited").
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT CHANGE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change any design, colors, animations, or layout
+- Do NOT change authentication or routing
+- Do NOT break any section that already works
+- Only add translation keys and update components to use t()
+- After all fixes: switching to any of the 5 languages must translate ALL content on every page

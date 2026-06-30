@@ -1,0 +1,101 @@
+1. EMAIL VERIFICATION / OTP — FIX THE BROKEN CODE FLOW
+Right now when a user enters their email during signup, the app shows a notification saying a verification code was sent, but no email is actually received. Fix this properly:
+
+When the user submits their email in the signup form (Step 1), call Supabase's signUp with emailRedirectTo or use Supabase's OTP via signInWithOtp depending on the flow
+Make sure Supabase actually sends the verification email with the 6-digit OTP code
+In the Supabase dashboard, ensure "Email OTP" is enabled under Authentication → Email settings
+The 6-digit code input field must properly call supabase.auth.verifyOtp({ email, token, type: 'signup' }) to verify
+After successful verification, proceed to the next registration step
+Show proper error messages if the code is wrong or expired
+Add a working "Resend Code" button that calls supabase.auth.resend({ type: 'signup', email }) with a 60-second countdown timer
+
+
+2. GOOGLE LOGIN / SIGNUP — MAKE IT FULLY FUNCTIONAL WITH PROPER LOGO
+
+The Google button must show the real Google "G" logo (use an inline SVG of the Google colored logo, not plain text)
+Clicking it must call supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })
+In Supabase dashboard, Google OAuth must be configured — add a note in comments that the developer must add Google Client ID and Secret in Supabase → Authentication → Providers → Google
+After Google login, fetch the user session with supabase.auth.getSession() and store the user data
+If it's a new Google user, redirect them to complete their profile (Step 2 of registration: name, country, city etc.)
+If it's a returning Google user, redirect them to the dashboard
+
+
+3. APPLE LOGIN / SIGNUP — MAKE IT FULLY FUNCTIONAL WITH PROPER LOGO
+
+The Apple button must show the real Apple logo (use an inline SVG of the Apple logo in correct black/white color depending on theme)
+Clicking it must call supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: window.location.origin + '/auth/callback' } })
+In Supabase dashboard, Apple OAuth must be configured — add a comment that the developer must add Apple Service ID, Team ID, Key ID, and Private Key in Supabase → Authentication → Providers → Apple
+After Apple login, same flow as Google: new users go to profile completion, returning users go to dashboard
+
+
+4. AUTH CALLBACK ROUTE
+
+Create a route at /auth/callback (file: src/routes/auth.callback.tsx)
+This route must handle the OAuth redirect from Google and Apple
+It should call supabase.auth.exchangeCodeForSession(code) using the code param from the URL
+Check if the user already has a completed profile in the Supabase profiles table
+If profile is complete → redirect to /dashboard
+If profile is incomplete (new OAuth user) → redirect to /register with their pre-filled data
+
+
+5. REGISTRATION FORM — KEEP EXACT SAME UI, ADD WORKING FUNCTIONALITY
+Do NOT change the existing multi-step registration form design. Keep all the steps exactly as they are visually. Just make the functionality work:
+
+Step 1 (Account): Email + password fields → on submit, call supabase.auth.signUp() → trigger OTP email → show 6-digit OTP input → verify with supabase.auth.verifyOtp() → move to Step 2
+Step 2 (Profile): Full name, country, county, city, postal code, street address, house number, profile picture upload → store in Supabase profiles table
+Step 3 (Skills — Provider only): Primary skill, secondary skill, certification upload → store in profiles table
+Step 4 (Verification): Residence permit front/back image upload → phone number → store documents in Supabase Storage bucket called documents → update profiles table
+On final step submission, call supabase.auth.updateUser() if needed and insert/update the profiles table with all collected data
+
+
+6. LOGIN FORM — MAKE IT FULLY WORKING
+
+Email + password login must call supabase.auth.signInWithPassword({ email, password })
+On success, check if the user's profile is complete → redirect to /dashboard
+On failure, show proper error message (wrong password, email not confirmed, etc.)
+"Forgot password?" link must go to the forgot password page
+"Remember me" checkbox should use Supabase's session persistence (it already does by default, just make sure it works)
+
+
+7. SUPABASE PROFILES TABLE
+Make sure this table exists and is used. Create it if not present:
+sqlcreate table profiles (
+  id uuid references auth.users on delete cascade primary key,
+  username text unique,
+  full_name text,
+  avatar_url text,
+  country text,
+  county text,
+  city text,
+  postal_code text,
+  street_address text,
+  house_number text,
+  phone text,
+  role text check (role in ('client', 'provider')),
+  primary_skill text,
+  secondary_skill text,
+  certification_url text,
+  doc_front_url text,
+  doc_back_url text,
+  is_verified boolean default false,
+  created_at timestamptz default now()
+);
+
+8. SESSION MANAGEMENT
+
+On app load in __root.tsx, call supabase.auth.getSession() to check if user is logged in
+Use supabase.auth.onAuthStateChange() to reactively update auth state
+Store the user in a React context or Zustand store so all pages can access it
+Protected routes (like /dashboard) must redirect to /auth/login if not authenticated
+
+
+IMPORTANT RULES:
+
+Do NOT change any existing UI design, layouts, colors, animations, or component structure
+Do NOT remove or modify the i18n translation system
+Do NOT change the navbar, footer, or any page that is not related to auth
+Keep all existing Framer Motion animations
+Keep all existing Tailwind classes
+Only add functionality — do not redesign anything
+Use the existing Supabase client from src/lib/supabase-browser.ts
+The env variables VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are already set

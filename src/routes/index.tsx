@@ -343,6 +343,7 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
           >
             <p className="text-sm font-semibold text-primary">{t("sec.browse")}</p>
             <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-4xl">{t("sec.categories")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground max-w-[600px]">{t("sec.categories.subtitle")}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1412,11 +1413,17 @@ const APP_SCREENSHOTS = [
 function AppShowcaseSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
   const [screenIdx, setScreenIdx] = useState(0);
+  const [qrModal, setQrModal] = useState<null | "appstore" | "playstore">(null);
   useEffect(() => {
     if (!isActive) return;
     const timer = setInterval(() => { setScreenIdx((p) => (p + 1) % APP_SCREENSHOTS.length); }, 3000);
     return () => clearInterval(timer);
   }, [isActive]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setQrModal(null); };
+    if (qrModal) document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [qrModal]);
 
   return (
     <section className="relative flex h-full flex-col justify-center overflow-hidden border-y border-border dark:bg-[#080C10] bg-[#F0FDF4]">
@@ -1425,6 +1432,49 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
           .iphone-mockup{width:160px!important;height:330px!important}
         }
       `}</style>
+      <AnimatePresence>
+        {qrModal && (
+          <motion.div
+            key="qr-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setQrModal(null)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center gap-4 shadow-2xl"
+              style={{ maxWidth: 280, width: "90vw" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">{t("app.qr.scanTitle")}</p>
+              <img
+                src={qrModal === "appstore"
+                  ? "https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=2D7A5F&data=https://apps.apple.com"
+                  : "https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=2D7A5F&data=https://play.google.com/store"}
+                alt="QR Code"
+                className="rounded-xl"
+                style={{ width: 180, height: 180 }}
+              />
+              <div className="text-center">
+                <p className="font-semibold text-sm">{qrModal === "appstore" ? t("app.qr.appStore") : t("app.qr.googlePlay")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("app.qr.scanSubtext")}</p>
+              </div>
+              <button
+                onClick={() => setQrModal(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t("common.close")}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-14" style={{ paddingTop: 72, paddingBottom: 16 }}>
         <motion.div className="flex-1 text-center lg:text-left" initial={{ opacity: 0, x: -40 }} animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} transition={{ duration: 0.6, ease: easeExpo }}>
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary mb-3">
@@ -1434,16 +1484,16 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
           <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-sm mx-auto lg:mx-0">{t("sec.app.subtitle")}</p>
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
             <motion.div initial={{ x: -20, opacity: 0 }} animate={isActive ? { x: 0, opacity: 1 } : { x: -20, opacity: 0 }} transition={{ duration: 0.4, delay: isActive ? 0.4 : 0 }}>
-              <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130, textDecoration: "none" }}>
+              <button onClick={() => setQrModal("appstore")} className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition border-0" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130 }}>
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 flex-shrink-0"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
                 <div className="leading-tight"><div className="text-[9px] opacity-80">{t("sec.app.downloadOn")}</div><div className="text-sm font-semibold">{t("common.appStore")}</div></div>
-              </a>
+              </button>
             </motion.div>
             <motion.div initial={{ x: 20, opacity: 0 }} animate={isActive ? { x: 0, opacity: 1 } : { x: 20, opacity: 0 }} transition={{ duration: 0.4, delay: isActive ? 0.5 : 0 }}>
-              <a href="https://play.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140, textDecoration: "none" }}>
+              <button onClick={() => setQrModal("playstore")} className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition border-0" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140 }}>
                 <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 flex-shrink-0"><path d="M3.18 23.76c.29.17.63.19.94.07l12.43-7.17-2.63-2.63L3.18 23.76z" fill="#EA4335" /><path d="M22.54 10.22 19.6 8.52l-2.95 2.95 2.95 2.95 2.97-1.72a1.58 1.58 0 0 0 0-2.48z" fill="#FBBC04" /><path d="M3.18.24a1.57 1.57 0 0 0-.93 1.41v20.7c0 .59.33 1.1.93 1.41l.09.05L15.7 12l-.01-.09L3.18.24z" fill="#4285F4" /><path d="M13.92 12l2.66-2.66-12.4-7.1-.09-.06L13.92 12z" fill="#34A853" /></svg>
                 <div className="leading-tight"><div className="text-[9px] opacity-80">{t("sec.app.getItOn")}</div><div className="text-sm font-semibold">{t("common.googlePlay")}</div></div>
-              </a>
+              </button>
             </motion.div>
           </div>
         </motion.div>

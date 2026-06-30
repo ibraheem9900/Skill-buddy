@@ -1,0 +1,81 @@
+FIX 2 — MOBILE APP SECTION: QR CODE POPUP ON STORE BUTTON CLICK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Clicking Play Store or App Store logo/button should show a QR code popup modal, not redirect to external link.
+
+FIX — KEEP STORE BUTTONS AS IS (do not remove them).
+ADD a QR code popup modal that appears when either button is clicked.
+
+POPUP MODAL BEHAVIOR:
+- When user clicks Google Play button OR App Store button: open a modal/popup
+- Modal appears centered on screen with a dark overlay behind it
+- Clicking outside the modal OR clicking X button closes it
+- Press Escape key also closes it
+- Separate QR codes for each store:
+  Google Play click → show Google Play QR
+  App Store click → show App Store QR
+- Use these QR image URLs:
+  Google Play QR: https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.skillbuddy
+  App Store QR:   https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://apps.apple.com/app/skillbuddy
+
+MODAL DESIGN:
+- Background overlay: rgba(0, 0, 0, 0.6), covers full screen, z-index 9999
+- Modal box:
+  background: white (light theme) / #1e1e1e (dark theme)
+  border-radius: 20px
+  padding: 32px
+  width: 300px
+  centered on screen (position fixed, top 50%, left 50%, transform -50% -50%)
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3)
+- X close button: top-right corner of modal, 32x32px, circular, muted color
+- Modal content (top to bottom):
+  1. Store logo icon (Google Play or App Store — small, 32px)
+  2. Heading: "Scan to Download" — font-bold, text-lg, color foreground
+  3. Subtext: "Point your phone camera at the QR code" — text-sm, text-muted-foreground
+  4. QR code image: 180x180px, centered, border-radius 8px, white bg padding 8px
+  5. Bottom text: "SkillBuddy — Available on [store name]" — text-xs, muted
+
+MODAL ANIMATION (use Framer Motion):
+- Entrance: scale 0.8 → 1, opacity 0 → 1, duration 250ms, ease easeOut
+- Exit: scale 1 → 0.8, opacity 1 → 0, duration 200ms
+- Overlay: opacity 0 → 0.6 on open, 0.6 → 0 on close
+- Use AnimatePresence to handle mount/unmount
+
+TRANSLATION KEYS (add to all 5 language files):
+  "app.qr.scanTitle": "Scan to Download"
+  "app.qr.scanSubtext": "Point your phone camera at the QR code"
+  "app.qr.availableOn": "SkillBuddy — Available on"
+  "app.qr.googlePlay": "Google Play"
+  "app.qr.appStore": "App Store"
+
+  Estonian:
+  "app.qr.scanTitle": "Skanni allalaadimiseks"
+  "app.qr.scanSubtext": "Suuna telefoni kaamera QR-koodi peale"
+  "app.qr.availableOn": "SkillBuddy — Saadaval"
+
+  Russian:
+  "app.qr.scanTitle": "Сканируйте для загрузки"
+  "app.qr.scanSubtext": "Наведите камеру телефона на QR-код"
+  "app.qr.availableOn": "SkillBuddy — Доступно в"
+
+  Latvian:
+  "app.qr.scanTitle": "Skenēt lejupielādei"
+  "app.qr.scanSubtext": "Pavērsiet tālruņa kameru uz QR kodu"
+  "app.qr.availableOn": "SkillBuddy — Pieejams"
+
+  Lithuanian:
+  "app.qr.scanTitle": "Nuskenuokite atsisiųsti"
+  "app.qr.scanSubtext": "Nukreipkite telefono kamerą į QR kodą"
+  "app.qr.availableOn": "SkillBuddy — Pasiekiama"
+
+Use t() for all modal text strings.
+
+STATE MANAGEMENT:
+  const [qrModal, setQrModal] = useState<null | "playstore" | "appstore">(null)
+
+  Google Play button onClick: setQrModal("playstore")
+  App Store button onClick:   setQrModal("appstore")
+  Close: setQrModal(null)
+
+  Show correct QR image based on qrModal value.
+  Show correct store name in modal title based on qrModal value.
