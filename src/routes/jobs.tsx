@@ -89,8 +89,8 @@ function JobCard({ job, index, onApply }: { job: Job; index: number; onApply: ()
           {t(`jobs.urgency.${job.urgency.toLowerCase()}`)}
         </Badge>
       </div>
-      <h3 className="mt-3 font-display text-lg font-bold leading-snug">{t("jobs." + job.id + ".title")}</h3>
-      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t("jobs." + job.id + ".desc")}</p>
+      <h3 className="mt-3 font-display text-lg font-bold leading-snug">{job.title}</h3>
+      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{job.description}</p>
       <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{job.location}</div>
         <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{t("jobs.posted")} {formatAgo(job.postedHoursAgo, t)}</div>

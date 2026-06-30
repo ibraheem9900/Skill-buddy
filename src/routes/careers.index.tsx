@@ -15,31 +15,6 @@ import {
 } from "@/lib/careers-data";
 import { useI18n } from "@/lib/i18n";
 
-const DEPT_KEY: Record<Department, string> = {
-  "Technology": "careers.dept.technology",
-  "Design": "careers.dept.design",
-  "Marketing": "careers.dept.marketing",
-  "Customer Support": "careers.dept.customerSupport",
-  "Operations": "careers.dept.operations",
-  "Finance": "careers.dept.finance",
-  "Legal": "careers.dept.legal",
-  "People & HR": "careers.dept.peopleHr",
-};
-
-const JOB_TYPE_KEY: Record<JobType, string> = {
-  "Full-time": "careers.jobType.fullTime",
-  "Part-time": "careers.jobType.partTime",
-  "Contract": "careers.jobType.contract",
-  "Internship": "careers.jobType.internship",
-};
-
-const LEVEL_KEY: Record<ExperienceLevel, string> = {
-  "Junior": "careers.level.junior",
-  "Mid-level": "careers.level.midLevel",
-  "Senior": "careers.level.senior",
-  "Lead / Manager": "careers.level.lead",
-};
-
 export const Route = createFileRoute("/careers/")({
   head: () => ({
     meta: [
@@ -287,7 +262,7 @@ function CareersPage() {
             <div className="mb-4 flex flex-wrap gap-2">
               {deptFilter.map((d) => (
                 <button key={d} onClick={() => setDeptFilter((p) => p.filter((x) => x !== d))} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  {t(DEPT_KEY[d])} <X className="h-3 w-3" />
+                  {d} <X className="h-3 w-3" />
                 </button>
               ))}
               {locFilter.map((l) => (
@@ -297,12 +272,12 @@ function CareersPage() {
               ))}
               {typeFilter && (
                 <button onClick={() => setTypeFilter("")} className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                  {t(JOB_TYPE_KEY[typeFilter as JobType])} <X className="h-3 w-3" />
+                  {typeFilter} <X className="h-3 w-3" />
                 </button>
               )}
               {levelFilter.map((l) => (
                 <button key={l} onClick={() => setLevelFilter((p) => p.filter((x) => x !== l))} className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400">
-                  {t(LEVEL_KEY[l])} <X className="h-3 w-3" />
+                  {l} <X className="h-3 w-3" />
                 </button>
               ))}
             </div>
@@ -383,10 +358,10 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${DEPT_COLORS[job.department]}`}>
-            {t(DEPT_KEY[job.department])}
+            {job.department}
           </span>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${JOB_TYPE_COLORS[job.jobType]}`}>
-            {t(JOB_TYPE_KEY[job.jobType])}
+            {job.jobType}
           </span>
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -406,11 +381,11 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
         </span>
         <span className="flex items-center gap-1.5">
           <Clock className="h-4 w-4" />
-          {t(JOB_TYPE_KEY[job.jobType])} · {t(LEVEL_KEY[job.level])}
+          {job.jobType} · {job.level}
         </span>
         <span className="flex items-center gap-1.5">
           <Briefcase className="h-4 w-4" />
-          {t(DEPT_KEY[job.department])}
+          {job.department}
         </span>
       </div>
 
@@ -464,7 +439,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {DEPARTMENTS.map((d) => (
             <label key={d} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="checkbox" checked={deptFilter.includes(d)} onChange={() => toggleDept(d)} className="accent-primary" />
-              <span className="flex-1">{t(DEPT_KEY[d])}</span>
+              <span className="flex-1">{d}</span>
               <span className="text-xs text-muted-foreground">({deptCounts[d] ?? 0})</span>
             </label>
           ))}
@@ -490,7 +465,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {(["", "Full-time", "Part-time", "Contract", "Internship"] as const).map((tp) => (
             <label key={tp || "all"} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="radio" name="jobType" checked={typeFilter === tp} onChange={() => setTypeFilter(tp)} className="accent-primary" />
-              <span>{tp ? t(JOB_TYPE_KEY[tp as JobType]) : t("careers.filters.allTypes")}</span>
+              <span>{tp || t("careers.filters.allTypes")}</span>
             </label>
           ))}
         </div>
@@ -502,7 +477,7 @@ function FilterContent({ deptFilter, setDeptFilter, locFilter, setLocFilter, typ
           {(["Junior", "Mid-level", "Senior", "Lead / Manager"] as ExperienceLevel[]).map((l) => (
             <label key={l} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1 hover:bg-accent">
               <input type="checkbox" checked={levelFilter.includes(l)} onChange={() => toggleLevel(l)} className="accent-primary" />
-              <span>{t(LEVEL_KEY[l])}</span>
+              <span>{l}</span>
             </label>
           ))}
         </div>

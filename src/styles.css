@@ -327,15 +327,13 @@
     will-change: auto !important;
   }
 
-  /* Hero inner section: natural content height on mobile (no viewport filling — avoids the blank gap below search bar) */
+  /* Hero inner section: fill viewport so justify-center works correctly */
   .snap-section:first-child > section {
-    min-height: auto !important;
+    min-height: calc(100svh - var(--navbar-height)) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    padding-top: 64px !important;
-    padding-bottom: 72px !important;
   }
 
   /* Ensure no element breaks out horizontally */

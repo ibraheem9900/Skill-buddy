@@ -17,7 +17,7 @@ import { useTheme } from "@/components/theme-provider";
 import { SERVICES, TESTIMONIALS, OFFERS, CATEGORIES } from "@/lib/data";
 import { CATEGORIES_FULL } from "@/lib/categories";
 import { useI18n } from "@/lib/i18n";
-import iconTransparent from "@/assets/skillbuddy-icon-dark.png";
+import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({

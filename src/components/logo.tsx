@@ -1,5 +1,5 @@
-import logoDark from "@/assets/skillbuddy-logo-dark.png";
-import iconDark from "@/assets/skillbuddy-icon-dark.png";
+import logoTransparent from "@/assets/skillbuddy-logo-transparent.png";
+import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 import { useTheme } from "@/components/theme-provider";
 
 export function Logo({
@@ -21,7 +21,7 @@ export function Logo({
   if (withText) {
     return (
       <img
-        src={logoDark}
+        src={logoTransparent}
         alt="Skillbuddy"
         className={`object-contain shrink-0 ${className}`}
         style={{ height: size, width: "auto", ...filterStyle }}
@@ -32,7 +32,7 @@ export function Logo({
 
   return (
     <img
-      src={iconDark}
+      src={iconTransparent}
       alt="Skillbuddy"
       className={`object-contain shrink-0 ${className}`}
       style={{ height: size, width: size, ...filterStyle }}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import logoIcon from "@/assets/skillbuddy-icon-dark.png";
+import logoIcon from "@/assets/skillbuddy-icon-transparent.png";
 import { useLoader } from "@/context/LoaderContext";
 
 export function SkillBuddyLoader() {
