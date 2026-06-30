@@ -15,7 +15,7 @@ import { CategoriesSlider } from "@/components/categories-slider";
 const searchSchema = z.object({
   category: fallback(z.string().optional(), undefined).default(undefined),
   q: fallback(z.string().optional(), undefined).default(undefined),
-  sort: fallback(z.enum(["popular", "price-asc", "price-desc", "rating"]), "popular").default("popular"),
+  sort: fallback(z.enum(["popular", "new", "offers", "upcoming", "rating", "price-asc", "price-desc"]), "popular").default("popular"),
 });
 
 export const Route = createFileRoute("/services/")({
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/services/")({
   component: ServicesPage,
 });
 
-type SortOption = "popular" | "price-asc" | "price-desc" | "rating";
+type SortOption = "popular" | "new" | "offers" | "upcoming" | "rating" | "price-asc" | "price-desc";
 
 function ServicesPage() {
   const { t } = useI18n();
@@ -53,10 +53,13 @@ function ServicesPage() {
   }, []);
 
   const sortOptions: { value: SortOption; label: string }[] = [
-    { value: "popular", label: t("services.sortPopular") },
-    { value: "rating", label: t("services.sortRating") },
-    { value: "price-asc", label: t("services.sortPriceAsc") },
-    { value: "price-desc", label: t("services.sortPriceDesc") },
+    { value: "popular", label: t("sort.mostPopular") },
+    { value: "new", label: t("sort.whatsNew") },
+    { value: "offers", label: t("sort.specialOffers") },
+    { value: "upcoming", label: t("sort.upcoming") },
+    { value: "rating", label: t("sort.highestRated") },
+    { value: "price-asc", label: t("sort.lowestPrice") },
+    { value: "price-desc", label: t("sort.highestPrice") },
   ];
 
   const filtered = useMemo(() => {
@@ -66,8 +69,10 @@ function ServicesPage() {
       return true;
     });
     if (sort === "price-asc") r = [...r].sort((a, b) => a.price - b.price);
-    else if (sort === "price-desc") r = [...r].sort((a, b) => b.price - a.price);
-    else if (sort === "rating") r = [...r].sort((a, b) => b.rating - a.rating);
+    else if (sort === "price-desc" || sort === "offers") r = [...r].sort((a, b) => b.price - a.price);
+    else if (sort === "rating" || sort === "highest-rated") r = [...r].sort((a, b) => b.rating - a.rating);
+    else if (sort === "new") r = [...r].sort((a, b) => b.id.localeCompare(a.id));
+    else if (sort === "upcoming") r = [...r].sort((a, b) => a.reviewCount - b.reviewCount);
     else r = [...r].sort((a, b) => b.reviewCount - a.reviewCount);
     return r;
   }, [cat, q, sort]);

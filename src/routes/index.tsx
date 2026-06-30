@@ -87,17 +87,17 @@ function Home() {
   /* On mobile: once a section enters the viewport it stays "active" forever
      so animations play once and remain visible as the user scrolls. */
   const [seenSections, setSeenSections] = useState<Set<number>>(new Set([0]));
-  const [popularServicesCard, setPopularServicesCard] = useState(0);
+  const [popularServicesCard, setPopularServicesCard] = useState(1);
   const popularServicesCardRef = useRef(0);
   const isAnimatingRef = useRef(false);
 
   useEffect(() => { popularServicesCardRef.current = popularServicesCard; }, [popularServicesCard]);
   useEffect(() => { activeSectionRef.current = activeSection; }, [activeSection]);
 
+  const POPULAR_LENGTH = 8;
   const navigatePopular = useCallback((d: number) => {
     if (isAnimatingRef.current) return;
-    const next = popularServicesCardRef.current + d;
-    if (next < 0 || next > 7) return;
+    const next = ((popularServicesCardRef.current + d) % POPULAR_LENGTH + POPULAR_LENGTH) % POPULAR_LENGTH;
     isAnimatingRef.current = true;
     setPopularServicesCard(next);
     setTimeout(() => { isAnimatingRef.current = false; }, 400);
@@ -214,8 +214,8 @@ function HeroSection({ isActive }: { isActive: boolean }) {
   }, [isActive]);
 
   const heroTexts = [
-    { main: "Expert Care,\nAnytime Anywhere", sub: null },
-    { main: "Post a job, get bids,\nchoose the best", sub: "Your trusted help is one click away." },
+    { main: `${t("hero.titleA")}\n${t("hero.titleB")} ${t("hero.titleC")}`, sub: null },
+    { main: t("hero.subtitle"), sub: null },
   ];
   const current = heroTexts[heroIdx];
 
@@ -333,7 +333,7 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
   };
 
   return (
-    <section className="relative flex h-full flex-col justify-center overflow-hidden bg-background pt-16">
+    <section className="relative flex h-full flex-col justify-center overflow-hidden bg-background pt-6">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="mb-6 flex items-end justify-between gap-4">
           <motion.div
@@ -464,9 +464,9 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
 const ELITE_BADGES = [
   {
     tier: "bronze" as const,
-    title: "Bronze SkillBuddy",
-    requirement: "Complete 5 jobs with 4.0+ rating",
-    perks: ["Priority listing in search results", "Exclusive Bronze member badge on profile", "10% discount on platform fee"],
+    titleKey: "elite.bronze.title",
+    reqKey: "elite.bronze.req",
+    perkKeys: ["elite.bronze.perk1", "elite.bronze.perk2", "elite.bronze.perk3"],
     glowColor: "rgba(205,127,50,0.3)",
     checkColor: "#A0522D",
     delay: 0.1,
@@ -474,9 +474,9 @@ const ELITE_BADGES = [
   },
   {
     tier: "silver" as const,
-    title: "Silver SkillBuddy",
-    requirement: "Complete 15 jobs with 4.5+ rating",
-    perks: ["Everything in Bronze", "25% discount on platform fee", "Featured provider status", "Free Uber ride (1/week) for job commute"],
+    titleKey: "elite.silver.title",
+    reqKey: "elite.silver.req",
+    perkKeys: ["elite.silver.perk1", "elite.silver.perk2", "elite.silver.perk3", "elite.silver.perk4"],
     glowColor: "rgba(192,192,192,0.3)",
     checkColor: "#808080",
     delay: 0.2,
@@ -484,9 +484,9 @@ const ELITE_BADGES = [
   },
   {
     tier: "gold" as const,
-    title: "Gold SkillBuddy",
-    requirement: "Complete 30 jobs with 4.8+ rating",
-    perks: ["Everything in Silver", "FREE Uber rides for ALL job pickups & drop-offs", "Zero platform fee", "Dedicated account manager", "Gold verified badge", "Priority customer support"],
+    titleKey: "elite.gold.title",
+    reqKey: "elite.gold.req",
+    perkKeys: ["elite.gold.perk1", "elite.gold.perk2", "elite.gold.perk3", "elite.gold.perk4", "elite.gold.perk5", "elite.gold.perk6"],
     glowColor: "rgba(255,215,0,0.4)",
     checkColor: "#CC8800",
     delay: 0.3,
@@ -495,6 +495,7 @@ const ELITE_BADGES = [
 ];
 
 function EliteRewardsSection({ isActive }: { isActive: boolean }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   return (
     <section className="relative flex h-full flex-col justify-center overflow-hidden dark:bg-[#0D1117] bg-[#F0FDF4] py-8">
@@ -506,12 +507,12 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
           transition={{ type: "spring", stiffness: 400, damping: 20, delay: isActive ? 0.05 : 0 }}
         >
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-            ⭐ EXCLUSIVE BADGE PERKS
+            ⭐ {t("elite.badge")}
           </span>
         </motion.div>
 
         <div className="mb-1 text-center">
-          {["Earn Badges.", "Unlock Real Rewards."].map((chunk, i) => (
+          {[t("elite.title1"), t("elite.title2")].map((chunk, i) => (
             <motion.span
               key={i}
               className={`inline-block mr-3 font-display font-extrabold ${i === 0 ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl text-primary"}`}
@@ -530,7 +531,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.4, delay: isActive ? 0.3 : 0 }}
         >
-          Every milestone you hit on SkillBuddy comes with exclusive perks designed to make your journey easier and more rewarding.
+          {t("elite.subtitle")}
         </motion.p>
 
         <style>{`
@@ -582,19 +583,19 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
                   <BadgeSVG tier={badge.tier} size={52} />
                 </motion.div>
                 <div>
-                  <h3 className="font-bold text-base sm:text-lg">{badge.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{badge.requirement}</p>
+                  <h3 className="font-bold text-base sm:text-lg">{t(badge.titleKey)}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t(badge.reqKey)}</p>
                 </div>
               </div>
 
               <ul className="space-y-2">
-                {badge.perks.map((perk, j) => (
+                {badge.perkKeys.map((perkKey, j) => (
                   <li key={j} className="flex items-start gap-2 text-xs sm:text-sm">
                     <span
                       className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white"
                       style={{ background: badge.checkColor }}
                     >✓</span>
-                    <span className="text-muted-foreground">{perk}</span>
+                    <span className="text-muted-foreground">{t(perkKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -624,7 +625,7 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
               width: "100%", maxWidth: 420,
             }}
           >
-            Start Earning Your Badge →
+            {t("elite.cta")}
           </motion.button>
         </motion.div>
       </div>
@@ -808,27 +809,28 @@ const SLOT_OFFSET = Math.round(CUR_W / 2 + CARD_GAP + SIDE_W / 2);
 function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isActive: boolean; activeCardIdx: number; onNavigate: (delta: number) => void }) {
   const { t } = useI18n();
   const popular = [...SERVICES].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 8);
+  const [isPaused, setIsPaused] = useState(false);
 
-  /* Auto-advance every 2s; wraps back to start */
+  /* Auto-advance every 3s; infinite loop, pauses on hover */
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || isPaused) return;
     const timer = setInterval(() => {
-      if (activeCardIdx >= popular.length - 1) {
-        onNavigate(-activeCardIdx);
-      } else {
-        onNavigate(1);
-      }
-    }, 2000);
+      onNavigate(1);
+    }, 3000);
     return () => clearInterval(timer);
-  }, [isActive, activeCardIdx, popular.length, onNavigate]);
+  }, [isActive, isPaused, onNavigate]);
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    if (info.offset.x < -80 && activeCardIdx < popular.length - 1) onNavigate(1);
-    else if (info.offset.x > 80 && activeCardIdx > 0) onNavigate(-1);
+    if (info.offset.x < -80) onNavigate(1);
+    else if (info.offset.x > 80) onNavigate(-1);
   };
 
   return (
-    <section className="relative flex h-full overflow-hidden bg-background">
+    <section
+      className="relative flex h-full overflow-hidden bg-background"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="w-full flex flex-col" style={{ paddingTop: 80, paddingBottom: 24 }}>
         <motion.div
           className="px-4 sm:px-6 mb-6 flex items-end justify-between gap-4"
@@ -848,11 +850,9 @@ function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isAct
         <div className="relative flex flex-1 items-center">
           <motion.button
             onClick={() => onNavigate(-1)}
-            disabled={activeCardIdx === 0}
-            animate={{ opacity: activeCardIdx === 0 ? 0.3 : 1 }}
-            whileHover={activeCardIdx > 0 ? { backgroundColor: "#2D7A5F", color: "#ffffff" } : {}}
+            whileHover={{ backgroundColor: "#2D7A5F", color: "#ffffff" }}
             transition={{ duration: 0.2 }}
-            style={{ position: "absolute", left: 8, zIndex: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F", color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center", cursor: activeCardIdx === 0 ? "not-allowed" : "pointer", flexShrink: 0 }}
+            style={{ position: "absolute", left: 8, zIndex: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F", color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
           >
             <ChevronLeft size={20} />
           </motion.button>
@@ -860,8 +860,7 @@ function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isAct
           <div className="relative flex-1 overflow-hidden" style={{ height: CUR_W + 20 }}>
             <div className="relative h-full flex items-center justify-center">
               {[-2, -1, 0, 1, 2].map((offset) => {
-                const cardIdx = activeCardIdx + offset;
-                if (cardIdx < 0 || cardIdx >= popular.length) return null;
+                const cardIdx = ((activeCardIdx + offset) % popular.length + popular.length) % popular.length;
                 const svc = popular[cardIdx];
                 const isCurrent = offset === 0;
                 const isSide = Math.abs(offset) === 1;
@@ -898,11 +897,9 @@ function PopularServicesSection({ isActive, activeCardIdx, onNavigate }: { isAct
 
           <motion.button
             onClick={() => onNavigate(1)}
-            disabled={activeCardIdx === popular.length - 1}
-            animate={{ opacity: activeCardIdx === popular.length - 1 ? 0.3 : 1 }}
-            whileHover={activeCardIdx < popular.length - 1 ? { backgroundColor: "#2D7A5F", color: "#ffffff" } : {}}
+            whileHover={{ backgroundColor: "#2D7A5F", color: "#ffffff" }}
             transition={{ duration: 0.2 }}
-            style={{ position: "absolute", right: 8, zIndex: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F", color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center", cursor: activeCardIdx === popular.length - 1 ? "not-allowed" : "pointer", flexShrink: 0 }}
+            style={{ position: "absolute", right: 8, zIndex: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(45,122,95,0.15)", border: "1px solid #2D7A5F", color: "#2D7A5F", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
           >
             <ChevronRight size={20} />
           </motion.button>
@@ -926,7 +923,7 @@ function CardInner({ svc, t }: { svc: typeof SERVICES[0]; t: (k: string) => stri
           <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
           <span className="text-xs text-white/90 font-medium">{svc.rating} · {svc.reviewCount}</span>
         </div>
-        <h3 className="font-display text-lg font-extrabold text-white leading-tight line-clamp-2">{svc.title}</h3>
+        <h3 className="font-display text-lg font-extrabold text-white leading-tight line-clamp-2">{t(svc.titleKey)}</h3>
         <p className="mt-1 text-xs text-white/75 line-clamp-2">{svc.description}</p>
       </div>
     </div>
@@ -1413,6 +1410,7 @@ const APP_SCREENSHOTS = [
 ];
 
 function AppShowcaseSection({ isActive }: { isActive: boolean }) {
+  const { t } = useI18n();
   const [screenIdx, setScreenIdx] = useState(0);
   useEffect(() => {
     if (!isActive) return;
@@ -1430,22 +1428,22 @@ function AppShowcaseSection({ isActive }: { isActive: boolean }) {
       <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-14" style={{ paddingTop: 72, paddingBottom: 16 }}>
         <motion.div className="flex-1 text-center lg:text-left" initial={{ opacity: 0, x: -40 }} animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} transition={{ duration: 0.6, ease: easeExpo }}>
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary mb-3">
-            <Smartphone className="h-3 w-3" /> Available on iOS &amp; Android
+            <Smartphone className="h-3 w-3" /> {t("sec.app.badge")}
           </span>
-          <h2 className="font-display text-3xl font-extrabold sm:text-4xl lg:text-5xl mt-2 mb-3 leading-tight">Your Services,<br className="hidden lg:block" /> In Your Pocket</h2>
-          <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-sm mx-auto lg:mx-0">Browse services, post jobs, chat with providers, and track your bookings — all in one beautiful app.</p>
+          <h2 className="font-display text-3xl font-extrabold sm:text-4xl lg:text-5xl mt-2 mb-3 leading-tight">{t("sec.app.heading")}</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-sm mx-auto lg:mx-0">{t("sec.app.subtitle")}</p>
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
             <motion.div initial={{ x: -20, opacity: 0 }} animate={isActive ? { x: 0, opacity: 1 } : { x: -20, opacity: 0 }} transition={{ duration: 0.4, delay: isActive ? 0.4 : 0 }}>
-              <div className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130 }}>
+              <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 130, textDecoration: "none" }}>
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 flex-shrink-0"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
-                <div className="leading-tight"><div className="text-[9px] opacity-80">Download on the</div><div className="text-sm font-semibold">App Store</div></div>
-              </div>
+                <div className="leading-tight"><div className="text-[9px] opacity-80">{t("sec.app.downloadOn")}</div><div className="text-sm font-semibold">{t("common.appStore")}</div></div>
+              </a>
             </motion.div>
             <motion.div initial={{ x: 20, opacity: 0 }} animate={isActive ? { x: 0, opacity: 1 } : { x: 20, opacity: 0 }} transition={{ duration: 0.4, delay: isActive ? 0.5 : 0 }}>
-              <div className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140 }}>
+              <a href="https://play.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white cursor-pointer select-none hover:opacity-90 transition" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.2)", minWidth: 140, textDecoration: "none" }}>
                 <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 flex-shrink-0"><path d="M3.18 23.76c.29.17.63.19.94.07l12.43-7.17-2.63-2.63L3.18 23.76z" fill="#EA4335" /><path d="M22.54 10.22 19.6 8.52l-2.95 2.95 2.95 2.95 2.97-1.72a1.58 1.58 0 0 0 0-2.48z" fill="#FBBC04" /><path d="M3.18.24a1.57 1.57 0 0 0-.93 1.41v20.7c0 .59.33 1.1.93 1.41l.09.05L15.7 12l-.01-.09L3.18.24z" fill="#4285F4" /><path d="M13.92 12l2.66-2.66-12.4-7.1-.09-.06L13.92 12z" fill="#34A853" /></svg>
-                <div className="leading-tight"><div className="text-[9px] opacity-80">Get it on</div><div className="text-sm font-semibold">Google Play</div></div>
-              </div>
+                <div className="leading-tight"><div className="text-[9px] opacity-80">{t("sec.app.getItOn")}</div><div className="text-sm font-semibold">{t("common.googlePlay")}</div></div>
+              </a>
             </motion.div>
           </div>
         </motion.div>

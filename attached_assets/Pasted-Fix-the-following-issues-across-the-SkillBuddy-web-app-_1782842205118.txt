@@ -1,0 +1,267 @@
+Fix the following issues across the SkillBuddy web app. Do NOT change anything already working correctly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 1 — CATEGORIES SECTION: REDUCE TOP GAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Too much empty space at the top of the categories section on homepage.
+
+FIX:
+- Find the categories section component (Section 2 on homepage)
+- Reduce paddingTop from whatever it currently is to maximum 24px
+- The section heading ("Browse" label + "Our Services" title) must appear close to the top of the section
+- Remove any unnecessary marginTop or paddingTop on the section wrapper or its children
+- The category cards grid must be visible without needing to scroll within the section
+- Keep all existing animations — only reduce the gap
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 2 — POPULAR SERVICES: INFINITE LOOP CAROUSEL WITH AUTO-SLIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Carousel has a start and end — no loop. No auto-sliding. Cards not all visible in one place.
+
+FIX — INFINITE LOOP:
+- The carousel must loop infinitely — no first card, no last card concept
+- When user reaches the last card and clicks right: wraps back to first card smoothly
+- When user is on first card and clicks left: wraps to last card smoothly
+- Implementation: use a circular index approach
+  const nextIdx = (activeCardIdx + 1) % cards.length
+  const prevIdx = (activeCardIdx - 1 + cards.length) % cards.length
+- Remove disabled state from both left and right arrow buttons — they are ALWAYS active
+- Arrow buttons always clickable, always full opacity
+
+FIX — AUTO-SLIDE:
+- Cards automatically advance to the next card every 3 seconds
+- Auto-slide PAUSES when user hovers over the carousel section
+- Auto-slide RESUMES when user moves mouse away
+- Auto-slide also pauses when user manually clicks an arrow button, then resumes after 5 seconds
+- Implementation:
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveCardIdx(prev => (prev + 1) % cards.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [activeCardIdx])
+- Add onMouseEnter to pause and onMouseLeave to resume on the carousel container
+
+FIX — START FROM 2ND CARD:
+- Initial activeCardIdx should be 1 (start showing from the 2nd card as the center)
+- This way left side shows card 1, center shows card 2, right side shows card 3
+- Carousel shows: [previous card blurred left] [current card center] [next card blurred right]
+- All 3 positions always filled due to infinite loop
+
+FIX — SMOOTH TRANSITION:
+- Add isAnimating guard — ignore clicks while animation is running (300ms lock)
+- Direction-aware animation: slide left when going forward, slide right when going backward
+- No flickering — use opacity + transform only, never unmount cards during transition
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3 — MOBILE APP SECTION: STORE BUTTON LINKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Clicking Play Store or App Store button/logo does nothing or breaks.
+
+FIX:
+- Google Play button: opens https://play.google.com in a new tab (target="_blank")
+- App Store button: opens https://apps.apple.com in a new tab (target="_blank")
+- Both buttons must be proper <a> tags with href and target="_blank" rel="noopener noreferrer"
+- On mobile: buttons are tappable, minimum touch target 44x44px
+- On desktop: buttons are clickable, show pointer cursor on hover
+- Add subtle hover effect: scale 1.03, duration 200ms
+- Make sure buttons are not hidden behind any overlay or have pointer-events: none
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4 — JOBS PAGE: FULL TRANSLATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Jobs page content not translating when language is changed.
+
+FIX:
+- Find the Jobs page component (route: /jobs)
+- Replace ALL hardcoded English text with t() translation calls
+- Add these translation keys to ALL 5 language files (en, et, ru, lv, lt):
+
+  "jobs.pageTitle": "Find Jobs"
+  "jobs.pageSubtitle": "Browse available jobs posted by clients"
+  "jobs.searchPlaceholder": "Search jobs..."
+  "jobs.filterAll": "All Jobs"
+  "jobs.filterOpen": "Open"
+  "jobs.filterInProgress": "In Progress"
+  "jobs.filterCompleted": "Completed"
+  "jobs.postedBy": "Posted by"
+  "jobs.budget": "Budget"
+  "jobs.deadline": "Deadline"
+  "jobs.applyNow": "Apply Now"
+  "jobs.noJobs": "No jobs found"
+  "jobs.jobTitle": "Job Title"
+  "jobs.jobDescription": "Description"
+  "jobs.jobLocation": "Location"
+  "jobs.jobCategory": "Category"
+  "jobs.bidsCount": "bids"
+  "jobs.postedAgo": "posted"
+  "jobs.viewDetails": "View Details"
+  "jobs.sortBy": "Sort by"
+  "jobs.newest": "Newest"
+  "jobs.oldest": "Oldest"
+  "jobs.highestBudget": "Highest Budget"
+  "jobs.lowestBudget": "Lowest Budget"
+
+- Apply t() to every visible text string on the jobs page including:
+  Page title, subtitle, search placeholder, filter buttons, sort dropdown,
+  job card titles, descriptions, budget labels, deadline labels, apply buttons,
+  "no results" messages, pagination text
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 5 — CAREERS PAGE: FULL TRANSLATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Careers page not translating — title, filters, descriptions all stay in English.
+
+FIX:
+- Find the Careers page component (route: /careers)
+- Add these translation keys to ALL 5 language files:
+
+  "careers.pageTitle": "Join Our Team"
+  "careers.pageSubtitle": "Build the future of local services with us"
+  "careers.filterAll": "All Positions"
+  "careers.filterEngineering": "Engineering"
+  "careers.filterDesign": "Design"
+  "careers.filterMarketing": "Marketing"
+  "careers.filterOperations": "Operations"
+  "careers.filterSupport": "Customer Support"
+  "careers.jobType.fullTime": "Full Time"
+  "careers.jobType.partTime": "Part Time"
+  "careers.jobType.remote": "Remote"
+  "careers.jobType.hybrid": "Hybrid"
+  "careers.location": "Location"
+  "careers.department": "Department"
+  "careers.applyNow": "Apply Now"
+  "careers.learnMore": "Learn More"
+  "careers.noPositions": "No open positions at the moment"
+  "careers.benefits.title": "Why Join SkillBuddy?"
+  "careers.benefits.subtitle": "We offer competitive benefits and a great work environment"
+  "careers.openPositions": "Open Positions"
+  "careers.tallinEstonia": "Tallinn, Estonia"
+
+- Replace ALL hardcoded text on careers page with t() calls
+- Filters, position titles, descriptions, location tags, job type badges, CTA buttons — everything translates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 6 — HOMEPAGE SECTIONS: MISSING TRANSLATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Multiple homepage sections not translating. Fix ALL of the following:
+
+── A. HERO SECTION (Expert Help text + Post Job text) ──
+- "Expert Help, Anytime, Anywhere" — must translate via t("hero.titleA"), t("hero.titleB"), t("hero.titleC")
+- "Post a job, get bids, choose the best..." subtitle — must translate via t("hero.subtitle")
+- Check that these keys exist in ALL 5 language files with correct translations
+- If keys exist but text still shows in English: check that the Hero component is actually using useI18n() and calling t()
+- Fix whatever is preventing translation from applying
+
+── B. CATEGORY NAMES ──
+- Each category card name must translate
+- Add/verify these keys in ALL 5 language files:
+  "cat.all": "All"
+  "cat.creativeDesign": "Creative & Design"
+  "cat.petCare": "Pet Care"
+  "cat.beautyPersonalCare": "Beauty & Personal Care"
+  "cat.healthWellness": "Health & Wellness"
+  "cat.homeProperty": "Home & Property"
+  "cat.personalHousehold": "Personal & Household"
+  "cat.educationTraining": "Education & Training"
+  "cat.eventParty": "Event & Party"
+  "cat.cleaning": "Cleaning"
+  "cat.repair": "Repair"
+  "cat.moving": "Moving"
+  "cat.tutoring": "Tutoring"
+  "cat.tech": "Tech Support"
+  "cat.design": "Design"
+- In CategoryCard component and category data: replace hardcoded names with t(category.nameKey) where nameKey maps to the translation key
+
+── C. EARN BADGES / STAR REWARD SECTION ──
+- Section badge label, heading, subtitle, all 3 card titles and descriptions must translate
+- Verify keys: "sec.star.badge", "sec.star.title", "sec.star.subtitle", "sec.star.level1", "sec.star.level2", "sec.star.level3", "sec.star.benefit1", "sec.star.benefit2", "sec.star.benefit3"
+- Add accurate translations for these keys in et, ru, lv, lt files
+- Make sure the StarRewardSection component calls t() for every text
+
+── D. RIDE FREE WITH UBER / SPECIAL OFFERS SECTION ──
+- Offer card titles, subtitles, CTA button text must translate
+- Verify keys: t(offer.titleKey), t(offer.subKey), t(offer.ctaKey) are being called
+- Add translations for all offer keys in ALL 5 language files
+- The "sec.limited" badge text must also translate
+
+── E. POPULAR SERVICES — SERVICE NAMES ──
+- Each service card title and description must translate
+- Add service name translation keys to ALL 5 language files:
+  "svc.cleaning.title", "svc.cleaning.desc"
+  "svc.repair.title", "svc.repair.desc"
+  "svc.petCare.title", "svc.petCare.desc"
+  "svc.tutoring.title", "svc.tutoring.desc"
+  "svc.moving.title", "svc.moving.desc"
+  "svc.beauty.title", "svc.beauty.desc"
+  "svc.tech.title", "svc.tech.desc"
+  "svc.events.title", "svc.events.desc"
+- In the SERVICES data array and CardInner component: use t(svc.titleKey) and t(svc.descKey) instead of hardcoded strings
+
+── F. MOBILE APP SECTION ──
+- Section heading, subtitle, feature bullet points must translate
+- Add keys:
+  "sec.app.heading": "Get the SkillBuddy App"
+  "sec.app.subtitle": "Book services on the go, anytime anywhere"
+  "sec.app.feature1": "Find professionals near you"
+  "sec.app.feature2": "Real-time chat with providers"
+  "sec.app.feature3": "Secure payments"
+  "sec.app.googlePlay": "Get it on Google Play"
+  "sec.app.appStore": "Download on the App Store"
+- Replace all hardcoded text in the mobile app section with t() calls
+
+── G. TESTIMONIALS SECTION ──
+- Section label and heading must translate:
+  "sec.loved": "Loved by thousands"
+  "sec.testimonials": "What People Are Saying"
+- Testimonial card text, reviewer names, roles:
+  If testimonial data is hardcoded in English, add translation keys for each testimonial
+  OR if names/roles should stay in original language, only translate the section heading
+- The section heading and label MUST translate in all 5 languages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 7 — SERVICES PAGE SORT DROPDOWN: ADD NEW OPTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: Sort dropdown only has "Most Popular". Need more options.
+
+FIX:
+- Find the sort/filter dropdown on the Services page (/services)
+- Replace or expand the dropdown options to include ALL of these:
+
+  Option 1: "Most Popular" (default, already exists — keep it)
+  Option 2: "What's New" — sorts by newest services added (createdAt descending)
+  Option 3: "Special Offers" — shows services that have active offers/discounts first
+  Option 4: "Upcoming" — shows services scheduled for future availability first
+  Option 5: "Highest Rated" — sorts by rating descending
+  Option 6: "Lowest Price" — sorts by price ascending
+  Option 7: "Highest Price" — sorts by price descending
+
+- Each option must be functional — actually re-sorts/re-filters the displayed services list
+- Add translation keys for all dropdown options in ALL 5 language files:
+  "sort.mostPopular": "Most Popular"
+  "sort.whatsNew": "What's New"
+  "sort.specialOffers": "Special Offers"
+  "sort.upcoming": "Upcoming"
+  "sort.highestRated": "Highest Rated"
+  "sort.lowestPrice": "Lowest Price"
+  "sort.highestPrice": "Highest Price"
+- Dropdown must use t() for all option labels so they translate with language change
+- Dropdown styling: keep same as current dropdown style
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — DO NOT CHANGE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change any brand colors, fonts, or existing design
+- Do NOT change authentication system
+- Do NOT change routing or navigation
+- Do NOT change scroll-snap homepage behavior
+- Do NOT break any section that is currently working
+- After all fixes: language switching must apply to ALL fixed sections instantly
+- Test on desktop (1280px) and mobile (375px) after each fix
