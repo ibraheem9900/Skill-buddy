@@ -14,6 +14,7 @@ import {
   type Department, type OfficeLocation, type JobType, type ExperienceLevel,
 } from "@/lib/careers-data";
 import { useI18n } from "@/lib/i18n";
+import { JOB_TRANSLATIONS } from "@/lib/careers-i18n";
 
 const DEPT_KEY: Record<string, string> = {
   "Technology": "careers.dept.technology", "Design": "careers.dept.design",
