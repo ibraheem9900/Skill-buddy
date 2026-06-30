@@ -726,6 +726,10 @@ const en: Dict = {
   // QR modal for app store buttons
   "app.qr.scanTitle": "Scan to Download", "app.qr.scanSubtext": "Point your phone camera at the QR code",
   "app.qr.availableOn": "SkillBuddy — Available on", "app.qr.googlePlay": "Google Play", "app.qr.appStore": "App Store",
+  // Uber banner
+  "uber.title": "Ride free\nwith Uber", "uber.subtitle": "Become a three Badge SkillBuddy to ride free with Uber",
+  "uber.perk.bronze": "Bronze — 5% discount", "uber.perk.silver": "Silver — 1 free ride/week", "uber.perk.gold": "Gold — Free every job",
+  "uber.cta": "Start Earning Your Badge →",
   // Careers filter translations
   "careers.dept.technology": "Technology", "careers.dept.design": "Design", "careers.dept.marketing": "Marketing",
   "careers.dept.customerSupport": "Customer Support", "careers.dept.operations": "Operations",
@@ -1421,6 +1425,10 @@ const et: Dict = {
   // QR modal
   "app.qr.scanTitle": "Skanni allalaadimiseks", "app.qr.scanSubtext": "Suuna telefoni kaamera QR-koodi peale",
   "app.qr.availableOn": "SkillBuddy — Saadaval", "app.qr.googlePlay": "Google Play", "app.qr.appStore": "App Store",
+  // Uber banner
+  "uber.title": "Sõida tasuta\nUberiga", "uber.subtitle": "Saa kolme märgiga SkillBuddy ja sõida Uberiga tasuta",
+  "uber.perk.bronze": "Pronks — 5% soodustus", "uber.perk.silver": "Hõbe — 1 tasuta sõit/nädal", "uber.perk.gold": "Kuld — Tasuta iga töö",
+  "uber.cta": "Alusta märgi kogumist →",
   // Careers filter translations
   "careers.dept.technology": "Tehnoloogia", "careers.dept.design": "Disain", "careers.dept.marketing": "Turundus",
   "careers.dept.customerSupport": "Klienditugi", "careers.dept.operations": "Toimingud",
@@ -2118,6 +2126,10 @@ const ru: Dict = {
   // QR modal
   "app.qr.scanTitle": "Сканируйте для загрузки", "app.qr.scanSubtext": "Наведите камеру телефона на QR-код",
   "app.qr.availableOn": "SkillBuddy — Доступно в", "app.qr.googlePlay": "Google Play", "app.qr.appStore": "App Store",
+  // Uber banner
+  "uber.title": "Езди бесплатно\nс Uber", "uber.subtitle": "Стань трёхзначным SkillBuddy и езди с Uber бесплатно",
+  "uber.perk.bronze": "Бронза — скидка 5%", "uber.perk.silver": "Серебро — 1 бесплатная поездка/нед", "uber.perk.gold": "Золото — Бесплатно с каждой работы",
+  "uber.cta": "Начни зарабатывать значки →",
   // Careers filter translations
   "careers.dept.technology": "Технологии", "careers.dept.design": "Дизайн", "careers.dept.marketing": "Маркетинг",
   "careers.dept.customerSupport": "Поддержка клиентов", "careers.dept.operations": "Операции",
@@ -2815,6 +2827,10 @@ const lv: Dict = {
   // QR modal
   "app.qr.scanTitle": "Skenēt lejupielādei", "app.qr.scanSubtext": "Pavērsiet tālruņa kameru uz QR kodu",
   "app.qr.availableOn": "SkillBuddy — Pieejams", "app.qr.googlePlay": "Google Play", "app.qr.appStore": "App Store",
+  // Uber banner
+  "uber.title": "Braukā bez maksas\nar Uber", "uber.subtitle": "Kļūsti par trīs nozīmju SkillBuddy un braukā ar Uber bez maksas",
+  "uber.perk.bronze": "Bronza — 5% atlaide", "uber.perk.silver": "Sudrabs — 1 bezmaksas brauciens/ned", "uber.perk.gold": "Zelts — Bezmaksas ar katru darbu",
+  "uber.cta": "Sāc nopelnīt nozīmes →",
   // Careers filter translations
   "careers.dept.technology": "Tehnoloģija", "careers.dept.design": "Dizains", "careers.dept.marketing": "Mārketings",
   "careers.dept.customerSupport": "Klientu atbalsts", "careers.dept.operations": "Operācijas",
@@ -3512,6 +3528,10 @@ const lt: Dict = {
   // QR modal
   "app.qr.scanTitle": "Nuskenuokite atsisiųsti", "app.qr.scanSubtext": "Nukreipkite telefono kamerą į QR kodą",
   "app.qr.availableOn": "SkillBuddy — Pasiekiama", "app.qr.googlePlay": "Google Play", "app.qr.appStore": "App Store",
+  // Uber banner
+  "uber.title": "Važiuok nemokamai\nsu Uber", "uber.subtitle": "Tapk trijų ženklelių SkillBuddy ir važiuok su Uber nemokamai",
+  "uber.perk.bronze": "Bronza — 5% nuolaida", "uber.perk.silver": "Sidabras — 1 nemokamas pasivažinėjimas/sav", "uber.perk.gold": "Auksas — Nemokamai su kiekvienu darbu",
+  "uber.cta": "Pradėk uždirbti ženklelius →",
   // Careers filter translations
   "careers.dept.technology": "Technologijos", "careers.dept.design": "Dizainas", "careers.dept.marketing": "Rinkodara",
   "careers.dept.customerSupport": "Klientų aptarnavimas", "careers.dept.operations": "Operacijos",

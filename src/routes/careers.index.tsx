@@ -386,7 +386,7 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3.5 w-3.5" />
-          {job.locations.join(" / ")}
+          {job.locations.map((l) => t(LOC_KEY[l] ?? l)).join(" / ")}
         </div>
       </div>
 
@@ -401,11 +401,11 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
         </span>
         <span className="flex items-center gap-1.5">
           <Clock className="h-4 w-4" />
-          {job.jobType} · {job.level}
+          {t(TYPE_KEY[job.jobType] ?? job.jobType)} · {t(LEVEL_KEY[job.level] ?? job.level)}
         </span>
         <span className="flex items-center gap-1.5">
           <Briefcase className="h-4 w-4" />
-          {job.department}
+          {t(DEPT_KEY[job.department] ?? job.department)}
         </span>
       </div>
 

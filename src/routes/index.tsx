@@ -1207,11 +1207,12 @@ const UBER_IMAGES = ["/uber-img-1.png", "/uber-img-2.png", "/uber-img-3.png"];
 function UberRewardsBanner({ isActive }: { isActive: boolean }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const { t } = useI18n();
   const [imgIdx, setImgIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setImgIdx((p) => (p + 1) % UBER_IMAGES.length), 3500);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setImgIdx((p) => (p + 1) % UBER_IMAGES.length), 3500);
+    return () => clearInterval(timer);
   }, []);
 
   const contentBg = isDark ? "#1a0f05" : "#FFF8F0";
@@ -1340,8 +1341,9 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
             margin: 0,
             lineHeight: 1.15,
             fontFamily: "'Helvetica Neue', Arial, sans-serif",
+            whiteSpace: "pre-line",
           }}>
-            Ride free<br />with Uber
+            {t("uber.title")}
           </h2>
 
           <p style={{
@@ -1349,21 +1351,21 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
             color: isDark ? "rgba(255,255,255,0.7)" : "#78350F",
             margin: 0, lineHeight: 1.65, maxWidth: 280,
           }}>
-            Become a three Badge SkillBuddy<br />to ride free with Uber
+            {t("uber.subtitle")}
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {[
-              { tier: "bronze" as const, text: "Bronze — 5% discount" },
-              { tier: "silver" as const, text: "Silver — 1 free ride/week" },
-              { tier: "gold" as const, text: "Gold — Free every job" },
+              { tier: "bronze" as const, key: "uber.perk.bronze" },
+              { tier: "silver" as const, key: "uber.perk.silver" },
+              { tier: "gold" as const, key: "uber.perk.gold" },
             ].map((perk) => (
               <div key={perk.tier} style={{
                 display: "flex", alignItems: "center", gap: 8, fontSize: 13,
                 color: isDark ? "rgba(255,255,255,0.85)" : "#44250A",
               }}>
                 <BadgeSVG tier={perk.tier} size={20} />
-                {perk.text}
+                {t(perk.key)}
               </div>
             ))}
           </div>
@@ -1382,7 +1384,7 @@ function UberRewardsBanner({ isActive }: { isActive: boolean }) {
               boxShadow: "0 4px 16px rgba(218,152,60,0.35)",
             }}
           >
-            Start Earning Your Badge →
+            {t("uber.cta")}
           </motion.a>
         </div>
       </motion.div>
