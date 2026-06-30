@@ -282,22 +282,22 @@ function CareersPage() {
             <div className="mb-4 flex flex-wrap gap-2">
               {deptFilter.map((d) => (
                 <button key={d} onClick={() => setDeptFilter((p) => p.filter((x) => x !== d))} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  {d} <X className="h-3 w-3" />
+                  {t(DEPT_KEY[d] ?? d)} <X className="h-3 w-3" />
                 </button>
               ))}
               {locFilter.map((l) => (
                 <button key={l} onClick={() => setLocFilter((p) => p.filter((x) => x !== l))} className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                  {l} <X className="h-3 w-3" />
+                  {t(LOC_KEY[l] ?? l)} <X className="h-3 w-3" />
                 </button>
               ))}
               {typeFilter && (
                 <button onClick={() => setTypeFilter("")} className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                  {typeFilter} <X className="h-3 w-3" />
+                  {t(TYPE_KEY[typeFilter] ?? typeFilter)} <X className="h-3 w-3" />
                 </button>
               )}
               {levelFilter.map((l) => (
                 <button key={l} onClick={() => setLevelFilter((p) => p.filter((x) => x !== l))} className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400">
-                  {l} <X className="h-3 w-3" />
+                  {t(LEVEL_KEY[l] ?? l)} <X className="h-3 w-3" />
                 </button>
               ))}
             </div>
@@ -409,7 +409,7 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
         </span>
       </div>
 
-      <p className="mt-3 line-clamp-2 text-sm text-foreground/80">{job.shortDescription}</p>
+      <p className="mt-3 line-clamp-2 text-sm text-foreground/80">{t(`career.job.${job.id}.desc`)}</p>
 
       <div className="mt-4 flex flex-wrap gap-1.5">
         {job.skills.slice(0, 5).map((s) => (
