@@ -18,6 +18,7 @@ import { SkillBuddyLoader } from "@/components/skillbuddy-loader";
 import { LoaderProvider } from "@/context/LoaderContext";
 import { NavigationLoader } from "@/components/NavigationLoader";
 import { Navbar } from "@/components/navbar";
+import { AuthProvider } from "@/context/AuthContext";
 
 function NotFoundComponent() {
   return (
@@ -139,15 +140,17 @@ function RootComponent() {
       <LoaderProvider>
         <I18nProvider>
           <ThemeProvider>
-            <SkillBuddyLoader />
-            <NavigationLoader />
-            <Navbar />
-            <div className="root-content">
-              <Suspense fallback={null}>
-                <Outlet />
-              </Suspense>
-            </div>
-            <Toaster richColors position="top-right" />
+            <AuthProvider>
+              <SkillBuddyLoader />
+              <NavigationLoader />
+              <Navbar />
+              <div className="root-content">
+                <Suspense fallback={null}>
+                  <Outlet />
+                </Suspense>
+              </div>
+              <Toaster richColors position="top-right" />
+            </AuthProvider>
           </ThemeProvider>
         </I18nProvider>
       </LoaderProvider>

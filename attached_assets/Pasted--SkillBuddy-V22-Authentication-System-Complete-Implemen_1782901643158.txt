@@ -1,0 +1,198 @@
+# SkillBuddy — V22 Authentication System (Complete Implementation)
+
+## Tech Stack Context
+React + Vite app called Skill-buddy using:
+- Supabase for authentication
+- TanStack Router
+- Tailwind CSS + Radix UI
+- Framer Motion
+- Existing Supabase client at: `src/lib/supabase-browser.ts`
+- Env vars already set: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+
+**IMPORTANT RULES — Read Before Doing Anything:**
+- Do NOT change any existing UI design, layouts, colors, animations, or component structure
+- Do NOT remove or modify the i18n translation system
+- Do NOT change the navbar, footer, or any page unrelated to auth
+- Keep all existing Framer Motion animations
+- Keep all existing Tailwind classes
+- Only ADD functionality — do not redesign anything
+
+---
+
+## 1. EMAIL VERIFICATION / OTP — Fix the Broken Code Flow
+
+Right now when a user enters their email during signup, the app shows a notification saying a code was sent but no email is actually received. Fix this:
+
+- When user submits email in signup Step 1, call `supabase.auth.signUp()` with proper config so Supabase actually sends a verification email with a 6-digit OTP code
+- In Supabase Dashboard → Authentication → Email settings → ensure "Email OTP" is enabled
+- The 6-digit code input field must call `supabase.auth.verifyOtp({ email, token, type: 'signup' })` to verify
+- After successful verification, proceed to Step 2 of registration
+- Show proper error messages if code is wrong or expired
+- Add a working "Resend Code" button that calls `supabase.auth.resend({ type: 'signup', email })` with a 60-second countdown timer before allowing resend
+
+---
+
+## 2. GOOGLE LOGIN / SIGNUP — Fully Functional with Real Logo
+
+- The Google button must show the real Google "G" colored logo — use an inline SVG of the official Google logo (4-color G), NOT plain text
+- Clicking it must call:
+  ```
+  supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/auth/callback' }
+  })
+  ```
+- Note in code comments: developer must add Google Client ID and Secret in Supabase → Authentication → Providers → Google
+- After Google login, fetch user session with `supabase.auth.getSession()` and store user data
+- If new Google user → redirect to complete their profile (Step 2 of registration: name, country, city etc.)
+- If returning Google user → redirect to dashboard
+
+---
+
+## 3. APPLE LOGIN / SIGNUP — Fully Functional with Real Logo
+
+- The Apple button must show the real Apple logo — use an inline SVG of the Apple logo (black in light mode, white in dark mode)
+- Clicking it must call:
+  ```
+  supabase.auth.signInWithOAuth({
+    provider: 'apple',
+    options: { redirectTo: window.location.origin + '/auth/callback' }
+  })
+  ```
+- Note in code comments: developer must add Apple Service ID, Team ID, Key ID, and Private Key in Supabase → Authentication → Providers → Apple
+- After Apple login: new users → profile completion, returning users → dashboard
+
+---
+
+## 4. AUTH CALLBACK ROUTE
+
+Create a route at `/auth/callback` (file: `src/routes/auth.callback.tsx`):
+- Handle the OAuth redirect from Google and Apple
+- Call `supabase.auth.exchangeCodeForSession(code)` using the `code` param from the URL
+- Check if the user already has a completed profile in the Supabase `profiles` table
+- If profile complete → redirect to `/dashboard`
+- If profile incomplete (new OAuth user) → redirect to `/register` with their pre-filled data (name, email from OAuth)
+
+---
+
+## 5. REGISTRATION FORM — Keep Exact Same UI, Add Working Functionality
+
+Do NOT change the existing multi-step registration form design. Keep all steps exactly as they are visually. Only make the functionality work:
+
+**Step 1 — Account:**
+- Email + password fields
+- On submit: call `supabase.auth.signUp()`
+- Trigger OTP email
+- Show 6-digit OTP input screen
+- Verify with `supabase.auth.verifyOtp()`
+- Move to Step 2
+
+**Step 2 — Profile:**
+- Full name, country, county, city, postal code, street address, house number, profile picture upload
+- Store all in Supabase `profiles` table
+
+**Step 3 — Skills (Provider only):**
+- Primary skill, secondary skill, certification upload
+- Store in `profiles` table
+
+**Step 4 — Verification:**
+- Residence permit front/back image upload
+- Phone number
+- Store documents in Supabase Storage bucket called `documents`
+- Update `profiles` table with document URLs
+
+On final step submission:
+- Call `supabase.auth.updateUser()` if needed
+- Insert/update the `profiles` table with all collected data from all steps
+
+---
+
+## 6. LOGIN FORM — Fully Working
+
+- Email + password login must call `supabase.auth.signInWithPassword({ email, password })`
+- On success: check if profile is complete → redirect to `/dashboard`
+- On failure: show proper error message (wrong password, email not confirmed, user not found, etc.)
+- "Forgot password?" link goes to the forgot password page
+- "Remember me" checkbox works with Supabase's default session persistence
+
+---
+
+## 7. SUPABASE PROFILES TABLE
+
+Make sure this table exists. Create it if not present:
+
+```sql
+create table profiles (
+  id uuid references auth.users on delete cascade primary key,
+  username text unique,
+  full_name text,
+  avatar_url text,
+  country text,
+  county text,
+  city text,
+  postal_code text,
+  street_address text,
+  house_number text,
+  phone text,
+  role text check (role in ('client', 'provider')),
+  primary_skill text,
+  secondary_skill text,
+  certification_url text,
+  doc_front_url text,
+  doc_back_url text,
+  is_verified boolean default false,
+  created_at timestamptz default now()
+);
+```
+
+Also set up Row Level Security (RLS):
+```sql
+alter table profiles enable row level security;
+
+create policy "Users can view own profile"
+  on profiles for select using (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on profiles for update using (auth.uid() = id);
+
+create policy "Users can insert own profile"
+  on profiles for insert with check (auth.uid() = id);
+```
+
+---
+
+## 8. SESSION MANAGEMENT
+
+- On app load in `__root.tsx`: call `supabase.auth.getSession()` to check if user is logged in
+- Use `supabase.auth.onAuthStateChange()` to reactively update auth state when user logs in/out
+- Store the user in a React context or Zustand store so all pages can access it
+- Protected routes (like `/dashboard`) must redirect to `/auth/login` if not authenticated
+- When user logs out, call `supabase.auth.signOut()` and redirect to homepage
+
+---
+
+## CHECKLIST
+
+- [ ] Supabase actually sends OTP email on signup (not just notification, real email)
+- [ ] 6-digit OTP input verifies correctly via `supabase.auth.verifyOtp()`
+- [ ] "Resend Code" button works with 60-second countdown
+- [ ] Google button shows real Google "G" colored SVG logo
+- [ ] Google OAuth works end-to-end (button → OAuth → callback → dashboard or profile completion)
+- [ ] Apple button shows real Apple SVG logo (black/white per theme)
+- [ ] Apple OAuth works end-to-end
+- [ ] `/auth/callback` route created and handles OAuth redirects
+- [ ] New OAuth users redirected to profile completion with pre-filled data
+- [ ] Returning OAuth users redirected to dashboard
+- [ ] Registration Step 1: signup + OTP verification working
+- [ ] Registration Step 2: profile data saved to Supabase profiles table
+- [ ] Registration Step 3: skills data saved to profiles table
+- [ ] Registration Step 4: documents uploaded to Supabase Storage, URLs saved
+- [ ] Login with email/password works, proper error messages shown
+- [ ] "Forgot password?" link works
+- [ ] Profiles table created with correct schema and RLS policies
+- [ ] Session persists on page refresh (getSession on app load)
+- [ ] onAuthStateChange listener set up in root
+- [ ] User stored in global state (context or Zustand)
+- [ ] Protected routes redirect to login if not authenticated
+- [ ] Logout clears session and redirects to homepage
+- [ ] No existing UI, design, animations, or translations changed

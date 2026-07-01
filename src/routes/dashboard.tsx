@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SERVICES } from "@/lib/data";
 import { Bell, CreditCard, Heart, Settings, MapPin, Calendar } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — SkillBuddy" }, { name: "description", content: "Manage your bookings, favorites, and account." }] }),
@@ -19,6 +21,19 @@ const bookings = SERVICES.slice(0, 3).map((s, i) => ({
 }));
 
 function Dashboard() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/auth/login" });
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || !user) {
+    return null;
+  }
+
   return (
     <SiteShell>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
