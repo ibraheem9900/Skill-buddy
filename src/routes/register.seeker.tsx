@@ -176,10 +176,11 @@ function ClientRegisterPage() {
     if (!validateStep1()) return;
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           username: form.username,
           role: "client",
@@ -190,16 +191,24 @@ function ClientRegisterPage() {
     setLoading(false);
 
     if (error) {
-      if (error.message.includes("already registered")) {
-        toast.error("This email is already registered. Please login instead.");
+      if (error.message.toLowerCase().includes("already registered") || error.message.toLowerCase().includes("user already registered")) {
+        toast.error("This email is already registered. Please log in instead.");
       } else {
         toast.error(error.message);
       }
       return;
     }
 
+    // If session is immediately returned, the project has "Confirm email" disabled
+    // Skip OTP and proceed directly
+    if (data.session) {
+      toast.success("Account created! Continuing…");
+      setStep(2);
+      return;
+    }
+
     setOtpSent(true);
-    toast.success(t("register.step1.otpSent"));
+    toast.success("Verification email sent! Check your inbox (and spam folder).");
     setResendCountdown(60);
     const interval = setInterval(() => {
       setResendCountdown((c) => {
@@ -613,10 +622,11 @@ function Step1Form({
         </div>
 
         {otpSent && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <Label htmlFor="otp">{t("register.step1.otpLabel")}</Label>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("register.step1.otpSent")} {form.email}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+            <Label htmlFor="otp">Enter the 6-digit code</Label>
+            <p className="text-xs text-muted-foreground">
+              We sent a verification code to <strong>{form.email}</strong>.<br />
+              Open the email and enter the 6-digit code below.
             </p>
             <Input
               id="otp"
@@ -624,18 +634,20 @@ function Step1Form({
               onChange={(e) => onOtpChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
               maxLength={6}
-              className="mt-2 h-12 text-center text-2xl tracking-widest"
+              className="h-12 text-center text-2xl tracking-widest"
             />
-            <button
-              type="button"
-              disabled={resendCountdown > 0}
-              onClick={onResendOtp}
-              className="mt-2 text-xs text-primary disabled:opacity-50"
-            >
-              {resendCountdown > 0 ? `${t("register.step1.resendIn")} ${resendCountdown}s` : t("register.step1.resendCode")}
-            </button>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Didn't receive the email? Check your spam or junk folder.
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                disabled={resendCountdown > 0}
+                onClick={onResendOtp}
+                className="text-xs text-primary disabled:opacity-50 hover:underline"
+              >
+                {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend code"}
+              </button>
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded p-2">
+              ⚠ No email? Check your <strong>spam / junk folder</strong>. The email comes from Supabase and may take 1–2 minutes.
             </p>
           </div>
         )}
