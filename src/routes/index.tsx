@@ -143,7 +143,7 @@ function Home() {
           });
         },
         isMobile
-          ? { threshold: 0.01, root: null, rootMargin: "0px 0px 300px 0px" }
+          ? { threshold: 0.1, root: null }
           : { threshold: 0.5, root: container }
       );
       obs.observe(el);

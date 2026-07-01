@@ -298,27 +298,28 @@
     scroll-snap-type: none !important;
   }
 
-  /* Each snap section: natural height, no clipping */
+  /* Each snap section: natural height, no clipping.
+     Zero outer padding so each section's own background fills edge-to-edge
+     (no dead-zone gap between backgrounds in dark mode). */
   .snap-section {
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
     scroll-snap-align: none !important;
-    padding-top: 48px !important;
-    padding-bottom: 48px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     width: 100% !important;
-    /* Remove any transform/will-change that breaks IntersectionObserver */
     transform: none !important;
     will-change: auto !important;
   }
 
-  /* Hero section: no extra padding-top, inner section handles its own spacing */
+  /* Hero outer: no extra padding — inner section owns the spacing */
   .snap-section:first-child {
     padding-top: 0 !important;
     min-height: 0 !important;
   }
 
-  /* Inner sections: remove h-full and overflow clipping */
+  /* Inner sections: auto height, no clipping */
   .snap-section section {
     height: auto !important;
     min-height: 0 !important;
@@ -327,15 +328,17 @@
     will-change: auto !important;
   }
 
-  /* Hero inner section: top-aligned with padding — eliminates centering gap */
+  /* Hero inner section: full-viewport-height, content anchored near the top.
+     justify-content:flex-start + padding-top eliminates the centering gap while
+     keeping the gradient background filling the entire hero area. */
   .snap-section:first-child > section {
     min-height: calc(100svh - var(--navbar-height)) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    padding-top: 56px !important;
-    padding-bottom: 40px !important;
+    padding-top: 32px !important;
+    padding-bottom: 0 !important;
   }
 
   /* Ensure no element breaks out horizontally */
