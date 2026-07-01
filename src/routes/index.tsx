@@ -142,7 +142,9 @@ function Home() {
             }
           });
         },
-        { threshold: isMobile ? 0.05 : 0.5, root: isMobile ? null : container }
+        isMobile
+          ? { threshold: 0.01, root: null, rootMargin: "0px 0px 300px 0px" }
+          : { threshold: 0.5, root: container }
       );
       obs.observe(el);
       observers.push(obs);

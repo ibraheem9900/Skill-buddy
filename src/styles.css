@@ -312,7 +312,7 @@
     will-change: auto !important;
   }
 
-  /* Hero section: no extra padding-top, let the inner section fill height */
+  /* Hero section: no extra padding-top, inner section handles its own spacing */
   .snap-section:first-child {
     padding-top: 0 !important;
     min-height: 0 !important;
@@ -327,13 +327,15 @@
     will-change: auto !important;
   }
 
-  /* Hero inner section: fill viewport so justify-center works correctly */
+  /* Hero inner section: top-aligned with padding — eliminates centering gap */
   .snap-section:first-child > section {
     min-height: calc(100svh - var(--navbar-height)) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
+    padding-top: 56px !important;
+    padding-bottom: 40px !important;
   }
 
   /* Ensure no element breaks out horizontally */
