@@ -5,6 +5,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { QRDownloadModal } from "@/components/qr-download-modal";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -37,18 +39,55 @@ function EmptyState({ label }: { label: string }) {
 function DashboardIndex() {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [activeNav, setActiveNav] = useState("bookings");
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrConfig, setQrConfig] = useState<{ title: string; message: string } | null>(null);
+
+  const openQr = (title: string, message: string) => {
+    setQrConfig({ title, message });
+    setQrOpen(true);
+  };
 
   const firstName = profile?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there";
   const displayName = profile?.full_name ?? user?.email ?? "My Account";
   const location = [profile?.city, profile?.county].filter(Boolean).join(", ");
   const isProvider = profile?.role === "provider";
 
-  const sidebarItems = [
+  const sidebarItems: {
+    id: string;
+    icon: React.ElementType;
+    label: string;
+    badge?: string;
+    appOnly?: boolean;
+    appTitle?: string;
+    appMessage?: string;
+  }[] = [
     { id: "bookings", icon: Calendar, label: isProvider ? "My Jobs" : "My Bookings" },
-    { id: "favorites", icon: Heart, label: "Saved Services" },
-    { id: "notifications", icon: Bell, label: "Notifications", badge: "" },
-    { id: "payments", icon: CreditCard, label: "Payment Methods" },
+    {
+      id: "favorites",
+      icon: Heart,
+      label: "Saved Services",
+      appOnly: true,
+      appTitle: "📱 Save services in the app",
+      appMessage: "Tap the heart on any service to save it for later. Available in the SkillBuddy app.",
+    },
+    {
+      id: "notifications",
+      icon: Bell,
+      label: "Notifications",
+      appOnly: true,
+      appTitle: "📱 Notifications in the app",
+      appMessage: "Get real-time alerts for bookings, messages, and promotions on your phone.",
+    },
+    {
+      id: "payments",
+      icon: CreditCard,
+      label: "Payment Methods",
+      appOnly: true,
+      appTitle: "📱 Payments in the app",
+      appMessage: "Add and manage payment methods securely. Pay for services directly from your phone.",
+    },
     { id: "settings", icon: Settings, label: "Settings" },
   ];
 
@@ -104,9 +143,15 @@ function DashboardIndex() {
               {sidebarItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveNav(item.id)}
+                  onClick={() => {
+                    if (item.appOnly && item.appTitle && item.appMessage) {
+                      openQr(item.appTitle, item.appMessage);
+                    } else {
+                      setActiveNav(item.id);
+                    }
+                  }}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    activeNav === item.id
+                    !item.appOnly && activeNav === item.id
                       ? "bg-primary/10 text-primary"
                       : "text-foreground/80 hover:bg-accent hover:text-foreground"
                   }`}
@@ -116,6 +161,11 @@ function DashboardIndex() {
                   {item.badge && (
                     <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                       {item.badge}
+                    </span>
+                  )}
+                  {item.appOnly && (
+                    <span className="ml-auto rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      App
                     </span>
                   )}
                 </button>
@@ -172,33 +222,6 @@ function DashboardIndex() {
               </>
             )}
 
-            {activeNav === "favorites" && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-20 text-center">
-                <Heart className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">No saved services yet</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">Tap the heart icon on any service to save it here.</p>
-                <Button asChild className="mt-5" size="sm">
-                  <Link to="/services">Explore services</Link>
-                </Button>
-              </div>
-            )}
-
-            {activeNav === "notifications" && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-20 text-center">
-                <Bell className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">No notifications yet</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">You'll be notified about bookings, promotions, and updates here.</p>
-              </div>
-            )}
-
-            {activeNav === "payments" && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-20 text-center">
-                <CreditCard className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">No payment methods saved</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">Add a card or payment method to speed up checkout.</p>
-              </div>
-            )}
-
             {activeNav === "settings" && (
               <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
                 <h2 className="text-lg font-bold">Account Settings</h2>
@@ -233,6 +256,13 @@ function DashboardIndex() {
           </div>
         </div>
       </div>
+
+      <QRDownloadModal
+        open={qrOpen}
+        onOpenChange={setQrOpen}
+        title={qrConfig?.title}
+        message={qrConfig?.message}
+      />
     </SiteShell>
   );
 }
