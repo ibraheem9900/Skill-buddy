@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, SlidersHorizontal, MapPin, Briefcase, Clock,
-  ChevronLeft, ChevronRight, ArrowRight, Globe, Users, Star,
+  ChevronLeft, ChevronRight, ArrowRight, Globe, Users, Star, DollarSign,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -397,7 +397,7 @@ function JobCard({ job }: { job: (typeof JOBS)[0] }) {
 
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="text-base">💰</span>
+          <DollarSign className="h-4 w-4" />
           €{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()} {t("careers.card.month")}
         </span>
         <span className="flex items-center gap-1.5">

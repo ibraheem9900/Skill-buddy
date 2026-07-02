@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, LayoutDashboard, LogOut, User } from "lucide-react";
+import { Moon, Sun, LayoutDashboard, LogOut, User, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,7 +138,7 @@ export function Navbar() {
                 }}
                 aria-label="Close menu"
               >
-                ✕
+                <X className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
 

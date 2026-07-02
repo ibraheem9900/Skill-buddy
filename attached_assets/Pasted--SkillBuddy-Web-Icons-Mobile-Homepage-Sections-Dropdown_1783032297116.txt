@@ -1,0 +1,55 @@
+# SkillBuddy Web — Icons, Mobile Homepage Sections & Dropdown Layering Fix (Replit Prompt)
+
+Copy everything below this line into Replit AI / your dev agent.
+
+---
+
+## CONTEXT
+
+Auth, signup, and the profile dropdown are now working correctly. This prompt covers three remaining polish/bug fixes: replacing emojis with proper icons site-wide, fixing mobile homepage structure/animations to match desktop, and fixing a dropdown layering bug.
+
+---
+
+## TASK 1 — Remove All Emojis Site-Wide, Use Icons Instead
+
+**Problem:** Emojis (🎉, 👋, etc.) are currently used across the site, including on the Profile page. This looks unprofessional and inconsistent.
+
+**Required fix:**
+- Search the entire codebase for emoji characters used in UI text/JSX (headings, welcome messages, buttons, badges, empty states, profile page, notifications, everywhere) and remove every one of them.
+- Replace each removed emoji with an appropriate icon from the icon library already used in the project (e.g. `lucide-react`, since shadcn/ui is in use) — matched to the same meaning the emoji was conveying (e.g. a wave emoji → a hand-wave icon or simply remove if purely decorative, a checkmark emoji → a `CheckCircle` icon, a phone emoji → a `Phone` icon, etc.).
+- Icons must be sized and colored consistently with the rest of the design system (same stroke width, sizing scale, and color tokens already used elsewhere in the app) — not just dropped in with default styling.
+- Pay special attention to the Profile page, Dashboard welcome banner, and any status/notification badges — these are the most visible emoji locations.
+- After this change, do a full pass across every page (Home, Services, Jobs, Careers, FAQs, Contact Us, Dashboard, Profile, Signup/Login flow, notifications) to confirm zero emojis remain anywhere in the UI.
+
+---
+
+## TASK 2 — Fix Mobile Homepage: Missing Sections & Missing Scroll Animations
+
+**Problem:** On desktop, the homepage is built with distinct, well-defined sections (hero, categories, featured services, etc.) each with scroll-triggered animations as the user scrolls down. On mobile, this structure breaks down — the same distinct sections are not present, and the scroll animations do not happen at all.
+
+**Required fix:**
+- Audit the desktop homepage and list out every distinct section it has (hero, "Verified pros across the Baltics" banner, search bar, categories grid, featured services, how-it-works, testimonials, footer CTA, etc. — whatever actually exists in the current desktop build).
+- Rebuild the mobile layout so it has the **exact same sections**, in the same order, just responsively restacked/resized for a narrow viewport — not a stripped-down or merged version missing sections.
+- Re-implement the same scroll-triggered entrance animations (fade-in / slide-up as each section enters the viewport) on mobile that already exist on desktop, using the same animation library/technique already used in the desktop implementation (e.g. Framer Motion `whileInView`, or CSS `IntersectionObserver`-driven classes — check what's already in the codebase and reuse it, don't introduce a second animation system).
+- Confirm animations trigger correctly on real mobile scroll behavior (touch scroll), not just when resizing a desktop browser window down to mobile width — test at common breakpoints (375px, 390px, 768px).
+- Nothing on desktop should change — this task is scoped to bringing mobile up to parity with the existing desktop experience.
+
+---
+
+## TASK 3 — Fix Language Dropdown Z-Index / Layering Bug
+
+**Problem:**
+- On desktop, when the language switcher (globe/flag icon in the navbar) is clicked, its dropdown menu sometimes renders **behind** the navbar instead of above it.
+- On mobile, when the hamburger menu is open and the language switcher is used, the language dropdown renders **behind** the mobile hamburger slide-out menu instead of on top of it.
+
+**Required fix:**
+- Give the language dropdown a `z-index` that is explicitly higher than both the navbar's z-index and the mobile hamburger menu's z-index — audit both of those current values and set the language dropdown above them (e.g. if hamburger menu is `z-50`, language dropdown should be `z-[60]` or similar, matching the existing Tailwind scale used in the project).
+- If the dropdown is currently nested inside a component with its own stacking context that's causing this, render it via a portal at the root level instead, same approach as used for other overlay fixes already made in this app (the "Download the App" modal fix).
+- Test that the language dropdown always appears fully on top and fully clickable in these three states: (1) desktop navbar, (2) mobile with hamburger menu closed, (3) mobile with hamburger menu open.
+- Clicking outside the dropdown, or selecting a language, should close it cleanly with no leftover artifacts.
+
+---
+
+## SCOPE BOUNDARY
+
+Only fix these three specific things — emoji-to-icon replacement, mobile homepage section/animation parity with desktop, and the language dropdown layering bug. Do not modify auth logic, profile data, or any backend/Supabase code while doing this — these are frontend UI/UX fixes only.

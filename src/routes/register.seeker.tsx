@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, CircleCheck as CheckCircle2, Upload, X, Loader as Loader2, Eye, EyeOff, User, Mail, Lock, MapPin, Phone, Building, QrCode } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleCheck as CheckCircle2, Upload, X, Loader as Loader2, Eye, EyeOff, User, Mail, Lock, MapPin, Phone, Building, QrCode, AlertTriangle } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -665,8 +665,9 @@ function Step1Form({
                 {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend code"}
               </button>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded p-2">
-              ⚠ No email? Check your <strong>spam / junk folder</strong>. The email comes from Supabase and may take 1–2 minutes.
+            <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded p-2">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" strokeWidth={2} />
+              <span>No email? Check your <strong>spam / junk folder</strong>. The email comes from Supabase and may take 1–2 minutes.</span>
             </p>
           </div>
         )}

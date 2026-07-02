@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { Mail, Clock, MapPin, Loader2 } from "lucide-react";
+import { Mail, Clock, MapPin, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/site-shell";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ function ContactPage() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 700));
     setLoading(false);
-    toast.success(`✅ ${t("contact.success")}`);
+    toast.success(t("contact.success"), { icon: <CheckCircle2 className="h-4 w-4" /> });
     e.currentTarget.reset();
   }
 

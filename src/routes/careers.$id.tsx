@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, MapPin, Clock, Briefcase, Linkedin,
-  Copy, Check, CheckCircle2, ChevronRight, Upload, X, Loader2,
+  Copy, Check, CheckCircle2, ChevronRight, Upload, X, Loader2, DollarSign,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -366,7 +366,7 @@ function JobDetailPage() {
 
             {/* Salary highlight */}
             <div className="mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3">
-              <span className="text-2xl">💰</span>
+              <DollarSign className="h-6 w-6 text-primary" />
               <div>
                 <div className="text-xs text-muted-foreground">{t("careers.detail.monthlySalary")}</div>
                 <div className="font-mono text-lg font-bold text-primary">
@@ -470,7 +470,7 @@ function JobDetailPage() {
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">💰</span>
+                    <DollarSign className="h-5 w-5 text-primary" />
                     <div>
                       <div className="text-xs text-muted-foreground">{t("careers.detail.monthlySalary")}</div>
                       <div className="font-mono font-bold text-primary">€{job.salaryMin.toLocaleString()} – €{job.salaryMax.toLocaleString()}</div>

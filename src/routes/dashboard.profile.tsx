@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, User, MapPin, Phone, Shield, Wrench, Save, Loader as Loader2 } from "lucide-react";
+import { ArrowLeft, User, MapPin, Phone, Shield, Wrench, Save, Loader as Loader2, CheckCircle2, XCircle, Clock3 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase-browser";
 
@@ -100,12 +100,19 @@ function ProfilePage() {
         ? "text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400"
         : "text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400";
 
+  const VerificationIcon =
+    profile?.verification_status === "verified"
+      ? CheckCircle2
+      : profile?.verification_status === "rejected"
+        ? XCircle
+        : Clock3;
+
   const verificationLabel =
     profile?.verification_status === "verified"
-      ? "✓ Verified"
+      ? "Verified"
       : profile?.verification_status === "rejected"
-        ? "✗ Rejected"
-        : "⏳ Pending Review";
+        ? "Rejected"
+        : "Pending Review";
 
   return (
     <SiteShell>
@@ -136,7 +143,8 @@ function ProfilePage() {
             <h1 className="text-xl font-extrabold truncate">{profile?.full_name || "—"}</h1>
             <p className="text-sm text-muted-foreground">@{profile?.username}</p>
             <div className="mt-2 flex flex-wrap gap-2 items-center">
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${verificationColor}`}>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${verificationColor}`}>
+                <VerificationIcon className="h-3 w-3" />
                 {verificationLabel}
               </span>
               <span className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground capitalize">
@@ -278,7 +286,8 @@ function ProfilePage() {
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-muted-foreground">Verification Status</span>
-                  <span className={`font-medium rounded-full px-2.5 py-0.5 text-xs ${verificationColor}`}>
+                  <span className={`inline-flex items-center gap-1 font-medium rounded-full px-2.5 py-0.5 text-xs ${verificationColor}`}>
+                    <VerificationIcon className="h-3 w-3" />
                     {verificationLabel}
                   </span>
                 </div>
@@ -299,7 +308,8 @@ function ProfilePage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <span className="text-muted-foreground">ID Verification</span>
-                <span className={`font-semibold text-xs rounded-full px-2.5 py-0.5 ${verificationColor}`}>
+                <span className={`inline-flex items-center gap-1 font-semibold text-xs rounded-full px-2.5 py-0.5 ${verificationColor}`}>
+                  <VerificationIcon className="h-3 w-3" />
                   {verificationLabel}
                 </span>
               </div>

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/chat")({
 const contacts = [
   { id: "1", name: "Marcus Lee", avatar: "https://i.pravatar.cc/100?img=68", last: "Sounds good, see you then!", time: "2m", online: true, unread: 2 },
   { id: "2", name: "Priya Kapoor", avatar: "https://i.pravatar.cc/100?img=47", last: "I'll bring extra supplies.", time: "1h", online: true, unread: 0 },
-  { id: "3", name: "Alex Morgan", avatar: "https://i.pravatar.cc/100?img=12", last: "Thank you for the great review 🙏", time: "Yesterday", online: false, unread: 0 },
+  { id: "3", name: "Alex Morgan", avatar: "https://i.pravatar.cc/100?img=12", last: "Thank you for the great review!", time: "Yesterday", online: false, unread: 0 },
   { id: "4", name: "Sofia Romero", avatar: "https://i.pravatar.cc/100?img=32", last: "Voice message", time: "Mon", online: false, unread: 0 },
 ];
 

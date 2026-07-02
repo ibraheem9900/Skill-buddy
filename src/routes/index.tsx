@@ -8,7 +8,7 @@ import {
   ClipboardList, Gavel, UserCheck, CircleCheck as CheckCircle2, BookOpen,
   Mail, Facebook, Instagram, Twitter, Youtube,
   ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Smartphone,
-  Truck, Award,
+  Truck, Award, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -595,9 +595,9 @@ function EliteRewardsSection({ isActive }: { isActive: boolean }) {
                 {badge.perkKeys.map((perkKey, j) => (
                   <li key={j} className="flex items-start gap-2 text-xs sm:text-sm">
                     <span
-                      className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white"
+                      className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-white"
                       style={{ background: badge.checkColor }}
-                    >✓</span>
+                    ><Check className="h-2.5 w-2.5" strokeWidth={3} /></span>
                     <span className="text-muted-foreground">{t(perkKey)}</span>
                   </li>
                 ))}
@@ -1679,10 +1679,10 @@ function TestimonialsSection({ isActive }: { isActive: boolean }) {
             >
               <div style={{ display: "flex", gap: 4 }}>
                 {Array.from({ length: review.rating }).map((_, i) => (
-                  <span key={i} style={{ color: "#F59E0B", fontSize: 18 }}>★</span>
+                  <Star key={i} className="h-[18px] w-[18px] fill-[#F59E0B] text-[#F59E0B]" />
                 ))}
                 {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                  <span key={i} style={{ color: "#D1D5DB", fontSize: 18 }}>★</span>
+                  <Star key={i} className="h-[18px] w-[18px] fill-[#D1D5DB] text-[#D1D5DB]" />
                 ))}
               </div>
               <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, flex: 1, color: "var(--foreground, #111)" }}>

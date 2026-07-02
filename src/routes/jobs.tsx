@@ -60,7 +60,7 @@ function JobsPage() {
       <QRDownloadModal
         open={open}
         onOpenChange={setOpen}
-        title={`📱 ${t("jobs.qr.title")}`}
+        title={t("jobs.qr.title")}
         message={t("jobs.qr.message")}
       />
     </SiteShell>

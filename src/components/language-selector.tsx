@@ -23,7 +23,7 @@ export function LanguageSelector() {
           <ChevronDown className="h-3 w-3 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[180px]">
+      <DropdownMenuContent align="end" className="z-[100000] min-w-[180px]">
         {LOCALES.map((l) => (
           <DropdownMenuItem
             key={l.code}

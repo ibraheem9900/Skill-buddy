@@ -3,7 +3,7 @@ import { useState } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, XCircle, Clock3, Hand } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
@@ -69,7 +69,7 @@ function DashboardIndex() {
       icon: Heart,
       label: "Saved Services",
       appOnly: true,
-      appTitle: "📱 Save services in the app",
+      appTitle: "Save services in the app",
       appMessage: "Tap the heart on any service to save it for later. Available in the SkillBuddy app.",
     },
     {
@@ -77,7 +77,7 @@ function DashboardIndex() {
       icon: Bell,
       label: "Notifications",
       appOnly: true,
-      appTitle: "📱 Notifications in the app",
+      appTitle: "Notifications in the app",
       appMessage: "Get real-time alerts for bookings, messages, and promotions on your phone.",
     },
     {
@@ -85,7 +85,7 @@ function DashboardIndex() {
       icon: CreditCard,
       label: "Payment Methods",
       appOnly: true,
-      appTitle: "📱 Payments in the app",
+      appTitle: "Payments in the app",
       appMessage: "Add and manage payment methods securely. Pay for services directly from your phone.",
     },
     { id: "settings", icon: Settings, label: "Settings" },
@@ -125,7 +125,13 @@ function DashboardIndex() {
                       ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                 }`}>
-                  {profile.verification_status === "verified" ? "✓ Verified" : profile.verification_status === "rejected" ? "✗ Rejected" : "⏳ Pending Review"}
+                  {profile.verification_status === "verified" ? (
+                    <><CheckCircle2 className="h-3 w-3" /> Verified</>
+                  ) : profile.verification_status === "rejected" ? (
+                    <><XCircle className="h-3 w-3" /> Rejected</>
+                  ) : (
+                    <><Clock3 className="h-3 w-3" /> Pending Review</>
+                  )}
                 </div>
               )}
               <Button
@@ -191,7 +197,7 @@ function DashboardIndex() {
               <>
                 <div className="mb-6 flex items-end justify-between">
                   <div>
-                    <h1 className="text-3xl font-extrabold">Welcome back, {firstName} 👋</h1>
+                    <h1 className="flex items-center gap-2 text-3xl font-extrabold">Welcome back, {firstName}<Hand className="h-6 w-6 text-primary" /></h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {isProvider ? "Manage your incoming service requests." : "Here's what's coming up."}
                     </p>
