@@ -206,17 +206,30 @@ export function Navbar() {
               {user ? (
                 <>
                   {isFullyOnboarded && (
-                    <Link to="/dashboard" onClick={closeMenu}>
-                      <button style={{
-                        width: "100%", padding: "12px", borderRadius: 50,
-                        border: "1.5px solid #2D7A5F", background: "transparent",
-                        color: "#2D7A5F", fontWeight: 600, fontSize: 15, cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      }}>
-                        <LayoutDashboard size={16} />
-                        Dashboard
-                      </button>
-                    </Link>
+                    <>
+                      <Link to="/dashboard" onClick={closeMenu}>
+                        <button style={{
+                          width: "100%", padding: "12px", borderRadius: 50,
+                          border: "1.5px solid #2D7A5F", background: "transparent",
+                          color: "#2D7A5F", fontWeight: 600, fontSize: 15, cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                        }}>
+                          <LayoutDashboard size={16} />
+                          Dashboard
+                        </button>
+                      </Link>
+                      <Link to="/dashboard/profile" onClick={closeMenu}>
+                        <button style={{
+                          width: "100%", padding: "12px", borderRadius: 50,
+                          border: "1.5px solid #2D7A5F", background: "transparent",
+                          color: "#2D7A5F", fontWeight: 600, fontSize: 15, cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                        }}>
+                          <User size={16} />
+                          My Profile
+                        </button>
+                      </Link>
+                    </>
                   )}
                   <button
                     onClick={handleSignOut}
@@ -341,7 +354,7 @@ export function Navbar() {
                         </span>
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuContent align="end" className="w-52 z-[10001]">
                       <div className="px-3 py-2">
                         <p className="text-sm font-semibold truncate">{displayName || "My Account"}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>

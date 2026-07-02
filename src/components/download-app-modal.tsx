@@ -6,7 +6,7 @@ import { Smartphone, Apple, MessageCircle, Shield, MapPin } from "lucide-react";
 export function DownloadAppModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border">
+      <DialogContent className="sm:max-w-md p-0 border-border overflow-y-auto max-h-[90vh]">
         <div className="relative gradient-hero p-6 pb-8 text-center">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary shadow-elegant">
             <Smartphone className="h-7 w-7 text-primary-foreground" />

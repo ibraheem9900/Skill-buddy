@@ -1,0 +1,54 @@
+# SkillBuddy Web — Modal Layering & Navbar Profile Dropdown Fix (Replit Prompt)
+
+Copy everything below this line into Replit AI / your dev agent.
+
+---
+
+## CONTEXT
+
+SkillBuddy is a service marketplace web app (React 19 + TanStack Router/Start + Tailwind v4 + shadcn/ui + Supabase). Two specific UI bugs need to be fixed properly across desktop and mobile.
+
+---
+
+## BUG 1 — "Download the App" Modal Layering & Backdrop Is Broken
+
+**Problem (confirmed via screenshots):**
+- The "Apply via the SkillBuddy App" modal's close (X) button renders **behind** the navbar instead of on top of it — it's partially hidden and hard to click.
+- The dark/blur backdrop does **not** cover the navbar — only the page content below the navbar gets dimmed, so the navbar stays fully bright and visually disconnected from the rest of the dimmed page.
+- On mobile, the modal doesn't render as a proper full-viewport overlay — it appears cut off, and background page content (e.g. job cards) bleeds through incorrectly below it.
+
+**Required fix:**
+- Render the modal at the root level of the app (e.g. via a React portal into `document.body`), not nested inside any component that has its own stacking context or lower `z-index`.
+- Give the modal and its backdrop a `z-index` that is explicitly higher than the navbar's `z-index` — audit the navbar's current `z-index` value and set the modal above it (e.g. navbar `z-40`, modal `z-[100]` or similar, whatever fits the existing Tailwind scale).
+- The backdrop (dark overlay + blur) must cover the **entire viewport** — full width, full height, from the very top of the screen to the bottom — including the area behind the navbar. Use a `fixed inset-0` positioned backdrop, not one that starts below the navbar.
+- The close (X) button must always be fully visible, fully clickable, and never obscured by the navbar or any other element, on any screen size.
+- On mobile (narrow viewports), the modal must scale to fit the screen as a centered card with proper padding on all sides, with its own internal scroll (`overflow-y-auto`) if its content is taller than the viewport. It must never let background content bleed through or appear clipped.
+- Closing the modal (via X button, clicking the backdrop, or pressing Escape) must cleanly remove both the modal and the backdrop with no leftover dimming or blur artifacts.
+- Test this on both desktop width and mobile width (e.g. 375px) before considering it done — the two screenshots provided show the exact failure state to fix.
+
+---
+
+## BUG 2 — Navbar Profile Icon & Dropdown Broken After Login/Signup
+
+**Problem:** After a user successfully logs in or completes signup, the profile avatar/icon in the navbar does not reliably appear, and when it does, the dropdown menu doesn't behave correctly.
+
+**Required fix:**
+- The navbar must reactively reflect the real Supabase auth state at all times — as soon as a user is authenticated, it must switch from Login/Signup buttons to the user's avatar + name automatically, with no manual page refresh required. Use `supabase.auth.onAuthStateChange` (or equivalent) to drive this, not a one-time check on initial page load.
+- Clicking the avatar must open a dropdown menu with a smooth open/close animation (fade + slight slide/scale — not an instant snap, not laggy).
+- The dropdown must contain, at minimum:
+  - User's name and email shown at the top
+  - **Dashboard** link
+  - **My Profile** link
+  - A visual divider
+  - **Sign Out** button at the bottom, styled distinctly (e.g. red/warning tone) — clicking it must fully clear the Supabase session and redirect the user to the homepage or login page.
+- The dropdown must close automatically when:
+  - the user clicks anywhere outside of it
+  - the user presses Escape
+  - the user selects any option inside it
+- **Mobile responsiveness:** this must work correctly on small screens too. On mobile it's fine to render as a slide-down panel or bottom sheet if that better matches the existing mobile nav pattern, but it must never overlap, clip, or visually break — apply the same layering/z-index discipline used in Bug 1's fix. Verify at common breakpoints (375px and 768px) that nothing overlaps the navbar or gets cut off.
+
+---
+
+## SCOPE BOUNDARY
+
+Only fix these two specific UI/behavior issues — the modal layering/backdrop and the navbar profile dropdown. Do not modify unrelated pages, auth logic beyond what's needed to drive the navbar's reactive state, or any other part of the app while making this fix.
