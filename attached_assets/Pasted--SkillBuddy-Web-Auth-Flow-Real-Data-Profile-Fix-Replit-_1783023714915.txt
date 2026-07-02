@@ -1,0 +1,127 @@
+# SkillBuddy Web — Auth Flow, Real Data & Profile Fix (Replit Prompt)
+
+Copy everything below this line into Replit AI / your dev agent.
+
+---
+
+## CONTEXT
+
+SkillBuddy is a TaskRabbit-style service marketplace (React 19 + TanStack Router/Start + Tailwind v4 + shadcn/ui + Supabase, deployed on Vercel). It has two user types: **Client (service seeker)** and **SkillBuddy Pilot (service provider)**.
+
+Right now the web app has three critical problems:
+1. Auth/session state is broken — a user's profile picture/name shows up in the navbar even while they are still mid-way through signup verification, before they are actually a real logged-in user.
+2. The dashboard, profile page, and bookings are showing **hardcoded demo data** ("Jane Cooper", fake bookings, fake photos) instead of the real logged-in user's data from Supabase.
+3. Clicking "Dashboard" or "My Profile" from the navbar dropdown leads to a 404 / broken page instead of the real profile.
+
+Fix these three things properly. Do not rebuild the whole app and do not implement the full native-app feature set — see "Scope Boundary" at the end.
+
+---
+
+## TASK 1 — Fix Authentication & Session State Logic
+
+**Problem:** The navbar currently shows the user's name/avatar as soon as *any* auth token exists, even if the account isn't fully verified/onboarded yet. During signup, at step 2 of verification, the logged-in-looking navbar already appears — this is wrong.
+
+**Required behavior:**
+
+- On every page load, check the real Supabase session (`supabase.auth.getSession()` / `onAuthStateChange`).
+- Derive a proper **account status** for the logged-in user, not just "has a session":
+  - `unauthenticated` → show normal Login/Signup buttons.
+  - `authenticated_but_unverified` → user has created an auth account (email/password or Google) but has **not** completed the required verification steps (email/phone OTP confirmed, profile/document steps from Module 1A completed). In this state:
+    - Do **NOT** show the profile avatar/name in the navbar as if the user is fully onboarded.
+    - Redirect them to continue the signup/verification flow wherever they navigate, with a clear message like "Please complete your account verification to continue."
+  - `authenticated_and_verified` → only now show the real navbar profile (avatar + name), enable Dashboard/Profile access, and allow booking/bidding actions.
+- Store this status in a single source of truth (e.g. a `profile` table row with a `status` or `verified_at` column, or `onboarding_step` field) — do not infer it from scattered local state.
+- If a user tries to log in and no account exists for that email → show a clear message: "No account found. Please sign up first," with a button to go to signup — do not silently create a broken session.
+- If a user tries to log in and an account exists but is unverified → resume them exactly at the step they left off (don't restart from scratch, don't skip ahead).
+
+---
+
+## TASK 2 — Don't Finalize Signup Until All Steps Are Done
+
+**Problem:** Right now signup (both Google and Email) appears to "complete" and shows the user as logged in before all required verification steps are finished.
+
+**Required behavior (applies to both Email signup and Google OAuth signup):**
+
+- Signup is a **multi-step flow**, not a single action. Based on the module spec, minimum required steps before an account is considered complete:
+  1. Basic info (username, email, password/Google identity)
+  2. OTP verification (email — already being set up via Supabase + Resend SMTP)
+  3. Core profile info: profile picture, address (Country/County/City/Postal Code/Street/House-Apartment number), contact details
+  4. Role selection: Client or SkillBuddy Pilot (provider), each with its own remaining steps (provider additionally needs Primary Skill, Secondary Skill, Certification upload — per Module 1A)
+- The user should NOT be treated as "logged in" with a visible profile in the navbar until **all mandatory steps for their chosen role are submitted** (verification of documents happening later on the backend/admin side is fine — that's a separate "pending approval" state — but the *signup flow itself* must be fully completed client-side first).
+- Add a persisted `onboarding_step` (or similar) field per user so if they refresh or come back later, they resume exactly where they left off instead of the flow resetting or breaking.
+- Until onboarding is fully complete, block navigation to Dashboard/Profile/Booking pages — redirect back into the signup flow instead.
+
+---
+
+## TASK 3 — Remove ALL Hardcoded Data, Wire Real Supabase Data
+
+**Problem:** Dashboard currently shows a hardcoded demo user "Jane Cooper" with fake bookings (Professional Photographer, Graphic Designer, Interior Designer) and a stock photo, regardless of who is actually logged in.
+
+**Required behavior:**
+
+- Remove every hardcoded name, photo, and booking currently in the Dashboard, Profile, and Bookings components.
+- Replace with real data fetched from Supabase for the currently authenticated user:
+  - Profile photo → from `profiles` table / Supabase storage, fallback to initials avatar if none uploaded (not a stock photo).
+  - Name → the real signed-up user's name.
+  - "My Bookings" tabs (Upcoming / Ongoing / Completed) → real bookings/jobs tied to `user_id`, pulled from the actual bookings/jobs table. If a user has zero bookings, show a proper empty state (e.g. "No bookings yet — browse services to get started") instead of fake cards.
+  - Notifications badge count → real unread notifications count for that user.
+  - Saved Services, Payment Methods → real data scoped to that user, empty state if none exist.
+- Every list/table in the dashboard must be scoped with the logged-in user's ID (RLS policies in Supabase should enforce this server-side too — confirm Row Level Security is enabled so users can only read their own data).
+
+---
+
+## TASK 4 — Fix Profile Dropdown Navigation (Dashboard / My Profile)
+
+**Problem:** Clicking "Dashboard" or "My Profile" in the navbar user-menu dropdown currently leads to a 404 page.
+
+**Required behavior:**
+
+- "Dashboard" → routes to the real dashboard (with real data per Task 3).
+- "My Profile" → routes to a real profile page (built per Task 5 below), not a 404 and not a placeholder.
+- Confirm these routes actually exist in the router config and are not pointing at removed/renamed pages.
+
+---
+
+## TASK 5 — Build Real Client & Provider Profile Pages
+
+Reference: Module 1B (User Profile & Dashboard), Module 1C (Client Profile View), Module 1D (Provider Profile View) from the SkillBuddy spec doc.
+
+**Required behavior:**
+
+- Profile page structure must adapt based on the logged-in user's role (Client vs. SkillBuddy Pilot/Provider):
+
+**Client Profile — sections:**
+- **General / Personal Information**: profile photo (editable), username (uneditable), personal code (uneditable), address, contact info (editable)
+- **Professional Information**: jobs done, active jobs, due payments
+- **Documents**: face verification status, residence permit status (view/reupload)
+- **Credit Points Summary**: current balance (1 point = €0.1), redemption history
+- **Payment / Wallet**: spending summary, taxes, platform fee, payment dues, saved card/bank details (never show raw full card numbers)
+- **Support**: chat with support team link
+
+**Provider (SkillBuddy Pilot) Profile — sections:**
+- **General / Personal Information**: same as client (photo, username, personal code, address, contact)
+- **Professional Information**: primary/secondary skills, certifications (view/reupload), performance metrics, job history
+- **Documents**: same verification statuses as client
+- **Payment / Wallet**: earnings summary, taxes, platform fee, payout bank details/IBAN
+- **Support**: chat with support team link
+
+- All of this data must come from real Supabase tables tied to the logged-in `user_id` — no placeholder numbers or names.
+- If a section's data doesn't exist yet in the DB (e.g. certifications table not built yet), show an honest empty/"coming soon" state rather than fake sample data.
+
+---
+
+## TASK 6 — Handoff to Mobile App for Deep/Unbuilt Features
+
+**Required behavior:**
+
+- For any feature that is out of scope for the current web build (e.g. real-time bidding, chat/call system, advanced job tracking, ticketing — anything not explicitly listed in Tasks 1–5), do **not** let the user hit a broken page or dead-end error.
+- Instead, show a clean modal/popup: "This feature is available in the SkillBuddy app" with a QR code + download links (App Store / Play Store), so the user can continue there.
+- This popup should trigger gracefully wherever a user clicks into a not-yet-built feature — it should never present as an error or 404.
+
+---
+
+## SCOPE BOUNDARY (IMPORTANT — DO NOT EXCEED)
+
+- Do **not** attempt to build the full bidding engine, chat/call system, payment processing, or ticketing system in this pass — those stay behind the "Download the app" popup from Task 6.
+- Focus only on: correct auth/session state, correct signup completion gating, removing hardcoded data, fixing the two broken navigation links, and building the Client/Provider profile page structure (data display + edit for editable fields only).
+- Don't break any currently-working parts of the site (public pages, service browsing, existing SMTP/OTP setup) while doing this.

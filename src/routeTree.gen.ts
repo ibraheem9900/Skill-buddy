@@ -31,11 +31,13 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as RegisterIndexRouteImport } from './routes/register.index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as CareersIndexRouteImport } from './routes/careers.index'
 import { Route as ServicesIdRouteImport } from './routes/services.$id'
 import { Route as RegisterSkillbuddyRouteImport } from './routes/register.skillbuddy'
 import { Route as RegisterSeekerRouteImport } from './routes/register.seeker'
 import { Route as ProvidersIdRouteImport } from './routes/providers.$id'
+import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
 import { Route as CareersIdRouteImport } from './routes/careers.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
@@ -151,6 +153,11 @@ const RegisterIndexRoute = RegisterIndexRouteImport.update({
   path: '/',
   getParentRoute: () => RegisterRoute,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const CareersIndexRoute = CareersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -175,6 +182,11 @@ const ProvidersIdRoute = ProvidersIdRouteImport.update({
   id: '/providers/$id',
   path: '/providers/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardProfileRoute = DashboardProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const CareersIdRoute = CareersIdRouteImport.update({
   id: '/$id',
@@ -206,7 +218,7 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -222,11 +234,13 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/register/seeker': typeof RegisterSeekerRoute
   '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers/': typeof CareersIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/register/': typeof RegisterIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
@@ -238,7 +252,6 @@ export interface FileRoutesByTo {
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -252,11 +265,13 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/register/seeker': typeof RegisterSeekerRoute
   '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers': typeof CareersIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/register': typeof RegisterIndexRoute
   '/services': typeof ServicesIndexRoute
 }
@@ -270,7 +285,7 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/chat': typeof ChatRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/explore': typeof ExploreRoute
   '/faqs': typeof FaqsRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -286,11 +301,13 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/careers/$id': typeof CareersIdRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
   '/providers/$id': typeof ProvidersIdRoute
   '/register/seeker': typeof RegisterSeekerRoute
   '/register/skillbuddy': typeof RegisterSkillbuddyRoute
   '/services/$id': typeof ServicesIdRoute
   '/careers/': typeof CareersIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/register/': typeof RegisterIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
@@ -321,11 +338,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/careers/$id'
+    | '/dashboard/profile'
     | '/providers/$id'
     | '/register/seeker'
     | '/register/skillbuddy'
     | '/services/$id'
     | '/careers/'
+    | '/dashboard/'
     | '/register/'
     | '/services/'
   fileRoutesByTo: FileRoutesByTo
@@ -337,7 +356,6 @@ export interface FileRouteTypes {
     | '/categories'
     | '/chat'
     | '/contact'
-    | '/dashboard'
     | '/explore'
     | '/faqs'
     | '/forgot-password'
@@ -351,11 +369,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/careers/$id'
+    | '/dashboard/profile'
     | '/providers/$id'
     | '/register/seeker'
     | '/register/skillbuddy'
     | '/services/$id'
     | '/careers'
+    | '/dashboard'
     | '/register'
     | '/services'
   id:
@@ -384,11 +404,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/careers/$id'
+    | '/dashboard/profile'
     | '/providers/$id'
     | '/register/seeker'
     | '/register/skillbuddy'
     | '/services/$id'
     | '/careers/'
+    | '/dashboard/'
     | '/register/'
     | '/services/'
   fileRoutesById: FileRoutesById
@@ -402,7 +424,7 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   ChatRoute: typeof ChatRoute
   ContactRoute: typeof ContactRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   ExploreRoute: typeof ExploreRoute
   FaqsRoute: typeof FaqsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -576,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterIndexRouteImport
       parentRoute: typeof RegisterRoute
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/careers/': {
       id: '/careers/'
       path: '/'
@@ -610,6 +639,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/providers/$id'
       preLoaderRoute: typeof ProvidersIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/profile': {
+      id: '/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/careers/$id': {
       id: '/careers/$id'
@@ -655,6 +691,20 @@ const CareersRouteChildren: CareersRouteChildren = {
 const CareersRouteWithChildren =
   CareersRoute._addFileChildren(CareersRouteChildren)
 
+interface DashboardRouteChildren {
+  DashboardProfileRoute: typeof DashboardProfileRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardProfileRoute: DashboardProfileRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 interface RegisterRouteChildren {
   RegisterSeekerRoute: typeof RegisterSeekerRoute
   RegisterSkillbuddyRoute: typeof RegisterSkillbuddyRoute
@@ -694,7 +744,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   ChatRoute: ChatRoute,
   ContactRoute: ContactRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   ExploreRoute: ExploreRoute,
   FaqsRoute: FaqsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,

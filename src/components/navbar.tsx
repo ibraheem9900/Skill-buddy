@@ -22,7 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const { t } = useI18n();
-  const { user, signOut, loading } = useAuth();
+  const { user, profile, accountStatus, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -55,12 +55,18 @@ export function Navbar() {
     navigate({ to: "/" });
   };
 
-  // Derive display name and avatar
-  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
-  const displayName = (user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || user?.email || "";
+  // Prefer profile row data over OAuth metadata
+  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata?.avatar_url as string | undefined);
+  const displayName = profile?.full_name
+    || (user?.user_metadata?.full_name as string)
+    || (user?.user_metadata?.name as string)
+    || user?.email
+    || "";
   const initials = displayName
     ? displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
+
+  const isFullyOnboarded = accountStatus === "authenticated_verified";
 
   // Portal content — rendered into document.body to escape all stacking contexts
   const mobileMenu = mounted && createPortal(
@@ -137,7 +143,7 @@ export function Navbar() {
             </div>
 
             {/* User info banner (mobile) */}
-            {user && (
+            {user && isFullyOnboarded && (
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "10px 12px", borderRadius: 10,
@@ -199,17 +205,19 @@ export function Navbar() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {user ? (
                 <>
-                  <Link to="/dashboard" onClick={closeMenu}>
-                    <button style={{
-                      width: "100%", padding: "12px", borderRadius: 50,
-                      border: "1.5px solid #2D7A5F", background: "transparent",
-                      color: "#2D7A5F", fontWeight: 600, fontSize: 15, cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    }}>
-                      <LayoutDashboard size={16} />
-                      Dashboard
-                    </button>
-                  </Link>
+                  {isFullyOnboarded && (
+                    <Link to="/dashboard" onClick={closeMenu}>
+                      <button style={{
+                        width: "100%", padding: "12px", borderRadius: 50,
+                        border: "1.5px solid #2D7A5F", background: "transparent",
+                        color: "#2D7A5F", fontWeight: 600, fontSize: 15, cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      }}>
+                        <LayoutDashboard size={16} />
+                        Dashboard
+                      </button>
+                    </Link>
+                  )}
                   <button
                     onClick={handleSignOut}
                     style={{
@@ -318,7 +326,7 @@ export function Navbar() {
             {/* Desktop CTA — conditional on auth state */}
             {!loading && (
               <div className="hidden md:flex items-center gap-2 pl-2">
-                {user ? (
+                {user && isFullyOnboarded ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="flex items-center gap-2 rounded-full pl-2 pr-3 py-1 hover:bg-accent transition-colors outline-none">
@@ -361,6 +369,10 @@ export function Navbar() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                ) : user ? (
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
                 ) : (
                   <>
                     <Button asChild variant="ghost" size="sm">
