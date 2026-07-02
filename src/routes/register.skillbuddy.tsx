@@ -1,7 +1,8 @@
 "use client";
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, CircleCheck as CheckCircle2, Upload, X, Loader as Loader2, Eye, EyeOff, User, Mail, Lock, MapPin, Phone, Building, QrCode, Wrench, Search } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
@@ -40,6 +41,7 @@ function AppleIcon() {
 }
 
 async function handleOAuth(provider: "google" | "apple") {
+  sessionStorage.setItem("oauth_register_flow", "skillbuddy");
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -147,6 +149,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 function ProviderRegisterPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -185,6 +188,21 @@ function ProviderRegisterPage() {
   const certRef = useRef<HTMLInputElement>(null);
   const frontDocRef = useRef<HTMLInputElement>(null);
   const backDocRef = useRef<HTMLInputElement>(null);
+
+  // Detect return from OAuth and jump to step 2 with pre-filled data
+  useEffect(() => {
+    const flow = sessionStorage.getItem("oauth_register_flow");
+    if (flow === "skillbuddy" && user) {
+      sessionStorage.removeItem("oauth_register_flow");
+      const name = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || "";
+      setForm((f) => ({
+        ...f,
+        email: user.email ?? f.email,
+        fullName: name,
+      }));
+      setStep(2);
+    }
+  }, [user]);
 
   const update = (key: keyof FormData, value: string | File | null) =>
     setForm((f) => ({ ...f, [key]: value }));

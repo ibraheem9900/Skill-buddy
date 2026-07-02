@@ -17,6 +17,20 @@ function AuthCallback() {
       if (didNavigate) return;
       didNavigate = true;
 
+      // If user came from a registration form's OAuth button,
+      // send them back to that form's step 2 (flag stays in sessionStorage
+      // for the form component to read and then clear)
+      const oauthFlow = sessionStorage.getItem("oauth_register_flow");
+      if (oauthFlow === "seeker") {
+        navigate({ to: "/register/seeker" });
+        return;
+      }
+      if (oauthFlow === "skillbuddy") {
+        navigate({ to: "/register/skillbuddy" });
+        return;
+      }
+
+      // Normal login — check if profile is complete
       const { data: profile } = await supabase
         .from("profiles")
         .select("role, full_name")
