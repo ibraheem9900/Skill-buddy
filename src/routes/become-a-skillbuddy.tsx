@@ -33,15 +33,6 @@ const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
 
 const CATEGORIES_LIST = Object.keys(CATEGORY_SUBCATEGORIES);
 
-const PREFERENCE_OPTIONS = [
-  "I can handle all services in this category",
-  "I specialize in a specific niche",
-  "I am flexible and open to all tasks",
-  "I prefer weekday jobs only",
-  "I prefer weekend jobs only",
-  "I am available for urgent/same-day jobs",
-];
-
 type FormData = {
   firstName: string;
   lastName: string;
@@ -50,8 +41,8 @@ type FormData = {
   address: string;
   personalCode: string;
   category: string;
-  subcategory: string;
-  preference: string;
+  preference1: string;
+  preference2: string;
   bio: string;
   terms: boolean;
 };
@@ -158,7 +149,7 @@ function BecomeASkillBuddy() {
     if (!data.address.trim()) errors.address = t("becomeSkillbuddy.addressRequired");
     if (!/^\d{11}$/.test(data.personalCode)) errors.personalCode = t("becomeSkillbuddy.personalCodeError");
     if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
-    if (data.category && !data.subcategory) errors.subcategory = "Please select your specific service";
+    if (data.category && !data.preference1) errors.preference1 = "Please select your Preference 1";
     if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
     if (!data.terms) errors.terms = t("becomeSkillbuddy.termsRequired");
     return errors;
@@ -174,14 +165,17 @@ function BecomeASkillBuddy() {
 
   const [form, setForm] = useState<FormData>({
     firstName: "", lastName: "", email: "", phone: "",
-    address: "", personalCode: "", category: "", subcategory: "",
-    preference: "", bio: "", terms: false,
+    address: "", personalCode: "", category: "", preference1: "",
+    preference2: "", bio: "", terms: false,
   });
 
   const set = (key: keyof FormData, value: string | boolean) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
-    if (key === "category") setForm((p) => ({ ...p, category: value as string, subcategory: "", preference: "" }));
+    if (key === "category") setForm((p) => ({ ...p, category: value as string, preference1: "", preference2: "" }));
+    if (key === "preference1" && form.preference2 === value) {
+      setForm((p) => ({ ...p, preference2: "" }));
+    }
   };
 
   const handleFile = (file: File) => {
@@ -413,7 +407,7 @@ function BecomeASkillBuddy() {
                 <CustomSelect
                   value={form.category}
                   onChange={(val) => {
-                    setForm((p) => ({ ...p, category: val, subcategory: "", preference: "" }));
+                    setForm((p) => ({ ...p, category: val, preference1: "", preference2: "" }));
                     if (errors.category) setErrors((p) => { const n = { ...p }; delete n.category; return n; });
                   }}
                   options={CATEGORIES_LIST}
@@ -423,7 +417,9 @@ function BecomeASkillBuddy() {
                 {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
               </div>
 
-              {/* Subcategory + Preference — fade in after category selected */}
+              {/* Preference 1 + Preference 2 — fade in after category selected. Both share the
+                  identical options list (the selected category's specific services); Preference 2
+                  excludes whatever is chosen in Preference 1 to prevent picking the same value twice. */}
               <AnimatePresence>
                 {form.category && (
                   <motion.div
@@ -433,30 +429,30 @@ function BecomeASkillBuddy() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="space-y-5"
                   >
-                    {/* Subcategory — MANDATORY */}
+                    {/* Preference 1 — MANDATORY */}
                     <div>
-                      <label className={labelClass}>Select your specific service *</label>
+                      <label className={labelClass}>Preference 1 *</label>
                       <CustomSelect
-                        value={form.subcategory}
+                        value={form.preference1}
                         onChange={(val) => {
-                          set("subcategory", val);
-                          if (errors.subcategory) setErrors((p) => { const n = { ...p }; delete n.subcategory; return n; });
+                          set("preference1", val);
+                          if (errors.preference1) setErrors((p) => { const n = { ...p }; delete n.preference1; return n; });
                         }}
                         options={CATEGORY_SUBCATEGORIES[form.category] ?? []}
-                        placeholder="Choose your specific service"
-                        error={errors.subcategory}
+                        placeholder="Choose your preferred service"
+                        error={errors.preference1}
                       />
-                      {errors.subcategory && <p className="mt-1 text-xs text-red-500">{errors.subcategory}</p>}
+                      {errors.preference1 && <p className="mt-1 text-xs text-red-500">{errors.preference1}</p>}
                     </div>
 
-                    {/* Preference — OPTIONAL */}
+                    {/* Preference 2 — OPTIONAL, same options as Preference 1 minus its current value */}
                     <div>
-                      <label className={labelClass}>Any preference or specialization? <span className="text-muted-foreground font-normal">(optional)</span></label>
+                      <label className={labelClass}>Preference 2 <span className="text-muted-foreground font-normal">(optional)</span></label>
                       <CustomSelect
-                        value={form.preference}
-                        onChange={(val) => set("preference", val)}
-                        options={PREFERENCE_OPTIONS}
-                        placeholder="Select a preference (optional)"
+                        value={form.preference2}
+                        onChange={(val) => set("preference2", val)}
+                        options={(CATEGORY_SUBCATEGORIES[form.category] ?? []).filter((opt) => opt !== form.preference1)}
+                        placeholder="Choose another preference (optional)"
                       />
                     </div>
                   </motion.div>

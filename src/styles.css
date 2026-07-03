@@ -262,6 +262,7 @@
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   width: 100%;
+  background-color: var(--color-background);
 }
 .snap-container::-webkit-scrollbar { display: none; }
 
@@ -273,6 +274,7 @@
   position: relative;
   flex-shrink: 0;
   width: 100%;
+  background-color: var(--color-background);
 }
 
 /* Footer section: auto height, snap to it so desktop users can reach it */
@@ -286,9 +288,11 @@
 /* ── FIX 1: Mobile — one section per screen, matching desktop scroll-snap ─── */
 @media (max-width: 768px) {
   /* Use clip instead of hidden — clip doesn't create a new containing block
-     for position:fixed elements, so the mobile menu drawer works correctly */
-  body { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; }
-  html { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; }
+     for position:fixed elements, so the mobile menu drawer works correctly.
+     scroll-behavior:smooth + -webkit-overflow-scrolling:touch give the
+     section-to-section snap a smoother, momentum-driven feel on mobile. */
+  body { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; scroll-behavior: smooth !important; -webkit-overflow-scrolling: touch !important; background-color: var(--color-background); }
+  html { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; scroll-behavior: smooth !important; background-color: var(--color-background); }
 
   /* Snap container: the page (html/body) owns the scroll + snap on mobile,
      since the container itself is normal document flow (no fixed height). */
@@ -301,7 +305,9 @@
 
   /* Each snap section: one section fills (at least) one screen so sections
      reveal one at a time instead of clustering together. Content taller than
-     the viewport simply grows the section — nothing gets clipped. */
+     the viewport simply grows the section — nothing gets clipped. A solid
+     theme background (inherited from the base .snap-section rule) means any
+     leftover space inside this box is never left uncolored/white. */
   .snap-section {
     height: auto !important;
     min-height: calc(100svh - var(--navbar-height)) !important;
@@ -323,10 +329,15 @@
     padding-top: 0 !important;
   }
 
-  /* Inner sections: auto height, no clipping */
+  /* Inner sections: flex:1 stretches the section to fill its parent's
+     min-height using flexbox (not percentage height, which silently fails
+     to resolve against an auto-height flex parent and was the cause of the
+     uncolored gap under the navbar). Content taller than one screen still
+     grows the section normally since flex-basis is auto. */
   .snap-section section {
     height: auto !important;
     min-height: 0 !important;
+    flex: 1 1 auto !important;
     overflow: visible !important;
     transform: none !important;
     will-change: auto !important;
