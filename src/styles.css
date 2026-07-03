@@ -423,9 +423,7 @@
 @media (max-width: 768px) {
   .badge-cards-row,
   .badge-tiers,
-  .tier-cards-row,
-  [class*="badge-tier"],
-  [class*="reward-tier"] {
+  .tier-cards-row {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
@@ -434,8 +432,7 @@
     overflow-x: hidden !important;
   }
   .badge-tier-card,
-  .tier-card,
-  [class*="tier-card"] {
+  .tier-card {
     width: 100% !important;
     min-width: unset !important;
     max-width: 100% !important;
@@ -458,12 +455,7 @@
   .cards-grid,
   .badge-cards-container,
   .tier-cards,
-  .reward-cards,
-  [class*="card-row"],
-  [class*="cards-row"],
-  [class*="cards-container"],
-  [class*="tier-row"],
-  [class*="badge-row"] {
+  .reward-cards {
     flex-direction: column !important;
     overflow-x: hidden !important;
     min-width: unset !important;
@@ -476,9 +468,7 @@
   .card,
   .tier-card,
   .badge-card,
-  .reward-card,
-  [class*="-card"],
-  [class*="card-"] {
+  .reward-card {
     width: 100% !important;
     min-width: unset !important;
     max-width: 100% !important;
