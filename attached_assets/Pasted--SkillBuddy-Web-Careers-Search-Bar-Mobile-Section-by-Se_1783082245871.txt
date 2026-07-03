@@ -1,0 +1,53 @@
+# SkillBuddy Web — Careers Search Bar, Mobile Section-by-Section Scroll & Skill Preference Dropdown Fix (Replit Prompt)
+
+Copy everything below this line into Replit AI / your dev agent.
+
+---
+
+## CONTEXT
+
+Three more fixes needed: the search bar on the Careers/Jobs page needs proper centering, the mobile homepage scroll behavior needs to show one section at a time like desktop does, and the "Become a SkillBuddy" signup page's skill preference dropdowns need a mandatory/optional structure fix.
+
+---
+
+## TASK 1 — Center-Align the Careers Page Search Bar
+
+**Problem:** On the Careers (Jobs) page, the search bar is not properly centered on the page, and it's too wide.
+
+**Required fix:**
+- Reduce the search bar's width so it reads as a focused search element, not a full-width bar (match the visual proportion used for search bars elsewhere on the site, e.g. the homepage hero search bar, for consistency).
+- Center-align it horizontally within its section/container, on both desktop and mobile.
+- Keep it easy to tap/click and readable at all breakpoints — don't shrink it so much that it becomes cramped on mobile; just bring its max-width in line with the rest of the site's search bar sizing and center it properly.
+
+---
+
+## TASK 2 — Mobile Homepage: One Section Per Screen, Matching Desktop Scroll Animation
+
+**Problem:** On desktop, the homepage scroll experience reveals **one distinct section at a time** as the user scrolls, each with its own entrance animation. On mobile, this currently breaks down — multiple sections appear clustered together on the same screen at once instead of one at a time, and the scroll-triggered animation doesn't match the desktop behavior.
+
+**Required fix:**
+- On mobile, each homepage section (hero, banner, categories, featured services, how-it-works, testimonials, footer CTA — whatever the actual desktop section list is) must occupy its own distinct screen area and animate into view **one at a time** as the user scrolls, exactly mirroring how it behaves on desktop — not multiple sections bunched together and visible simultaneously.
+- Reuse the exact same scroll-triggered animation technique/library already used on desktop (check what's already implemented — e.g. Framer Motion `whileInView`, or an `IntersectionObserver`-based approach — and apply the same one to mobile, don't introduce a second animation system).
+- This is not necessarily about forcing full-viewport-height scroll-snap per section (only do that if that's what desktop already does) — the core requirement is: **no clustering of 2–3 sections crammed into one screen on mobile**, and the same fade-in/slide-up entrance animation timing and style as desktop, triggered per-section as it scrolls into view.
+- Test at common mobile breakpoints (375px, 390px, 768px) using actual touch/scroll interaction, not just a resized desktop window, to confirm sections reveal one at a time with the correct animation, matching the desktop experience.
+- Desktop behavior must remain unchanged — this task only brings mobile up to the same standard.
+
+---
+
+## TASK 3 — Fix "Become a SkillBuddy" Skill Preference Dropdowns (Preference 1 / Preference 2)
+
+**Problem:** On the "Become a SkillBuddy" (provider signup) page, under "Which category do you work in?", there are two preference selectors. The first preference works correctly, but the second preference is currently not set up right — it doesn't offer the same dropdown/options as the first one.
+
+**Required fix:**
+- Both preference selectors must use the **exact same dropdown component and the exact same list of category/skill options** — Preference 2 is not a different, more limited field; it's the same selector as Preference 1.
+- **Preference 1 is mandatory** — the user must select a category to proceed.
+- **Preference 2 is optional** — the user may leave it unselected, or choose a second category (representing another skill/category they also work in). Since it's optional, its label/placeholder should make that clear (e.g. "Preference 2 (optional)" or similar, whatever fits the existing form label style).
+- Clearly label the two fields so their purpose is obvious — e.g. "Preference 1" and "Preference 2" as field titles/labels (or another clear equivalent already used in the app's naming conventions), so the user understands Preference 1 is their primary skill category and Preference 2 is an optional secondary one.
+- Prevent the user from selecting the **same category in both fields** — if they pick the same option in Preference 2 that they already picked in Preference 1, either disable that option in the Preference 2 list or show a validation message asking them to pick a different one.
+- On submit, Preference 1 must be required/validated; Preference 2 should submit as empty/null if the user didn't select anything, without blocking form submission.
+
+---
+
+## SCOPE BOUNDARY
+
+Only fix these three specific things — the Careers page search bar sizing/alignment, mobile homepage one-section-at-a-time scroll behavior matching desktop, and the Preference 1/Preference 2 dropdown structure on the Become a SkillBuddy page. Do not modify unrelated pages, auth logic, or backend/Supabase schema while doing this — these are frontend UI/UX and form-logic fixes only.

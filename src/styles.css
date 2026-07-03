@@ -283,14 +283,15 @@
   scroll-snap-align: start !important;
 }
 
-/* ── FIX 1: Mobile — disable snap-scroll, auto height sections ────────────── */
+/* ── FIX 1: Mobile — one section per screen, matching desktop scroll-snap ─── */
 @media (max-width: 768px) {
   /* Use clip instead of hidden — clip doesn't create a new containing block
      for position:fixed elements, so the mobile menu drawer works correctly */
-  body { overflow-x: clip !important; overflow-y: auto !important; }
-  html { overflow-x: clip !important; overflow-y: auto !important; }
+  body { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; }
+  html { overflow-x: clip !important; overflow-y: auto !important; scroll-snap-type: y proximity !important; }
 
-  /* Snap container: normal document scroll on mobile */
+  /* Snap container: the page (html/body) owns the scroll + snap on mobile,
+     since the container itself is normal document flow (no fixed height). */
   .snap-container {
     height: auto !important;
     overflow-y: visible !important;
@@ -298,14 +299,18 @@
     scroll-snap-type: none !important;
   }
 
-  /* Each snap section: natural height, no clipping.
-     Zero outer padding so each section's own background fills edge-to-edge
-     (no dead-zone gap between backgrounds in dark mode). */
+  /* Each snap section: one section fills (at least) one screen so sections
+     reveal one at a time instead of clustering together. Content taller than
+     the viewport simply grows the section — nothing gets clipped. */
   .snap-section {
     height: auto !important;
-    min-height: 0 !important;
+    min-height: calc(100svh - var(--navbar-height)) !important;
     overflow: visible !important;
-    scroll-snap-align: none !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     width: 100% !important;
@@ -316,7 +321,6 @@
   /* Hero outer: no extra padding — inner section owns the spacing */
   .snap-section:first-child {
     padding-top: 0 !important;
-    min-height: 0 !important;
   }
 
   /* Inner sections: auto height, no clipping */
@@ -339,6 +343,12 @@
     justify-content: flex-start !important;
     padding-top: 32px !important;
     padding-bottom: 0 !important;
+  }
+
+  /* Footer section: content-driven height — it's the last section, so it
+     doesn't need to fill a full screen, it just needs its own scroll stop. */
+  .snap-section-footer {
+    min-height: 0 !important;
   }
 
   /* Ensure no element breaks out horizontally */

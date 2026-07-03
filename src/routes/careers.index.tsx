@@ -193,8 +193,8 @@ function CareersPage() {
 
       {/* SEARCH BAR */}
       <div className="sticky top-16 z-20 border-b border-border bg-background/95 px-4 py-4 backdrop-blur sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="relative flex items-center">
+        <div className="mx-auto flex max-w-7xl justify-center">
+          <div className="relative flex w-full max-w-2xl items-center">
             <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
             <Input
               value={query}

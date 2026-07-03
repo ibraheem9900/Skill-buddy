@@ -12,7 +12,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -113,13 +115,6 @@ const SKILLS = [
 // Unique categories derived from SKILLS
 const SKILL_CATEGORIES = Array.from(new Set(SKILLS.map((s) => s.category))).sort();
 
-// Subcategory options mapped to preference dropdown
-const SERVICE_PREFERENCES = [
-  "I can do all services in this subcategory",
-  "I specialize in a specific type",
-  "I am flexible / open to all",
-];
-
 type FormData = {
   username: string;
   email: string;
@@ -134,9 +129,6 @@ type FormData = {
   streetAddress: string;
   houseNumber: string;
   primarySkill: string;
-  serviceCategory: string;
-  subcategorySkill: string;
-  servicePreference: string;
   secondarySkill: string;
   certification: File | null;
   residencePermitFront: File | null;
@@ -157,7 +149,6 @@ function ProviderRegisterPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [resendCountdown, setResendCountdown] = useState(0);
-  const [skillSearch, setSkillSearch] = useState("");
 
   const [form, setForm] = useState<FormData>({
     username: "",
@@ -173,9 +164,6 @@ function ProviderRegisterPage() {
     streetAddress: "",
     houseNumber: "",
     primarySkill: "",
-    serviceCategory: "",
-    subcategorySkill: "",
-    servicePreference: "",
     secondarySkill: "",
     certification: null,
     residencePermitFront: null,
@@ -236,8 +224,10 @@ function ProviderRegisterPage() {
 
   const validateStep3 = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.serviceCategory) errs.serviceCategory = t("auth.validation.required");
-    if (!form.subcategorySkill) errs.subcategorySkill = t("auth.validation.required");
+    if (!form.primarySkill) errs.primarySkill = t("auth.validation.required");
+    if (form.secondarySkill && form.secondarySkill === form.primarySkill) {
+      errs.secondarySkill = t("register.step3.duplicateSkill");
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -452,7 +442,7 @@ function ProviderRegisterPage() {
 
       const { error: providerError } = await supabase.from("provider_profiles").insert({
         user_id: user.id,
-        primary_skill: form.subcategorySkill || form.primarySkill,
+        primary_skill: form.primarySkill,
         secondary_skill: form.secondarySkill || null,
         certification_url: certificationUrl,
         residence_permit_front_url: frontDocUrl,
@@ -487,12 +477,6 @@ function ProviderRegisterPage() {
     setErrors((e) => ({ ...e, [key]: undefined }));
     update(key, file);
   };
-
-  const filteredSkills = SKILLS.filter(
-    (s) =>
-      s.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
-      s.category.toLowerCase().includes(skillSearch.toLowerCase())
-  );
 
   return (
     <SiteShell>
@@ -1033,17 +1017,6 @@ function Step3Form({
 }) {
   const { t } = useI18n();
 
-  // Skills filtered by selected category
-  const subcategoryOptions = form.serviceCategory
-    ? SKILLS.filter((s) => s.category === form.serviceCategory)
-    : [];
-
-  // When category changes, clear subcategory
-  const handleCategoryChange = (cat: string) => {
-    onUpdate("serviceCategory", cat);
-    onUpdate("subcategorySkill", "");
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -1057,91 +1030,80 @@ function Step3Form({
 
       <div className="mt-6 space-y-5">
 
-        {/* ── Dropdown 1: Category ── */}
+        {/* ── Preference 1: primary skill (mandatory) ── */}
         <div>
           <Label className="text-sm font-semibold">
-            {t("register.step3.categoryLabel")} <span className="text-red-500">*</span>
+            {t("register.step3.preference1Label")} <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={form.serviceCategory}
-            onValueChange={handleCategoryChange}
+            value={form.primarySkill}
+            onValueChange={(v) => {
+              onUpdate("primarySkill", v as string);
+              // Preference 2 can't match Preference 1 — clear it if it now does
+              if (form.secondarySkill === v) onUpdate("secondarySkill", "");
+            }}
           >
             <SelectTrigger
               className={`mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F] ${
-                errors.serviceCategory ? "border-red-500" : ""
+                errors.primarySkill ? "border-red-500" : ""
               }`}
             >
-              <SelectValue placeholder={t("register.step3.categoryPlaceholder")} />
+              <SelectValue placeholder={t("register.step3.preference1Placeholder")} />
             </SelectTrigger>
             <SelectContent>
               {SKILL_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
+                <SelectGroup key={cat}>
+                  <SelectLabel>{cat}</SelectLabel>
+                  {SKILLS.filter((s) => s.category === cat).map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>
-          {errors.serviceCategory && (
-            <p className="mt-1 text-xs text-red-500">{errors.serviceCategory}</p>
+          {errors.primarySkill && (
+            <p className="mt-1 text-xs text-red-500">{errors.primarySkill}</p>
           )}
         </div>
 
-        {/* ── Dropdown 2: Subcategory / Specific service (mandatory) ── */}
+        {/* ── Preference 2: secondary skill (optional, same options list) ── */}
         <div>
           <Label className="text-sm font-semibold">
-            {t("register.step3.subcategoryLabel")} <span className="text-red-500">*</span>
+            {t("register.step3.preference2Label")}
           </Label>
           <Select
-            value={form.subcategorySkill}
-            onValueChange={(v) => onUpdate("subcategorySkill", v as string)}
-            disabled={!form.serviceCategory}
+            value={form.secondarySkill}
+            onValueChange={(v) => onUpdate("secondarySkill", v as string)}
           >
             <SelectTrigger
               className={`mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F] ${
-                errors.subcategorySkill ? "border-red-500" : ""
-              } ${!form.serviceCategory ? "opacity-50 cursor-not-allowed" : ""}`}
+                errors.secondarySkill ? "border-red-500" : ""
+              }`}
             >
-              <SelectValue
-                placeholder={
-                  form.serviceCategory
-                    ? t("register.step3.subcategoryPlaceholder")
-                    : t("register.step3.subcategoryFirst")
-                }
-              />
+              <SelectValue placeholder={t("register.step3.preference2Placeholder")} />
             </SelectTrigger>
             <SelectContent>
-              {subcategoryOptions.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
+              {SKILL_CATEGORIES.map((cat) => (
+                <SelectGroup key={cat}>
+                  <SelectLabel>{cat}</SelectLabel>
+                  {SKILLS.filter((s) => s.category === cat).map((s) => (
+                    <SelectItem
+                      key={s.id}
+                      value={s.id}
+                      disabled={s.id === form.primarySkill}
+                    >
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>
-          {errors.subcategorySkill && (
-            <p className="mt-1 text-xs text-red-500">{errors.subcategorySkill}</p>
+          {errors.secondarySkill && (
+            <p className="mt-1 text-xs text-red-500">{errors.secondarySkill}</p>
           )}
-        </div>
-
-        {/* ── Dropdown 3: Service Preference (optional) ── */}
-        <div>
-          <Label className="text-sm font-semibold">
-            {t("register.step3.preferenceLabel")}
-          </Label>
-          <Select
-            value={form.servicePreference}
-            onValueChange={(v) => onUpdate("servicePreference", v as string)}
-          >
-            <SelectTrigger className="mt-1.5 h-11 focus:ring-2 focus:ring-[#2D7A5F]">
-              <SelectValue placeholder={t("register.step3.preferencePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {SERVICE_PREFERENCES.map((pref) => (
-                <SelectItem key={pref} value={pref}>
-                  {pref}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {/* ── Certification upload ── */}

@@ -84,9 +84,7 @@ function Home() {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(SECTION_COUNT).fill(null));
   const [activeSection, setActiveSection] = useState(0);
   const activeSectionRef = useRef(0);
-  /* On mobile: once a section enters the viewport it stays "active" forever
-     so animations play once and remain visible as the user scrolls. */
-  const [seenSections, setSeenSections] = useState<Set<number>>(new Set([0]));
+  const ratiosRef = useRef<Map<number, number>>(new Map());
   const [popularServicesCard, setPopularServicesCard] = useState(1);
   const popularServicesCardRef = useRef(0);
   const isAnimatingRef = useRef(false);
@@ -116,35 +114,38 @@ function Home() {
     };
   }, [isMobile]);
 
-  /* Intersection observers:
-     - Mobile: add section to seenSections (never remove → animations stay visible)
-     - Desktop: update activeSection (snap-scroll, one section at a time) */
+  /* Intersection observer: a single observer tracks how much of each section
+     is visible, and whichever section has the highest visible ratio becomes
+     "active" and plays its entrance animation — exactly the same model on
+     mobile and desktop, one section at a time. They only differ in `root`
+     (desktop scrolls inside the fixed-height container; mobile scrolls the
+     page itself since sections use normal document flow). */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    ratiosRef.current = new Map();
     const observers: IntersectionObserver[] = [];
+    const THRESHOLDS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
     sectionRefs.current.forEach((el, idx) => {
       if (!el) return;
       const obs = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (isMobile) {
-              if (entry.isIntersecting) {
-                setSeenSections((prev) => {
-                  if (prev.has(idx)) return prev;
-                  return new Set([...prev, idx]);
-                });
-              }
-            } else {
-              if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-                setActiveSection(idx);
-              }
+            ratiosRef.current.set(idx, entry.isIntersecting ? entry.intersectionRatio : 0);
+          });
+          let bestIdx = activeSectionRef.current;
+          let bestRatio = 0;
+          ratiosRef.current.forEach((ratio, i) => {
+            if (ratio > bestRatio) {
+              bestRatio = ratio;
+              bestIdx = i;
             }
           });
+          if (bestRatio > 0.15 && bestIdx !== activeSectionRef.current) {
+            setActiveSection(bestIdx);
+          }
         },
-        isMobile
-          ? { threshold: 0.1, root: null }
-          : { threshold: 0.5, root: container }
+        { threshold: THRESHOLDS, root: isMobile ? null : container }
       );
       obs.observe(el);
       observers.push(obs);
@@ -156,10 +157,10 @@ function Home() {
     sectionRefs.current[idx] = el;
   }, []);
 
-  /* isActive: on mobile = "has this section ever been seen", on desktop = "currently snapped" */
+  /* isActive: currently the most-visible/snapped section, same rule on mobile and desktop */
   const getIsActive = useCallback((idx: number): boolean => {
-    return isMobile ? seenSections.has(idx) : activeSection === idx;
-  }, [isMobile, seenSections, activeSection]);
+    return activeSection === idx;
+  }, [activeSection]);
 
   return (
     <>
