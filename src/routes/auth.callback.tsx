@@ -1,89 +1,82 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase-browser";
 import { Loader } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { tokenStore } from "@/lib/auth-tokens";
+import { z } from "zod";
+
+/**
+ * OAuth callback handler for FastAPI-driven Google/Apple sign-in.
+ *
+ * ⚠️  FLAG FOR BACKEND TEAM: Confirm the exact redirect target and token delivery
+ *     mechanism after the backend completes the OAuth dance.
+ *     Assumption: backend redirects to {origin}/auth/callback with tokens as
+ *     query params: ?access_token=...&refresh_token=...&token_type=bearer
+ *     If tokens arrive differently (e.g. in the URL fragment or a POST), update this handler.
+ */
+
+const searchSchema = z.object({
+  access_token: z.string().optional(),
+  refresh_token: z.string().optional(),
+  token_type: z.string().optional(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+});
 
 export const Route = createFileRoute("/auth/callback")({
+  validateSearch: searchSchema,
   component: AuthCallback,
 });
 
 function AuthCallback() {
   const navigate = useNavigate();
+  const { signIn, refreshUser } = useAuth();
+  const { access_token, refresh_token, error, error_description } = Route.useSearch();
 
   useEffect(() => {
-    let didNavigate = false;
+    let cancelled = false;
 
-    const goNext = async (userId: string) => {
-      if (didNavigate) return;
-      didNavigate = true;
-
-      // If user came from a registration form's OAuth button,
-      // send them back to that form's step 2 (flag stays in sessionStorage
-      // for the form component to read and then clear)
-      const oauthFlow = sessionStorage.getItem("oauth_register_flow");
-      if (oauthFlow === "seeker") {
-        navigate({ to: "/register/seeker" });
-        return;
-      }
-      if (oauthFlow === "skillbuddy") {
-        navigate({ to: "/register/skillbuddy" });
+    const handle = async () => {
+      // Error from OAuth provider
+      if (error) {
+        console.error("OAuth error:", error, error_description);
+        navigate({ to: "/auth/login" });
         return;
       }
 
-      // Normal login — check if profile is complete
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, full_name")
-        .eq("user_id", userId)
-        .single();
+      // Tokens present in query params (backend redirect)
+      if (access_token && refresh_token) {
+        // Immediately scrub tokens from the URL to avoid leaking via history/referrer
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
-      if (profile?.full_name) {
-        navigate({ to: "/dashboard" });
-      } else {
-        navigate({ to: "/register" });
+        tokenStore.setAccess(access_token);
+        tokenStore.setRefresh(refresh_token);
+
+        try {
+          await refreshUser();
+        } catch {
+          // refreshUser throws on API failure; send back to login
+          tokenStore.clear();
+          navigate({ to: "/auth/login" });
+          return;
+        }
+
+        if (!cancelled) navigate({ to: "/dashboard" });
+        return;
       }
+
+      // No tokens — something unexpected; send back to login
+      navigate({ to: "/auth/login" });
     };
 
-    // Supabase fires SIGNED_IN for both PKCE (?code=) and implicit (#access_token=) flows
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user) {
-          subscription.unsubscribe();
-          clearTimeout(timer);
-          await goNext(session.user.id);
-        }
-      }
-    );
-
-    // Also manually handle PKCE code exchange if ?code= is in the URL
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).catch(() => {});
-    }
-
-    // Fallback: if already signed in (e.g. returning to the page)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && !didNavigate) {
-        subscription.unsubscribe();
-        clearTimeout(timer);
-        goNext(session.user.id);
-      }
-    });
-
-    // Timeout — something went wrong, send to login
-    const timer = setTimeout(() => {
-      if (!didNavigate) {
-        subscription.unsubscribe();
-        navigate({ to: "/auth/login" });
-      }
-    }, 10_000);
+    handle();
 
     return () => {
-      subscription.unsubscribe();
-      clearTimeout(timer);
+      cancelled = true;
     };
-  }, [navigate]);
+  }, [access_token, refresh_token, error, error_description, navigate, signIn, refreshUser]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

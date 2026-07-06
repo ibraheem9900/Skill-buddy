@@ -18,11 +18,12 @@ import { useTheme } from "@/components/theme-provider";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/context/AuthContext";
+import { getFullName } from "@/lib/user-helpers";
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const { t } = useI18n();
-  const { user, profile, accountStatus, signOut, loading } = useAuth();
+  const { user, accountStatus, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -55,25 +56,18 @@ export function Navbar() {
     navigate({ to: "/" });
   };
 
-  // Prefer profile row data over OAuth metadata
-  const avatarUrl = profile?.avatar_url ?? (user?.user_metadata?.avatar_url as string | undefined);
-  const displayName = profile?.full_name
-    || (user?.user_metadata?.full_name as string)
-    || (user?.user_metadata?.name as string)
-    || user?.email
-    || "";
+  const displayName = getFullName(user);
+  const avatarUrl = user?.avatar_url ?? undefined;
   const initials = displayName
     ? displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
   const isFullyOnboarded = accountStatus === "authenticated_verified";
 
-  // Portal content — rendered into document.body to escape all stacking contexts
   const mobileMenu = mounted && createPortal(
     <AnimatePresence>
       {menuOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -82,16 +76,12 @@ export function Navbar() {
             transition={{ duration: 0.2 }}
             onClick={closeMenu}
             style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 99998,
+              position: "fixed", inset: 0, zIndex: 99998,
               backgroundColor: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
+              backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
               touchAction: "none",
             }}
           />
-          {/* Drawer */}
           <motion.div
             key="drawer"
             initial={{ x: "100%" }}
@@ -99,42 +89,23 @@ export function Navbar() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             style={{
-              position: "fixed",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: "80vw",
-              maxWidth: 300,
-              zIndex: 99999,
+              position: "fixed", top: 0, right: 0, bottom: 0,
+              width: "80vw", maxWidth: 300, zIndex: 99999,
               boxShadow: "-8px 0 40px rgba(0,0,0,0.25)",
-              display: "flex",
-              flexDirection: "column",
-              paddingTop: 16,
-              paddingLeft: 20,
-              paddingRight: 20,
-              paddingBottom: 24,
-              overflowY: "auto",
-              background: "var(--background, #fff)",
+              display: "flex", flexDirection: "column",
+              paddingTop: 16, paddingLeft: 20, paddingRight: 20, paddingBottom: 24,
+              overflowY: "auto", background: "var(--background, #fff)",
             }}
           >
-            {/* Close button row */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <Logo size={28} />
               <button
                 onClick={closeMenu}
                 style={{
-                  background: "none",
-                  border: "1px solid rgba(0,0,0,0.12)",
-                  borderRadius: 8,
-                  width: 32,
-                  height: 32,
-                  fontSize: 18,
-                  cursor: "pointer",
-                  color: "currentColor",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  background: "none", border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 8, width: 32, height: 32, fontSize: 18,
+                  cursor: "pointer", color: "currentColor",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}
                 aria-label="Close menu"
               >
@@ -142,20 +113,17 @@ export function Navbar() {
               </button>
             </div>
 
-            {/* User info banner (mobile) */}
             {user && isFullyOnboarded && (
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "10px 12px", borderRadius: 10,
-                background: "rgba(45,122,95,0.08)",
-                marginBottom: 8,
+                background: "rgba(45,122,95,0.08)", marginBottom: 8,
               }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: "50%",
                   background: "#2D7A5F", color: "#fff",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 700, fontSize: 14, flexShrink: 0,
-                  overflow: "hidden",
+                  fontWeight: 700, fontSize: 14, flexShrink: 0, overflow: "hidden",
                 }}>
                   {avatarUrl
                     ? <img src={avatarUrl} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -172,7 +140,6 @@ export function Navbar() {
               </div>
             )}
 
-            {/* Nav links */}
             <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
               {navLinks.map((link) => (
                 <Link
@@ -182,12 +149,8 @@ export function Navbar() {
                   activeOptions={{ exact: link.to === "/" }}
                   className="text-foreground hover:bg-accent"
                   style={{
-                    display: "block",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    fontSize: 16,
-                    fontWeight: 500,
-                    textDecoration: "none",
+                    display: "block", padding: "10px 12px",
+                    borderRadius: 10, fontSize: 16, fontWeight: 500, textDecoration: "none",
                   }}
                 >
                   {link.label}
@@ -198,10 +161,8 @@ export function Navbar() {
               </div>
             </nav>
 
-            {/* Divider */}
             <div style={{ height: 1, background: "rgba(0,0,0,0.08)", marginBottom: 16 }} />
 
-            {/* Auth buttons — conditional */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {user ? (
                 <>
@@ -294,7 +255,6 @@ export function Navbar() {
             <Logo />
           </Link>
 
-          {/* Desktop nav links */}
           <nav className="hidden items-center gap-1 lg:flex">
             {navLinks.map((n) => (
               <Link
@@ -328,15 +288,10 @@ export function Navbar() {
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </motion.div>
             </Button>
 
-            {/* Desktop CTA — conditional on auth state */}
             {!loading && (
               <div className="hidden md:flex items-center gap-2 pl-2">
                 {user && isFullyOnboarded ? (
@@ -350,7 +305,7 @@ export function Navbar() {
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-semibold max-w-[120px] truncate">
-                          {displayName.split(" ")[0] || "Account"}
+                          {user.first_name || displayName.split(" ")[0] || "Account"}
                         </span>
                       </button>
                     </DropdownMenuTrigger>
@@ -410,28 +365,15 @@ export function Navbar() {
                     transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                     whileHover={{ scale: 1.06, y: -1 }}
                     whileTap={{ scale: 0.97 }}
-                    style={{
-                      background: "linear-gradient(135deg, #DA983C, #F99912)",
-                      color: "white",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
+                    style={{ background: "linear-gradient(135deg, #DA983C, #F99912)", color: "white", border: "none", cursor: "pointer" }}
                   >
-                    <img
-                      src={iconTransparent}
-                      alt="SkillBuddy"
-                      style={{
-                        width: 20, height: 20, objectFit: "contain",
-                        filter: "brightness(0) invert(1)", flexShrink: 0,
-                      }}
-                    />
+                    <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
                     <span>{t("nav.becomeSkillBuddy")}</span>
                   </motion.button>
                 </Link>
               </div>
             )}
 
-            {/* Hamburger — mobile & tablet only */}
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -444,28 +386,18 @@ export function Navbar() {
                 animate={menuOpen ? "open" : "closed"}
                 style={{ display: "flex", flexDirection: "column", gap: "5px", width: 22 }}
               >
-                <motion.span
-                  variants={{ closed: { rotate: 0, y: 0 }, open: { rotate: 45, y: 7 } }}
-                  transition={{ duration: 0.25 }}
-                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2, transformOrigin: "center" }}
-                />
-                <motion.span
-                  variants={{ closed: { opacity: 1 }, open: { opacity: 0 } }}
-                  transition={{ duration: 0.15 }}
-                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2 }}
-                />
-                <motion.span
-                  variants={{ closed: { rotate: 0, y: 0 }, open: { rotate: -45, y: -7 } }}
-                  transition={{ duration: 0.25 }}
-                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2, transformOrigin: "center" }}
-                />
+                <motion.span variants={{ closed: { rotate: 0, y: 0 }, open: { rotate: 45, y: 7 } }} transition={{ duration: 0.25 }}
+                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2, transformOrigin: "center" }} />
+                <motion.span variants={{ closed: { opacity: 1 }, open: { opacity: 0 } }} transition={{ duration: 0.15 }}
+                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2 }} />
+                <motion.span variants={{ closed: { rotate: 0, y: 0 }, open: { rotate: -45, y: -7 } }} transition={{ duration: 0.25 }}
+                  style={{ display: "block", height: 2, width: 22, background: "currentColor", borderRadius: 2, transformOrigin: "center" }} />
               </motion.div>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile menu rendered in a portal (document.body) — avoids all stacking context issues */}
       {mobileMenu}
     </>
   );

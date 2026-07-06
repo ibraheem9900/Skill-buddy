@@ -3,8 +3,9 @@ import { useState } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, XCircle, Clock3, Hand } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
 
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/dashboard/")({
   component: DashboardIndex,
 });
 
-function getInitials(name: string | null | undefined): string {
+function getInitials(name: string): string {
   if (!name) return "?";
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
@@ -37,7 +38,7 @@ function EmptyState({ label }: { label: string }) {
 }
 
 function DashboardIndex() {
-  const { profile, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
   const [activeNav, setActiveNav] = useState("bookings");
@@ -49,10 +50,11 @@ function DashboardIndex() {
     setQrOpen(true);
   };
 
-  const firstName = profile?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there";
-  const displayName = profile?.full_name ?? user?.email ?? "My Account";
-  const location = [profile?.city, profile?.county].filter(Boolean).join(", ");
-  const isProvider = profile?.role === "provider";
+  const displayName = getFullName(user);
+  const firstName = user?.first_name || displayName.split(" ")[0] || "there";
+  const location = [user?.city, user?.county].filter(Boolean).join(", ");
+  const isProvider = user?.role === "PROVIDER";
+  const profileComplete = isProfileComplete(user);
 
   const sidebarItems: {
     id: string;
@@ -94,44 +96,44 @@ function DashboardIndex() {
   return (
     <SiteShell>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
 
+        {/* Profile completion banner */}
+        {!profileComplete && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              <strong>Complete your profile</strong> — add your address and role to unlock all features.
+            </p>
+            <Button size="sm" variant="outline" className="shrink-0 border-amber-400 text-amber-700 dark:text-amber-300" onClick={() => navigate({ to: "/dashboard/profile" })}>
+              Complete Profile
+            </Button>
+          </div>
+        )}
+
+        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
           {/* Sidebar */}
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
-              {profile?.avatar_url ? (
+              {user?.avatar_url ? (
                 <img
-                  src={profile.avatar_url}
+                  src={user.avatar_url}
                   alt={displayName}
                   className="mx-auto h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
                 />
               ) : (
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-                  {getInitials(profile?.full_name)}
+                  {getInitials(displayName)}
                 </div>
               )}
-              <h2 className="mt-3 font-bold truncate">{displayName}</h2>
+              <h2 className="mt-3 font-bold truncate">{displayName || user?.email || "My Account"}</h2>
               {location && (
                 <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3 shrink-0" />
                   <span className="truncate">{location}</span>
                 </div>
               )}
-              {profile?.verification_status && (
-                <div className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                  profile.verification_status === "verified"
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    : profile.verification_status === "rejected"
-                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                }`}>
-                  {profile.verification_status === "verified" ? (
-                    <><CheckCircle2 className="h-3 w-3" /> Verified</>
-                  ) : profile.verification_status === "rejected" ? (
-                    <><XCircle className="h-3 w-3" /> Rejected</>
-                  ) : (
-                    <><Clock3 className="h-3 w-3" /> Pending Review</>
-                  )}
+              {user?.is_verified && (
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-0.5 text-[10px] font-semibold">
+                  <CheckCircle2 className="h-3 w-3" /> Verified
                 </div>
               )}
               <Button
@@ -185,7 +187,7 @@ function DashboardIndex() {
                   Provider Account
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  You can offer services to clients once your account is verified.
+                  You can offer services to clients once your account is fully set up.
                 </p>
               </div>
             )}
@@ -197,7 +199,10 @@ function DashboardIndex() {
               <>
                 <div className="mb-6 flex items-end justify-between">
                   <div>
-                    <h1 className="flex items-center gap-2 text-3xl font-extrabold">Welcome back, {firstName}<Hand className="h-6 w-6 text-primary" /></h1>
+                    <h1 className="flex items-center gap-2 text-3xl font-extrabold">
+                      Welcome back, {firstName}
+                      <Hand className="h-6 w-6 text-primary" />
+                    </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {isProvider ? "Manage your incoming service requests." : "Here's what's coming up."}
                     </p>
@@ -237,21 +242,29 @@ function DashboardIndex() {
                     <span className="font-medium">{user?.email}</span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-border">
-                    <span className="text-muted-foreground">Username</span>
-                    <span className="font-medium">@{profile?.username ?? "—"}</span>
+                    <span className="text-muted-foreground">Name</span>
+                    <span className="font-medium">{displayName || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">Account type</span>
-                    <span className="font-medium capitalize">{profile?.role ?? "—"}</span>
+                    <span className="font-medium capitalize">{user?.role?.toLowerCase() ?? "—"}</span>
                   </div>
-                  <div className="flex items-center justify-between py-3">
-                    <span className="text-muted-foreground">Member since</span>
-                    <span className="font-medium">
-                      {profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-                        : "—"}
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <span className="text-muted-foreground">Email verified</span>
+                    <span className={`font-medium ${user?.is_verified ? "text-emerald-600" : "text-amber-600"}`}>
+                      {user?.is_verified ? "Yes" : "No"}
                     </span>
                   </div>
+                  {user?.created_at && (
+                    <div className="flex items-center justify-between py-3">
+                      <span className="text-muted-foreground">Member since</span>
+                      <span className="font-medium">
+                        {new Date(user.created_at).toLocaleDateString("en-GB", {
+                          day: "numeric", month: "long", year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <Button variant="outline" onClick={() => navigate({ to: "/dashboard/profile" })}>
                   <User className="mr-2 h-4 w-4" />

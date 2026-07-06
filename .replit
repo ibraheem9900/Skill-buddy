@@ -45,3 +45,4 @@ build = ["bun", "run", "build"]
 [userenv.shared]
 VITE_SUPABASE_URL = "https://tbbrkzganaktzauvfykw.supabase.co"
 VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiYnJremdhbmFrdHphdXZmeWt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NzcwMTYsImV4cCI6MjA5ODU1MzAxNn0.ferqUvb6mAbgenfizC64RC9Xi29gP3eUS71pmQ1wV6M"
+VITE_API_BASE_URL = "https://api.skillbuddy.zeyshan.com"

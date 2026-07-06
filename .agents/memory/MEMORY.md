@@ -7,3 +7,4 @@
 - [3D rotateX card flip pattern](3d-rotate-card-flip.md) — shared rotateCardVariants with rotateX + y + opacity; container needs perspective:"1000px", card needs transformStyle:"preserve-3d"; works for both SpecialOffers and WhatMakesUsSpecial sections
 - [useTheme in homepage](use-theme-homepage.md) — import useTheme from @/components/theme-provider (not next-themes); used in OfferCard for dark/light color switching inline; exported as named export from theme-provider.tsx
 - [Auth profile gating pattern](auth-profile-gating.md) — AuthContext fetches profiles row; accountStatus drives all auth UI; dashboard.tsx is layout-only Outlet; dashboard.index.tsx has real content; dashboard.profile.tsx is profile edit page
+- [FastAPI auth migration](fastapi-auth-migration.md) — all endpoints, token strategy, FastAPIUser shape, helper split, pending_role flow, refresh deadlock fix

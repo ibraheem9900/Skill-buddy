@@ -1,0 +1,228 @@
+# SkillBuddy Web — Migrate Auth from Supabase to FastAPI Backend (Replit Prompt)
+
+Copy everything below this line into Replit AI / your dev agent.
+
+---
+
+## CONTEXT
+
+The client's backend team has built a live FastAPI backend at `https://api.skillbuddy.zeyshan.com` (Swagger docs at `/docs`), which the mobile app also uses. To keep web and app consistent and avoid future integration issues, **all authentication must now go through this FastAPI backend instead of Supabase Auth.** Supabase Auth (email/password signup, Google OAuth via Supabase, OTP verification, and the SMTP/Resend setup previously configured) is being replaced entirely by this backend's own auth system.
+
+Services and Jobs APIs are **not ready yet** — the backend team will add them to the same Swagger docs over the coming weeks as the mobile app development progresses. For now, leave Services/Jobs pages using their current data source (mock/existing), and structure the code so those can be swapped over later without a rewrite.
+
+---
+
+## TASK 1 — Remove Supabase Auth, Set Up FastAPI Client
+
+- Remove all Supabase Auth calls (`supabase.auth.signUp`, `signInWithPassword`, `signInWithOtp`, `verifyOtp`, `signInWithOAuth` for Google, `onAuthStateChange`, etc.) from the codebase. Do **not** remove Supabase entirely if it's still used for anything else non-auth-related (confirm this — if the `profiles`/`provider_profiles` Supabase tables are no longer the source of truth for user data now that FastAPI has its own user database, stop reading/writing to them for auth/profile purposes to avoid two conflicting sources of truth).
+- Create a single shared API client module (e.g. `src/lib/api-client.ts`) that wraps `fetch` calls to the FastAPI backend, using a base URL read from an environment variable — do not hardcode the URL:
+  ```
+  VITE_API_BASE_URL=https://api.skillbuddy.zeyshan.com
+  ```
+  (adjust the env var prefix to whatever this project's bundler expects — Vite uses `VITE_`, confirm what's already used elsewhere in the project).
+- This client should automatically attach the stored access token (see Task 6) as an `Authorization: Bearer <token>` header on every authenticated request, and should centrally handle 401 responses by attempting a token refresh once before failing.
+
+---
+
+## TASK 2 — Signup Flow
+
+Endpoint: `POST /api/v1/users/signup`
+
+- Request body (JSON):
+  ```json
+  {
+    "email": "string",
+    "personal_code": "string",
+    "password": "string (min 8 chars)",
+    "confirm_password": "string (min 8 chars)",
+    "first_name": "string",
+    "last_name": "string"
+  }
+  ```
+- Validate `password` and `confirm_password` match client-side before submitting (min 8 characters, per the schema).
+- On success (201), the response includes `status`, `message`, and a `user` object. The account is created but **not yet verified** — do not treat the user as logged in yet.
+- After successful signup, show a "Check your email to verify your account" screen — do NOT show an OTP input here; this backend verifies via an email link, not a code (see Task 3).
+- Handle 422 validation errors by mapping the `detail` array's field-level errors back to the correct form fields (each error has a `loc` array indicating which field failed).
+
+---
+
+## TASK 3 — Email Verification (Link-Based, Not OTP)
+
+Endpoint: `GET /api/v1/users/verify-email?token=<token>`
+
+- This backend sends its own verification email containing a link with a `token` query parameter — the backend team handles sending this email, you do not need to send anything from the frontend.
+- Build a dedicated route/page (e.g. `/verify-email`) that reads the `token` from the URL query string when the user lands on it (i.e. after clicking the link in their email), and calls this GET endpoint with that token.
+- On success, the response includes the verified `user` object with `is_verified: true`. Show a success message and redirect to login (or directly log them in if the flow allows — check if login still requires a separate step).
+- On failure/invalid token, show a clear error with an option to request the verification email again if such an endpoint exists (check Swagger for a resend-verification endpoint; if none exists yet, show a "Contact support" fallback and note it as a gap to raise with the backend team).
+- **Important:** Since verification is link-based, remove any remaining OTP input UI from the signup flow that was built for the old Supabase/Resend setup.
+
+---
+
+## TASK 4 — Login Flow
+
+Endpoint: `POST /api/v1/users/login`
+
+- This endpoint expects `application/x-www-form-urlencoded` data (OAuth2 password-flow style), **not JSON**:
+  ```
+  grant_type=password
+  username=<user's email>
+  password=<password>
+  ```
+  (`scope`, `client_id`, `client_secret` are optional/not needed for this flow — omit them unless the backend team says otherwise.)
+- On success (200), the response contains:
+  ```json
+  {
+    "status": 0,
+    "message": "string",
+    "refresh_token": "string",
+    "access_token": "string",
+    "token_type": "string",
+    "user": { ...user fields... },
+    "roles": ["CLIENT"],
+    "active_role": "CLIENT"
+  }
+  ```
+- Store `access_token` and `refresh_token` securely (see Task 6), store `user`, `roles`, and `active_role` in your global auth state (context/store), and only now treat the user as fully authenticated — trigger the navbar to show their avatar/name per the earlier auth-state work already done.
+- If login fails because the account isn't verified yet, surface that specific message clearly (check what error the backend returns in that case) rather than a generic "invalid credentials" message.
+
+---
+
+## TASK 5 — Token Storage & Refresh Flow
+
+- Store `access_token` and `refresh_token` in a secure, appropriate place — prefer an httpOnly cookie set by a thin server-side route if your hosting setup allows it (more secure against XSS); if not feasible in the current architecture, store in memory + a secure storage mechanism, and avoid `localStorage` for the tokens if at all possible given XSS risk. Whatever approach is chosen, be consistent across the app.
+- Endpoint: `POST /api/v1/users/refresh`
+  ```json
+  { "refresh_token": "string" }
+  ```
+  Returns a new `access_token`, `refresh_token`, `token_type`.
+- Implement automatic refresh: when any API call returns 401, attempt one call to `/refresh` using the stored refresh token; if that succeeds, retry the original request with the new access token; if it fails, clear all stored auth state and redirect to login.
+- On app load, if a refresh token exists, attempt to restore the session via `GET /api/v1/users/me` (see Task 7) before rendering authenticated routes, so a page refresh doesn't log the user out unnecessarily.
+
+---
+
+## TASK 6 — Get Current User & Route Guarding
+
+Endpoint: `GET /api/v1/users/me`
+
+- Use this to fetch/refresh the current user's data (including `role`, `is_verified`, `deactivated`) — call it on app load (per Task 5) and anywhere you need the freshest user state.
+- Route guarding logic:
+  - No valid session → redirect to login for protected routes.
+  - Valid session but `is_verified: false` → redirect into the "please verify your email" screen, block Dashboard/Profile/booking routes.
+  - Valid session, verified, but profile incomplete (missing address/role-specific fields per Task 7/8) → redirect into the remaining onboarding steps.
+  - Valid, verified, and fully onboarded → normal app access, route by `role`/`active_role` (CLIENT vs PROVIDER) to the correct dashboard/profile view per the Client/Provider structure already built.
+
+---
+
+## TASK 7 — Update User (Profile Completion & Editing)
+
+Endpoint: `PATCH /api/v1/users/update-user`
+
+- Body (all fields optional/nullable — send only what's being updated):
+  ```json
+  {
+    "email": "string",
+    "username": "string",
+    "first_name": "string",
+    "last_name": "string",
+    "phone_number": "string",
+    "role": "CLIENT | PROVIDER",
+    "personal_code": "string",
+    "country": "string",
+    "county": "string",
+    "city": "string",
+    "postal_code": "string",
+    "street_address": "string",
+    "house_number": "string"
+  }
+  ```
+- Use this both for the remaining signup/onboarding steps (collecting address, phone, role selection) and for the "Edit Profile" functionality on the real profile pages already built.
+- `role` must be one of `"CLIENT"` or `"PROVIDER"` (see `EndUserRole`/`UserRole` enum in the schema — note `UserRole` also lists `"CHAT SUPPORT"` and `"ADMIN"` for backend/internal roles, but the signup flow should only ever let a user choose CLIENT or PROVIDER).
+
+---
+
+## TASK 8 — Document & Media Uploads
+
+All three are `multipart/form-data` POST requests requiring the stored access token in the `Authorization` header:
+
+- **Profile picture** — `POST /api/v1/users/upload-profile-picture`, field name `file` (required).
+- **Residence permits** — `POST /api/v1/users/upload-residence-permits`, fields `front_file` and `back_file` (check if both are required or optional per current backend validation — Swagger currently shows them as not strictly required, confirm with backend team before assuming either is optional in the UI flow).
+- **Face auth video** — `POST /api/v1/users/upload-face-auth-video`, field name `file` (required).
+
+Wire these into the existing onboarding/verification steps and into the profile page's "Documents" section (per the earlier Client/Provider profile spec) so users can view/reupload from their profile, not just during signup.
+
+---
+
+## TASK 9 — Forgot Password / Reset Password
+
+- **Request reset:** `POST /api/v1/users/forgot-password` with `{ "email": "string" }`. Backend sends a reset link via email (their own email system, not something you need to trigger separately).
+- **Reset page:** Build a route (e.g. `/reset-password`) that reads `token` from the URL query string (the link the user clicks from their email) and calls:
+  - `GET /api/v1/users/reset-password?token=<token>` first if needed to validate the token exists/hasn't expired (check what this GET actually returns/validates — Swagger shows both a GET and POST at the same path, confirm the intended flow with the backend team if unclear), then
+  - `POST /api/v1/users/reset-password?token=<token>` with body `{ "new_password": "string (min 8 chars)", "confirm_password": "string (min 8 chars)" }` to actually set the new password.
+- On success, redirect to login with a confirmation message.
+
+---
+
+## TASK 10 — Update Password (Logged-In Settings)
+
+Endpoint: `PATCH /api/v1/users/update-password`
+```json
+{
+  "old_password": "string",
+  "new_password": "string (min 8 chars)",
+  "confirm_password": "string (min 8 chars)"
+}
+```
+Add this to the Profile/Settings section as a "Change Password" form for already-authenticated users.
+
+---
+
+## TASK 11 — Google & Apple Login (via Backend Redirect Flow)
+
+- These are **backend-driven OAuth redirect flows**, not client-side Supabase OAuth anymore:
+  - `GET /api/v1/users/login/google` — redirect the user's browser to this URL when they click "Continue with Google"; the backend handles the Google OAuth dance and redirects back to `GET /api/v1/users/callback/google`, which should ultimately hand back tokens/session info (confirm exact response/redirect behavior with the backend team — Swagger doesn't show the final redirect target, so check whether it redirects back to a web URL with tokens in the query string/fragment, or expects the frontend to call it directly).
+  - `GET /api/v1/users/login/apple` and `POST /api/v1/users/callback/apple` — same pattern for Apple Sign-In.
+- Remove the previous Supabase-based Google/Apple OAuth buttons' logic entirely and point both buttons at these backend endpoints instead.
+- **Flag to the backend team:** confirm what the callback redirects to on the web (a specific frontend URL with token params, e.g. `https://yourdomain.com/auth/callback?access_token=...&refresh_token=...`) so the frontend can build a matching callback-handling page that stores the tokens and logs the user in, consistent with Task 5's storage approach.
+
+---
+
+## TASK 12 — Logout
+
+Endpoint: `POST /api/v1/users/logout`
+```json
+{
+  "access_token": "string",
+  "refresh_token": "string",
+  "token_type": "string"
+}
+```
+- Call this with the currently stored tokens when the user clicks "Sign Out" (from the navbar dropdown built earlier).
+- Regardless of the API call's success/failure, always clear all locally stored tokens/auth state and redirect to the homepage or login page.
+
+---
+
+## TASK 13 — Role-Based Behavior (CLIENT vs PROVIDER)
+
+- A user's `role` (single value: `CLIENT` or `PROVIDER`) comes from `update-user`/`me`; login also separately returns a `roles` array and an `active_role` — confirm with the backend team whether a single account can hold both roles simultaneously (e.g. someone who is both a client and a provider) and how `active_role` switching should work in that case. Until clarified, assume one role per account and route accordingly (matching the Client/Provider profile structure already built).
+- Use `role`/`active_role` to decide which Dashboard and Profile variant to render, and which fields from Task 7/8 are required during onboarding (Provider needs the skill/certification/permit/face-auth steps; Client's flow is shorter).
+
+---
+
+## TASK 14 — Services & Jobs (Leave As-Is for Now, Structure for Later)
+
+- The backend team has said Services and Jobs APIs are still being built and will appear in the same Swagger docs (`https://api.skillbuddy.zeyshan.com/docs`) over the coming weeks.
+- Do **not** try to integrate Services/Jobs endpoints yet since they don't exist. Keep the current Services/Jobs pages working as they are.
+- Structure the data-fetching for these pages behind a clearly named function/module (e.g. `src/lib/services-api.ts`, `src/lib/jobs-api.ts`) so that when the real endpoints are ready, only that module needs to be updated to call the real API instead of swapping code throughout the app.
+- Check the Swagger docs weekly for new endpoints as instructed by the client.
+
+---
+
+## IMPORTANT — Do Not Touch Vercel Configuration
+
+Do not create, modify, or suggest changes to any Vercel project settings, environment variables, or deployment configuration. The environment variable for the API base URL (e.g. `VITE_API_BASE_URL=https://api.skillbuddy.zeyshan.com`) will be added manually by the developer directly in the Vercel dashboard. In the code, simply **read** this env variable wherever the API base URL is needed (matching whatever env var naming convention is already used elsewhere in this project's codebase) — do not hardcode the URL, but also do not attempt to set up, edit, or touch `.env` files tied to Vercel deployment, `vercel.json`, or any Vercel-specific configuration.
+
+---
+
+## SCOPE BOUNDARY
+
+Focus only on migrating authentication, user profile, and document upload functionality from Supabase to this FastAPI backend, exactly as specified in Tasks 1–13. Do not attempt to build or guess at Services/Jobs API integration (Task 14) since those endpoints don't exist yet — just structure the code to make that swap easy later. Do not touch Vercel configuration/deployment settings per the note above. If any endpoint's exact behavior is ambiguous from the Swagger docs (especially the OAuth callback redirect targets and the reset-password GET's exact purpose), flag it clearly as a question for the backend team rather than guessing and silently building something that may not match.

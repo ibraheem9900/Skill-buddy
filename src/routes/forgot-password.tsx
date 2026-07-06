@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase-browser";
 import { useI18n } from "@/lib/i18n";
+import { extractErrorMessage } from "@/lib/api-client";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -37,7 +37,6 @@ function ForgotPasswordPage() {
       setError(t("auth.validation.emailRequired"));
       return;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError(t("auth.validation.emailInvalid"));
       return;
@@ -45,18 +44,27 @@ function ForgotPasswordPage() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const res = await fetch(`${baseUrl}/api/v1/users/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    setLoading(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        toast.error(extractErrorMessage(data, "Failed to send reset email."));
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      toast.error(error.message);
-      return;
+      setSent(true);
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to send reset email."));
+    } finally {
+      setLoading(false);
     }
-
-    setSent(true);
   };
 
   return (
@@ -97,10 +105,7 @@ function ForgotPasswordPage() {
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setError("");
-                      }}
+                      onChange={(e) => { setEmail(e.target.value); setError(""); }}
                       placeholder="you@email.com"
                       className={`h-11 pl-10 ${error ? "border-red-500" : ""}`}
                     />
@@ -108,16 +113,8 @@ function ForgotPasswordPage() {
                   {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
                 </div>
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-11 w-full"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    t("auth.forgot.sendReset")
-                  )}
+                <Button type="submit" disabled={loading} className="h-11 w-full">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.forgot.sendReset")}
                 </Button>
               </form>
 

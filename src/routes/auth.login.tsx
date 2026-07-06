@@ -10,9 +10,10 @@ import { Eye, EyeOff, Loader as Loader2, Mail, Lock } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase-browser";
 import { useI18n } from "@/lib/i18n";
 import { useLoader } from "@/context/LoaderContext";
+import { useAuth } from "@/context/AuthContext";
+import { extractErrorMessage } from "@/lib/api-client";
 
 function GoogleIcon() {
   return (
@@ -47,13 +48,14 @@ function Login() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const { showLoader, hideLoader } = useLoader();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
   const validate = (): boolean => {
     const errs: typeof errors = {};
@@ -71,47 +73,86 @@ function Login() {
     setLoading(true);
     showLoader();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const res = await fetch(`${baseUrl}/api/v1/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "password",
+          username: email,
+          password,
+        }),
+      });
 
-    setLoading(false);
+      const data = await res.json();
 
-    if (error) {
+      if (!res.ok) {
+        hideLoader();
+        setLoading(false);
+        // Surface "not verified" specifically
+        const msg = extractErrorMessage(data, "Invalid email or password.");
+        if (
+          msg.toLowerCase().includes("verif") ||
+          msg.toLowerCase().includes("not verified") ||
+          msg.toLowerCase().includes("confirm")
+        ) {
+          setErrors({
+            general:
+              "Your email is not verified yet. Please check your inbox for the verification link.",
+          });
+        } else {
+          setErrors({ general: msg });
+        }
+        return;
+      }
+
+      signIn(
+        data.user,
+        data.access_token,
+        data.refresh_token,
+        data.roles ?? [],
+        data.active_role ?? ""
+      );
+
       hideLoader();
-      toast.error(error.message);
-      return;
-    }
+      setLoading(false);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      // If a pending role was stored during a completed registration flow, apply it now.
+      // We only consume it on *successful* login to avoid accidental role patching.
+      const pendingRole = sessionStorage.getItem("pending_role") as "CLIENT" | "PROVIDER" | null;
+      if (pendingRole) {
+        sessionStorage.removeItem("pending_role");
+        try {
+          await fetch(`${baseUrl}/api/v1/users/update-user`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.access_token}`,
+            },
+            body: JSON.stringify({ role: pendingRole }),
+          });
+        } catch {
+          // Non-critical; user can set role from profile page
+        }
+      }
 
-    if (user) {
       navigate({ to: "/dashboard" });
-    } else {
+    } catch (err) {
       hideLoader();
-      navigate({ to: "/" });
+      setLoading(false);
+      toast.error(extractErrorMessage(err));
     }
   };
 
-  const handleOAuth = async (provider: "google" | "apple") => {
+  const handleOAuth = (provider: "google" | "apple") => {
     setOAuthLoading(provider);
-    showLoader();
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      hideLoader();
-      toast.error(error.message);
-      setOAuthLoading(null);
-    }
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+    // Redirect browser to backend OAuth initiation URL.
+    // ⚠️  FLAG FOR BACKEND TEAM: Confirm the exact callback redirect target and
+    //     whether tokens are returned as query params or in a redirect body.
+    //     Current assumption: backend redirects to {origin}/auth/callback?access_token=...&refresh_token=...
+    window.location.href = `${baseUrl}/api/v1/users/login/${provider}`;
   };
 
   return (
@@ -155,6 +196,12 @@ function Login() {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {errors.general && (
+              <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 p-3 text-sm text-red-600 dark:text-red-400">
+                {errors.general}
+              </div>
+            )}
+
             <div>
               <Label htmlFor="email">{t("auth.email")}</Label>
               <div className="relative mt-1.5">
@@ -165,24 +212,19 @@ function Login() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setErrors((err) => ({ ...err, email: undefined }));
+                    setErrors((err) => ({ ...err, email: undefined, general: undefined }));
                   }}
                   placeholder="you@email.com"
                   className={`h-11 pl-10 ${errors.email ? "border-red-500" : ""}`}
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-              )}
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
 
             <div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">{t("auth.password")}</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-primary hover:underline"
-                >
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
                   {t("auth.login.forgotPassword")}
                 </Link>
               </div>
@@ -194,7 +236,7 @@ function Login() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    setErrors((err) => ({ ...err, password: undefined }));
+                    setErrors((err) => ({ ...err, password: undefined, general: undefined }));
                   }}
                   placeholder={`${t("auth.password")}`}
                   className={`h-11 pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
@@ -207,9 +249,7 @@ function Login() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
-              )}
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
             </div>
 
             <label className="flex items-center gap-2 text-sm">
@@ -220,16 +260,8 @@ function Login() {
               <span className="text-muted-foreground">{t("auth.login.rememberMe")}</span>
             </label>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="h-11 w-full shadow-elegant"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t("auth.signin")
-              )}
+            <Button type="submit" disabled={loading} className="h-11 w-full shadow-elegant">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.signin")}
             </Button>
           </form>
 
@@ -250,10 +282,7 @@ function Login() {
               {oAuthLoading === "google" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <GoogleIcon />
-                  Google
-                </>
+                <><GoogleIcon /> Google</>
               )}
             </Button>
             <Button
@@ -266,10 +295,7 @@ function Login() {
               {oAuthLoading === "apple" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <AppleIcon />
-                  Apple
-                </>
+                <><AppleIcon /> Apple</>
               )}
             </Button>
           </div>
