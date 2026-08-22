@@ -363,7 +363,7 @@ function ServiceDetail() {
         className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">            <div>
-              <div className="text-xs text-muted-foreground">Total Price</div>
+              <div className="text-xs text-muted-foreground">Approx. Price</div>
               <div className="font-mono text-xl font-bold text-primary">{approxPrice(service.price)}</div>
             </div>
           <Button
