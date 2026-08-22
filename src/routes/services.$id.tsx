@@ -4,7 +4,7 @@ import { getService, SERVICES } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, MapPin, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X } from "lucide-react";
+import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRDownloadModal } from "@/components/qr-download-modal";
@@ -43,6 +43,12 @@ function ServiceDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [activeTab, setActiveTab] = useState<TabKey>("about");
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+
+  const approxPrice = (price: number) => {
+    const low = Math.round(price * 0.85 / 5) * 5;
+    const high = Math.round(price * 1.15 / 5) * 5;
+    return low === high ? `~€${low}` : `~€${low} – €${high}`;
+  };
 
   if (!service) {
     return (
@@ -139,13 +145,6 @@ function ServiceDetail() {
           <div className="mt-8">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-primary/10 text-primary hover:bg-primary/20">{service.category}</Badge>
-              <div className="flex items-center gap-1 text-sm">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-4 w-4 ${i < Math.round(service.rating) ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
-                ))}
-                <span className="ml-1 font-semibold">{service.rating}</span>
-                <span className="text-muted-foreground">({service.reviewCount} reviews)</span>
-              </div>
             </div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -155,9 +154,6 @@ function ServiceDetail() {
             >
               {service.title}
             </motion.h1>
-            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 shrink-0" />{service.provider.location}
-            </div>
           </div>
 
           {/* SECTION 3 — Tabs */}
@@ -212,23 +208,7 @@ function ServiceDetail() {
                         Our professionals arrive on time, introduce themselves, and walk you through the process before starting. They use professional-grade equipment and clean up after the job is done. Estimated duration: 2–4 hours depending on scope.
                       </p>
                     </div>
-                    {/* Provider card */}
-                    <div className="rounded-2xl border border-border bg-card p-5">
-                      <div className="flex items-center gap-3">
-                        <img src={service.provider.avatar} alt="" className="h-14 w-14 rounded-full" />
-                        <div>
-                          <div className="flex items-center gap-1.5 font-semibold">
-                            {service.provider.name}
-                            {service.provider.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{service.provider.location}</div>
-                        </div>
-                        <Button asChild variant="outline" size="sm" className="ml-auto">
-                          <Link to="/providers/$id" params={{ id: service.provider.id }}>View profile</Link>
-                        </Button>
-                      </div>
-                      <p className="mt-3 text-sm text-muted-foreground">{service.provider.bio}</p>
-                    </div>
+
                   </div>
                 )}
 
@@ -331,7 +311,7 @@ function ServiceDetail() {
                     <div className="p-3">
                       <div className="line-clamp-1 text-sm font-semibold">{r.title}</div>
                       <div className="mt-1 flex items-center justify-between">
-                        <div className="font-mono text-sm font-bold text-primary">€{r.price}</div>
+                        <div className="font-mono text-sm font-bold text-primary">{approxPrice(r.price)}</div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Star className="h-3 w-3 fill-warning text-warning" /> {r.rating}
                         </div>
@@ -362,9 +342,9 @@ function ServiceDetail() {
                     <img src={r.image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-1 text-sm font-semibold">{r.title}</div>
-                      <div className="font-mono text-xs text-primary">€{r.price} · {r.price * 10} pts</div>
+                      <div className="font-mono text-xs text-primary">{approxPrice(r.price)}</div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="h-3 w-3 fill-warning text-warning" /> {r.rating} ({r.reviewCount})
+                        <Star className="h-3 w-3 fill-warning text-warning" /> {r.rating}
                       </div>
                     </div>
                   </Link>
@@ -382,12 +362,10 @@ function ServiceDetail() {
         transition={{ delay: 0.5, duration: 0.4, type: "spring", stiffness: 200 }}
         className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur"
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-muted-foreground">Total Price</div>
-            <div className="font-mono text-xl font-bold text-primary">€{service.price}.00</div>
-            <div className="font-mono text-[10px] text-muted-foreground">= {service.price * 10} pts</div>
-          </div>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">            <div>
+              <div className="text-xs text-muted-foreground">Total Price</div>
+              <div className="font-mono text-xl font-bold text-primary">{approxPrice(service.price)}</div>
+            </div>
           <Button
             onClick={() => setModalOpen(true)}
             size="lg"

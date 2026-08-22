@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Star, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Service } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
@@ -41,21 +41,11 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         <div className="flex flex-1 flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <h3 className="line-clamp-1 font-semibold">{t(service.titleKey) !== service.titleKey ? t(service.titleKey) : service.title}</h3>
-            <div className="flex shrink-0 items-center gap-1 text-sm">
-              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-              <span className="font-medium">{service.rating}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <img src={service.provider.avatar} alt="" className="h-6 w-6 rounded-full" />
-            <span className="line-clamp-1 text-xs text-muted-foreground">{service.provider.name}</span>
-            <span className="ml-auto text-xs text-muted-foreground">({service.reviewCount})</span>
           </div>
           <div className="mt-auto flex items-end justify-between border-t border-border pt-3">
             <div>
               <div className="text-xs text-muted-foreground">{t("common.from")}</div>
-              <div className="font-mono text-lg font-bold text-primary">€{service.price}</div>
-              <div className="font-mono text-[10px] text-muted-foreground">= {service.price * 10} pts</div>
+              <div className="font-mono text-lg font-bold text-primary">~€{Math.round(service.price * 0.85 / 5) * 5} – €{Math.round(service.price * 1.15 / 5) * 5}</div>
             </div>
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               {t("common.postJob")} →

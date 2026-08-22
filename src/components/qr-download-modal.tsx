@@ -41,7 +41,7 @@ export function QRDownloadModal({ open, onOpenChange, title, message }: Props) {
         {/* Header */}
         <div
           className="relative px-7 pb-7 pt-8 text-center text-white overflow-hidden"
-          style={{ background: "linear-gradient(135deg, #1d5c44 0%, #2D7A5F 60%, #3a9b76 100%)" }}
+          style={{ background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%)" }}
         >
           {/* decorative blobs */}
           <div className="pointer-events-none absolute -top-6 -right-6 h-28 w-28 rounded-full bg-white/10" />
