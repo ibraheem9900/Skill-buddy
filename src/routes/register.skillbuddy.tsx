@@ -1,6 +1,7 @@
 "use client";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ENABLE_ROLE_SELECTION_ON_SIGNUP } from "@/lib/feature-flags";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, User, Mail, Lock, Loader as Loader2, CircleCheck as CheckCircle2, CreditCard } from "lucide-react";
@@ -176,11 +177,11 @@ function ProviderRegisterPage() {
     <SiteShell>
       <div className="mx-auto max-w-lg px-4 py-8 sm:px-6 lg:py-12">
         <Link
-          to="/register"
+          to={ENABLE_ROLE_SELECTION_ON_SIGNUP ? "/register" : "/auth/login"}
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t("register.backToRole")}
+          {ENABLE_ROLE_SELECTION_ON_SIGNUP ? t("register.backToRole") : t("auth.signin")}
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-lg sm:p-8">

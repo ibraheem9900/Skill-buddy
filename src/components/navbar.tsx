@@ -227,18 +227,21 @@ export function Navbar() {
                   </Link>
                 </>
               )}
-              <Link to="/become-a-skillbuddy" onClick={closeMenu}>
-                <button style={{
-                  width: "100%", padding: "12px", borderRadius: 50,
-                  background: "linear-gradient(135deg, #DA983C, #F99912)",
-                  color: "white", fontWeight: 600, fontSize: 14,
-                  border: "none", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}>
-                  <img src={iconTransparent} alt="" style={{ width: 16, height: 16, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-                  {t("nav.becomeSkillBuddy")}
-                </button>
-              </Link>
+              {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in users */}
+              {user && (
+                <Link to="/become-a-skillbuddy" onClick={closeMenu}>
+                  <button style={{
+                    width: "100%", padding: "12px", borderRadius: 50,
+                    background: "linear-gradient(135deg, #DA983C, #F99912)",
+                    color: "white", fontWeight: 600, fontSize: 14,
+                    border: "none", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  }}>
+                    <img src={iconTransparent} alt="" style={{ width: 16, height: 16, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+                    {t("nav.becomeSkillBuddy")}
+                  </button>
+                </Link>
+              )}
             </div>
           </motion.div>
         </>
@@ -352,25 +355,28 @@ export function Navbar() {
                   </>
                 )}
 
-                <Link to="/become-a-skillbuddy">
-                  <motion.button
-                    className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"
-                    animate={{
-                      boxShadow: [
-                        "0 0 10px rgba(218,152,60,0.3)",
-                        "0 0 25px rgba(218,152,60,0.7), 0 0 45px rgba(249,153,18,0.2)",
-                        "0 0 10px rgba(218,152,60,0.3)",
-                      ],
-                    }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    whileHover={{ scale: 1.06, y: -1 }}
-                    whileTap={{ scale: 0.97 }}
-                    style={{ background: "linear-gradient(135deg, #DA983C, #F99912)", color: "white", border: "none", cursor: "pointer" }}
-                  >
-                    <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
-                    <span>{t("nav.becomeSkillBuddy")}</span>
-                  </motion.button>
-                </Link>
+                {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in users */}
+                {user && (
+                  <Link to="/become-a-skillbuddy">
+                    <motion.button
+                      className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"
+                      animate={{
+                        boxShadow: [
+                          "0 0 10px rgba(218,152,60,0.3)",
+                          "0 0 25px rgba(218,152,60,0.7), 0 0 45px rgba(249,153,18,0.2)",
+                          "0 0 10px rgba(218,152,60,0.3)",
+                        ],
+                      }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                      whileHover={{ scale: 1.06, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      style={{ background: "linear-gradient(135deg, #DA983C, #F99912)", color: "white", border: "none", cursor: "pointer" }}
+                    >
+                      <img src={iconTransparent} alt="SkillBuddy" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(0) invert(1)", flexShrink: 0 }} />
+                      <span>{t("nav.becomeSkillBuddy")}</span>
+                    </motion.button>
+                  </Link>
+                )}
               </div>
             )}
 

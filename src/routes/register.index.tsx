@@ -1,9 +1,11 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { motion } from "framer-motion";
 import { Search, Star, ArrowRight, Wrench } from "lucide-react";
 import { z } from "zod";
 import { useI18n } from "@/lib/i18n";
+import { ENABLE_ROLE_SELECTION_ON_SIGNUP } from "@/lib/feature-flags";
 
 const roleSelectSearchSchema = z.object({
   role: z.enum(["client", "provider"]).optional(),
@@ -21,9 +23,24 @@ export const Route = createFileRoute("/register/")({
 });
 
 function RegisterRoleSelect() {
+  const navigate = useNavigate();
   const search = useSearch({ from: "/register/" });
   const preselectedRole = search.role;
   const { t } = useI18n();
+
+  // FEATURE FLAG: When ENABLE_ROLE_SELECTION_ON_SIGNUP is false,
+  // redirect directly to the client registration form.
+  // To re-enable the role-selection screen, set the flag to true
+  // in src/lib/feature-flags.ts.
+  useEffect(() => {
+    if (!ENABLE_ROLE_SELECTION_ON_SIGNUP) {
+      navigate({ to: "/register/seeker", replace: true });
+    }
+  }, [navigate]);
+
+  if (!ENABLE_ROLE_SELECTION_ON_SIGNUP) {
+    return null;
+  }
 
   return (
     <SiteShell>

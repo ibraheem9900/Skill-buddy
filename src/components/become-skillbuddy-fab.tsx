@@ -28,8 +28,7 @@ export function BecomeSkillBuddyFAB() {
       className="fixed bottom-8 right-8 z-[9999] max-[480px]:bottom-4 max-[480px]:right-4"
     >
       <Link
-        to="/register"
-        search={{ role: "provider" }}
+        to="/become-a-skillbuddy"
         className="flex items-center gap-2 rounded-full bg-[#2D7A5F] px-6 py-3.5 text-white font-medium shadow-lg transition-colors hover:bg-[#236B4F] max-[480px]:px-4 max-[480px]:py-3"
       >
         <Star className="h-5 w-5 fill-white" />

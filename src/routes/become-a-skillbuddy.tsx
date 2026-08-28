@@ -1,11 +1,14 @@
 "use client";
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Upload, Loader2, ArrowLeft, ChevronDown, Check } from "lucide-react";
 import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/context/AuthContext";
+import { apiClient, extractErrorMessage } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -139,6 +142,17 @@ function CustomSelect({
 function BecomeASkillBuddy() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+
+  // PART 3: Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate({ to: "/auth/login" });
+    }
+  }, [user, authLoading, navigate]);
+
+  // PART 3: Pre-fill form with logged-in user's data
+  const [formInitialized, setFormInitialized] = useState(false);
 
   const validate = (data: FormData): FormErrors => {
     const errors: FormErrors = {};
@@ -169,6 +183,21 @@ function BecomeASkillBuddy() {
     preference2: "", bio: "", terms: false,
   });
 
+  // PART 3: Pre-fill form with user data from auth context
+  useEffect(() => {
+    if (user && !formInitialized) {
+      setForm((prev) => ({
+        ...prev,
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        email: user.email || "",
+        personalCode: user.personal_code || "",
+        address: [user.street_address, user.house_number, user.city, user.county, user.country].filter(Boolean).join(", "),
+      }));
+      setFormInitialized(true);
+    }
+  }, [user, formInitialized]);
+
   const set = (key: keyof FormData, value: string | boolean) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
@@ -197,15 +226,46 @@ function BecomeASkillBuddy() {
     const errs = validate(form);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    setLoading(false);
-    setSubmitted(true);
+
+    try {
+      // PART 3: Submit provider application to backend API.
+      // ⚠️  FLAG FOR BACKEND TEAM: The POST /api/v1/provider-applications endpoint
+      //     must accept this payload and store it with status "pending". The user's
+      //     role MUST NOT be changed on submission — approval is a separate admin action.
+      const payload = {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        email: form.email,
+        phone_number: form.phone,
+        address: form.address,
+        personal_code: form.personalCode,
+        category: form.category,
+        preference1: form.preference1,
+        preference2: form.preference2 || null,
+        bio: form.bio,
+        // NOTE: cvFile is not included in JSON payload — it should be uploaded
+        // separately via multipart/form-data if the backend supports it.
+      };
+
+      await apiClient.post("/api/v1/provider-applications", payload);
+
+      setLoading(false);
+      setSubmitted(true);
+    } catch (err) {
+      setLoading(false);
+      const msg = extractErrorMessage(err, "Failed to submit application. Please try again.");
+      toast.error(msg);
+    }
   };
 
   const inputClass = (err?: string) =>
     `w-full rounded-xl border px-4 py-3 text-sm transition-colors outline-none focus:ring-2 focus:ring-[#2D7A5F] bg-[#F8FAFB] dark:bg-[#161B22] text-[#0D1117] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${err ? "border-red-500 focus:ring-red-400" : "border-gray-200 dark:border-gray-700 focus:border-[#2D7A5F]"}`;
 
   const labelClass = "block text-sm font-medium text-[#374151] dark:text-[#8B949E] mb-1.5";
+
+  if (!user && !authLoading) {
+    return null; // Will redirect via useEffect
+  }
 
   if (submitted) {
     return (
@@ -225,13 +285,19 @@ function BecomeASkillBuddy() {
             <CheckCircle className="h-12 w-12 text-[#2D7A5F]" />
           </motion.div>
           <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-3xl font-extrabold mb-3">
-            {t("becomeSkillbuddy.successTitle")}
+            Application Submitted!
           </motion.h2>
-          <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-muted-foreground mb-8 leading-relaxed">
-            {t("becomeSkillbuddy.successMessage")}
+          <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-muted-foreground mb-4 leading-relaxed">
+            Your application has been submitted successfully. Our team will review it and get back to you.
           </motion.p>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-            <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-[#2D7A5F] px-8 py-3.5 font-semibold text-white shadow-lg hover:bg-[#236B4F] transition">
+          <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="text-sm text-muted-foreground mb-8">
+            Your account remains a client account until your application is approved. You will be notified once a decision has been made.
+          </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex flex-col gap-3">
+            <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2D7A5F] px-8 py-3.5 font-semibold text-white shadow-lg hover:bg-[#236B4F] transition">
+              Go to Dashboard
+            </Link>
+            <Link to="/" className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-8 py-3.5 font-semibold text-foreground hover:bg-accent transition">
               {t("becomeSkillbuddy.backHome")}
             </Link>
           </motion.div>
