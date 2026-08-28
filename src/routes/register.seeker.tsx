@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Logo } from "@/components/logo";
 import { useI18n } from "@/lib/i18n";
 import { extractFieldErrors, extractErrorMessage } from "@/lib/api-client";
 
@@ -179,27 +180,57 @@ function ClientRegisterPage() {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-lg px-4 py-8 sm:px-6 lg:py-12">
-        <Link
-          to={ENABLE_ROLE_SELECTION_ON_SIGNUP ? "/register" : "/auth/login"}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {ENABLE_ROLE_SELECTION_ON_SIGNUP ? t("register.backToRole") : t("auth.signin")}
-        </Link>
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center">
+        {/* ─── LEFT: Branded content (hidden on mobile, matches login layout) ─── */}
+        <div className="hidden lg:block">
+          <Logo />
+          <h1 className="mt-8 font-display text-4xl font-extrabold leading-tight">
+            {t("auth.signup.leftTitle")}
+          </h1>
+          <p className="mt-4 text-muted-foreground">
+            {t("auth.signup.leftSubtitle")}
+          </p>
+          <ul className="mt-8 space-y-3 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {t("register.role.clientFeature1")}
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {t("register.role.clientFeature2")}
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {t("register.role.clientFeature3")}
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {t("register.role.clientFeature4")}
+            </li>
+          </ul>
+        </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-lg sm:p-8">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+        {/* ─── RIGHT: Signup form card ─── */}
+        <div className="mx-auto w-full max-w-md rounded-3xl border border-border bg-card p-7 shadow-elegant">
+          <div className="lg:hidden mb-6">
+            <Logo />
+          </div>
+
+          <Link
+            to={ENABLE_ROLE_SELECTION_ON_SIGNUP ? "/register" : "/auth/login"}
+            className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
-            <h2 className="text-2xl font-bold">{t("register.step1.title")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("register.haveAccount")}{" "}
-              <Link to="/auth/login" className="text-primary hover:underline">
-                {t("auth.signin")}
-              </Link>
-            </p>
+            <ArrowLeft className="h-4 w-4" />
+            {ENABLE_ROLE_SELECTION_ON_SIGNUP ? t("register.backToRole") : t("auth.signin")}
+          </Link>
+
+          <h2 className="text-2xl font-extrabold">{t("register.step1.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("register.haveAccount")}{" "}
+            <Link to="/auth/login" className="text-primary hover:underline">
+              {t("auth.signin")}
+            </Link>
+          </p>
 
             <div className="mt-6 space-y-4">
               {/* Name row */}
@@ -344,7 +375,6 @@ function ClientRegisterPage() {
                 <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
               </p>
             </div>
-          </motion.div>
         </div>
       </div>
     </SiteShell>

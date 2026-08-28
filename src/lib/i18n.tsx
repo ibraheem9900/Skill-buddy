@@ -132,6 +132,9 @@ const en: Dict = {
   "auth.reset.submit": "Reset Password",
   "auth.reset.success": "Password Updated",
   "auth.reset.successSubtitle": "Your password has been reset successfully. Redirecting to login...",
+  // Auth - Signup (left-side branded content)
+  "auth.signup.leftTitle": "Your trusted help is one click away",
+  "auth.signup.leftSubtitle": "Join thousands of people across the Baltics who book verified professionals for cleaning, repairs, beauty, wellness, and more — all in minutes.",
   // Register - Role Selection
   "register.role.title": "How do you want to use SkillBuddy?",
   "register.role.subtitle": "Choose your path to get started",
@@ -863,6 +866,9 @@ const et: Dict = {
   "auth.reset.submit": "Lähtesta parool",
   "auth.reset.success": "Parool uuendatud",
   "auth.reset.successSubtitle": "Parool on edukalt lähtestatud. Suunamine sisselogimisele...",
+  // Auth - Signup (left-side branded content)
+  "auth.signup.leftTitle": "Sinu usaldusväärne abi on vaid ühe kliki kaugusel",
+  "auth.signup.leftSubtitle": "Liitu tuhandete inimestega üle Baltimaade, kes broneerivad kontrollitud spetsialiste koristuse, remondi, ilu, tervise ja muu jaoks — kõik vaid minutitega.",
   "register.role.title": "Kuidas soovid SkillBuddyd kasutada?",
   "register.role.subtitle": "Vali oma tee alustamiseks",
   "register.role.clientTitle": "Otsin teenuseid",
@@ -1555,6 +1561,9 @@ const ru: Dict = {
   "auth.reset.submit": "Сбросить пароль",
   "auth.reset.success": "Пароль обновлён",
   "auth.reset.successSubtitle": "Пароль успешно сброшен. Перенаправление на вход...",
+  // Auth - Signup (left-side branded content)
+  "auth.signup.leftTitle": "Ваш надёжный помощник в один клик",
+  "auth.signup.leftSubtitle": "Присоединяйтесь к тысячам людей по всей Балтии, которые бронируют проверенных профессионалов для уборки, ремонта, красоты, здоровья и многого другого — всё за считанные минуты.",
   "register.role.title": "Как вы хотите использовать SkillBuddy?",
   "register.role.subtitle": "Выберите свой путь для начала",
   "register.role.clientTitle": "Я ищу услуги",
@@ -2247,6 +2256,9 @@ const lv: Dict = {
   "auth.reset.submit": "Atiestatīt paroli",
   "auth.reset.success": "Parole atjaunināta",
   "auth.reset.successSubtitle": "Parole veiksmīgi atiestatīta. Novirzīšana uz pieslēgšanos...",
+  // Auth - Signup (left-side branded content)
+  "auth.signup.leftTitle": "Tavs uzticamais palīgs ir viena klikšķa attālumā",
+  "auth.signup.leftSubtitle": "Pievienojies tūkstošiem cilvēku visā Baltijā, kuri rezervē pārbaudītus profesionāļus uzkopšanai, remontam, skaistumam, veselībai un daudz kam citam — viss dažu minūšu laikā.",
   "register.role.title": "Kā tu vēlies izmantot SkillBuddy?",
   "register.role.subtitle": "Izvēlies savu ceļu, lai sāktu",
   "register.role.clientTitle": "Meklēju pakalpojumus",
@@ -2939,6 +2951,9 @@ const lt: Dict = {
   "auth.reset.submit": "Atkurti slaptažodį",
   "auth.reset.success": "Slaptažodis atnaujintas",
   "auth.reset.successSubtitle": "Slaptažodis sėkmingai atkurtas. Nukreipiama į prisijungimą...",
+  // Auth - Signup (left-side branded content)
+  "auth.signup.leftTitle": "Jūsų patikimas pagalbininkas yra vos vieno mygtuko paspaudimu",
+  "auth.signup.leftSubtitle": "Prisijunkite prie tūkstančių žmonių visoje Baltijoje, kurie užsisako patikrintus profesionalus valymui, remontui, grožiui, sveikatai ir daugeliui kitų paslaugų — viskas vos per kelias minutes.",
   "register.role.title": "Kaip norite naudotis SkillBuddy?",
   "register.role.subtitle": "Pasirinkite savo kelią pradėti",
   "register.role.clientTitle": "Ieškau paslaugų",
