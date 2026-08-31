@@ -60,7 +60,6 @@ function Login() {
   const validate = (): boolean => {
     const errs: typeof errors = {};
     if (!email.trim()) errs.email = t("auth.validation.emailRequired");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = t("auth.validation.emailInvalid");
     if (!password) errs.password = t("auth.validation.passwordRequired");
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -75,7 +74,7 @@ function Login() {
 
     try {
       const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
-      const res = await fetch(`${baseUrl}/api/v1/users/login`, {
+      const res = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
@@ -152,7 +151,7 @@ function Login() {
     // ⚠️  FLAG FOR BACKEND TEAM: Confirm the exact callback redirect target and
     //     whether tokens are returned as query params or in a redirect body.
     //     Current assumption: backend redirects to {origin}/auth/callback?access_token=...&refresh_token=...
-    window.location.href = `${baseUrl}/api/v1/users/login/${provider}`;
+    window.location.href = `${baseUrl}/api/v1/auth/login/${provider}`;
   };
 
   return (
@@ -208,13 +207,13 @@ function Login() {
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setErrors((err) => ({ ...err, email: undefined, general: undefined }));
                   }}
-                  placeholder="you@email.com"
+                  placeholder="Email or Personal ID Code"
                   className={`h-11 pl-10 ${errors.email ? "border-red-500" : ""}`}
                 />
               </div>
