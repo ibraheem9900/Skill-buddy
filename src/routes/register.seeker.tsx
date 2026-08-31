@@ -95,7 +95,7 @@ function ClientRegisterPage() {
 
     try {
       const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
-      const res = await fetch(`${baseUrl}/api/v1/users/signup`, {
+      const res = await fetch(`${baseUrl}/api/v1/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
