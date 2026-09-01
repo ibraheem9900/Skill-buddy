@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         const res = await fetch(
-          `${(import.meta.env.VITE_API_BASE_URL as string) ?? ""}/api/v1/users/refresh`,
+          `${(import.meta.env.VITE_API_BASE_URL as string) ?? ""}/api/v1/auth/refresh`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
