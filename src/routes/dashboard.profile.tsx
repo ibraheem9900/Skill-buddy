@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, User, MapPin, Phone, Shield, Save, Loader as Loader2,
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
+  Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
@@ -263,6 +264,123 @@ function ProfilePage() {
       toast.error(extractErrorMessage(err, "Failed to update password."));
       setPwSaving(false);
     }
+  };
+
+  // ─── Active Sessions ───────────────────────────────────────────────────────
+  type Session = {
+    sid: string;
+    device_type: string;
+    device_name: string;
+    browser: string;
+    os_name: string;
+    app_version: string;
+    ip_address: string;
+    last_active: string;
+    created_at: string;
+    is_current: boolean;
+  };
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState("");
+  const [loggingOutSid, setLoggingOutSid] = useState<string | null>(null);
+  const [loggingOutAll, setLoggingOutAll] = useState(false);
+  const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
+
+  const getAuthHeaders = useCallback(async () => {
+    const { tokenStore } = await import("@/lib/auth-tokens");
+    const accessToken = tokenStore.getAccess();
+    return {
+      "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    };
+  }, []);
+
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    setSessionsError("");
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/api/v1/auth/sessions`, { headers });
+      if (!res.ok) {
+        setSessionsError("Couldn't load your sessions. Please try again.");
+        setSessionsLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setSessions(data.sessions ?? []);
+    } catch {
+      setSessionsError("Couldn't load your sessions. Please try again.");
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [getAuthHeaders]);
+
+  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+
+  const logoutSession = async (sid: string) => {
+    setLoggingOutSid(sid);
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/api/v1/auth/sessions/${encodeURIComponent(sid)}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) {
+        toast.error("Failed to log out device. Please try again.");
+        return;
+      }
+      toast.success("Device logged out.");
+      setSessions((prev) => prev.filter((s) => s.sid !== sid));
+    } catch {
+      toast.error("Failed to log out device. Please try again.");
+    } finally {
+      setLoggingOutSid(null);
+    }
+  };
+
+  const logoutAllOther = async () => {
+    setLoggingOutAll(true);
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/api/v1/auth/sessions`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) {
+        toast.error("Failed to log out devices. Please try again.");
+        return;
+      }
+      toast.success("All other devices logged out.");
+      setSessions((prev) => prev.filter((s) => s.is_current));
+      setConfirmLogoutAll(false);
+    } catch {
+      toast.error("Failed to log out devices. Please try again.");
+    } finally {
+      setLoggingOutAll(false);
+    }
+  };
+
+  const getDeviceIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "mobile": case "phone": return Smartphone;
+      case "tablet": return Tablet;
+      default: return Monitor;
+    }
+  };
+
+  const formatLastActive = (ts: string) => {
+    if (!ts) return "";
+    const diff = Date.now() - new Date(ts).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Active now";
+    if (mins < 60) return `Active ${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Active ${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `Active ${days}d ago`;
   };
 
   const displayName = getFullName(user);
@@ -613,6 +731,132 @@ function ProfilePage() {
                 ⚠️ After changing your password, you will be logged out for security. You'll need to log in again with your new password.
               </p>
             </div>
+          </section>
+
+          {/* Active Sessions */}
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <SectionHeader icon={Globe} title="Active Sessions" />
+            <p className="text-sm text-muted-foreground mb-4">
+              These are the devices currently logged into your account. If you don't recognize one, log it out for your security.
+            </p>
+
+            {sessionsLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+
+            {sessionsError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 p-4 text-sm text-red-600 dark:text-red-400">
+                {sessionsError}
+                <Button variant="outline" size="sm" className="ml-3" onClick={fetchSessions}>
+                  Retry
+                </Button>
+              </div>
+            )}
+
+            {!sessionsLoading && !sessionsError && sessions.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No active sessions found.</p>
+            )}
+
+            {!sessionsLoading && !sessionsError && sessions.length > 0 && (
+              <div className="space-y-3">
+                {sessions.map((session) => {
+                  const DeviceIcon = getDeviceIcon(session.device_type);
+                  return (
+                    <div
+                      key={session.sid}
+                      className={`flex items-center justify-between gap-4 rounded-xl border p-4 ${
+                        session.is_current ? "border-primary/30 bg-primary/5" : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <DeviceIcon className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium truncate">
+                              {session.device_name || session.browser || "Unknown device"}
+                            </p>
+                            {session.is_current && (
+                              <span className="shrink-0 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                This device
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {[session.browser, session.os_name].filter(Boolean).join(" on ")}
+                            {session.ip_address && <> · {session.ip_address}</>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatLastActive(session.last_active)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {!session.is_current && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={loggingOutSid === session.sid}
+                          onClick={() => logoutSession(session.sid)}
+                          className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        >
+                          {loggingOutSid === session.sid ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <><LogOut className="h-4 w-4 mr-1" />Log out</>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Log out all other devices */}
+                {sessions.some((s) => !s.is_current) && (
+                  <div className="pt-2">
+                    {confirmLogoutAll ? (
+                      <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 p-4">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                            Log out all other devices?
+                          </p>
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            This will log you out of all devices except this one.
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button variant="outline" size="sm" onClick={() => setConfirmLogoutAll(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            disabled={loggingOutAll}
+                            onClick={logoutAllOther}
+                          >
+                            {loggingOutAll ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, log out all"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        onClick={() => setConfirmLogoutAll(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Log out all other devices
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </div>
       </div>
