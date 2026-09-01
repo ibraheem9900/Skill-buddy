@@ -285,6 +285,8 @@ function ProfilePage() {
   const [loggingOutSid, setLoggingOutSid] = useState<string | null>(null);
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
+  const [confirmLogoutEverywhere, setConfirmLogoutEverywhere] = useState(false);
+  const [loggingOutEverywhere, setLoggingOutEverywhere] = useState(false);
 
   const getAuthHeaders = useCallback(async () => {
     const { tokenStore } = await import("@/lib/auth-tokens");
@@ -361,6 +363,31 @@ function ProfilePage() {
       toast.error("Failed to log out devices. Please try again.");
     } finally {
       setLoggingOutAll(false);
+    }
+  };
+
+  const logoutEverywhere = async () => {
+    setLoggingOutEverywhere(true);
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${baseUrl}/api/v1/auth/logout-all`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) {
+        toast.error("Couldn't log out of all devices. Please try again.");
+        setLoggingOutEverywhere(false);
+        return;
+      }
+      // Clear all local session data
+      const { tokenStore } = await import("@/lib/auth-tokens");
+      tokenStore.clear();
+      toast.success("Logged out of all devices.");
+      navigate({ to: "/auth/login" });
+    } catch {
+      toast.error("Couldn't log out of all devices. Please try again.");
+      setLoggingOutEverywhere(false);
     }
   };
 
@@ -839,7 +866,7 @@ function ProfilePage() {
                             disabled={loggingOutAll}
                             onClick={logoutAllOther}
                           >
-                            {loggingOutAll ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, log out all"}
+                            {loggingOutAll ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, log out other devices"}
                           </Button>
                         </div>
                       </div>
@@ -856,6 +883,45 @@ function ProfilePage() {
                     )}
                   </div>
                 )}
+
+                {/* Log out of ALL devices (including this one) */}
+                <div className="pt-3 border-t border-border mt-3">
+                  {confirmLogoutEverywhere ? (
+                    <div className="flex items-center gap-3 rounded-xl border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30 p-4">
+                      <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                          Log out of ALL devices?
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          This will log you out of every device, including this one. You'll need to log in again.
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => setConfirmLogoutEverywhere(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-red-700 hover:bg-red-800 text-white"
+                          disabled={loggingOutEverywhere}
+                          onClick={logoutEverywhere}
+                        >
+                          {loggingOutEverywhere ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, log out everywhere"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setConfirmLogoutEverywhere(true)}
+                    >
+                      <LogOut className="h-4 w-4 mr-1" />
+                      Log out of all devices
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </section>
