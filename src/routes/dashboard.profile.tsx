@@ -186,15 +186,32 @@ function ProfilePage() {
   };
 
   // ─── Change password ───────────────────────────────────────────────────────
-  const [pwForm, setPwForm] = useState({ old_password: "", new_password: "", confirm_password: "" });
+  const { signOut } = useAuth();
+  const [pwForm, setPwForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
   const [showOldPw, setShowOldPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
 
+  const getPasswordStrength = (pwd: string) => {
+    if (!pwd) return { label: "", color: "bg-muted", width: "0%" };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[^a-zA-Z\d]/.test(pwd)) score++;
+    if (score <= 2) return { label: "Weak", color: "bg-red-500", width: "25%" };
+    if (score === 3) return { label: "Fair", color: "bg-yellow-500", width: "50%" };
+    if (score === 4) return { label: "Good", color: "bg-blue-500", width: "75%" };
+    return { label: "Strong", color: "bg-green-500", width: "100%" };
+  };
+  const pwStrength = getPasswordStrength(pwForm.new_password);
+
   const handleChangePassword = async () => {
     const errs: Record<string, string> = {};
-    if (!pwForm.old_password) errs.old_password = "Current password is required.";
+    if (!pwForm.current_password) errs.current_password = "Current password is required.";
     if (!pwForm.new_password) errs.new_password = "New password is required.";
     else if (pwForm.new_password.length < 8) errs.new_password = "Password must be at least 8 characters.";
     if (pwForm.new_password !== pwForm.confirm_password) errs.confirm_password = "Passwords don't match.";
@@ -203,16 +220,47 @@ function ProfilePage() {
 
     setPwSaving(true);
     try {
-      await apiClient.patch("/api/v1/users/update-password", {
-        old_password: pwForm.old_password,
-        new_password: pwForm.new_password,
-        confirm_password: pwForm.confirm_password,
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const { tokenStore } = await import("@/lib/auth-tokens");
+      const accessToken = tokenStore.getAccess();
+      const res = await fetch(`${baseUrl}/api/v1/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          current_password: pwForm.current_password,
+          new_password: pwForm.new_password,
+        }),
       });
-      toast.success("Password updated successfully.");
-      setPwForm({ old_password: "", new_password: "", confirm_password: "" });
+
+      if (!res.ok) {
+        let msg = "Failed to update password.";
+        try {
+          const data = await res.json();
+          if (typeof data.detail === "string") msg = data.detail;
+          else if (typeof data.message === "string") msg = data.message;
+          else if (Array.isArray(data.detail) && data.detail.length > 0) {
+            msg = data.detail[0]?.msg ?? msg;
+          }
+        } catch {}
+        // Show specific error for wrong current password
+        if (msg.toLowerCase().includes("current") || msg.toLowerCase().includes("incorrect")) {
+          setPwErrors({ current_password: msg });
+        } else {
+          toast.error(msg);
+        }
+        setPwSaving(false);
+        return;
+      }
+
+      // Success — API invalidates all sessions, so log out and redirect
+      toast.success("Password updated. Please log in again with your new password.");
+      await signOut();
+      navigate({ to: "/auth/login" });
     } catch (err) {
       toast.error(extractErrorMessage(err, "Failed to update password."));
-    } finally {
       setPwSaving(false);
     }
   };
@@ -491,16 +539,17 @@ function ProfilePage() {
           {/* Change Password */}
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={Lock} title="Change Password" />
+            <p className="text-sm text-muted-foreground mb-4">Update your password to keep your account secure.</p>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="old_password">Current Password</Label>
+                <Label htmlFor="current_password">Current Password</Label>
                 <div className="relative mt-1.5">
                   <Input
-                    id="old_password"
+                    id="current_password"
                     type={showOldPw ? "text" : "password"}
-                    value={pwForm.old_password}
-                    onChange={(e) => { setPwForm((f) => ({ ...f, old_password: e.target.value })); setPwErrors((e) => ({ ...e, old_password: "" })); }}
-                    className={`h-11 pr-10 ${pwErrors.old_password ? "border-red-500" : ""}`}
+                    value={pwForm.current_password}
+                    onChange={(e) => { setPwForm((f) => ({ ...f, current_password: e.target.value })); setPwErrors((er) => ({ ...er, current_password: "" })); }}
+                    className={`h-11 pr-10 ${pwErrors.current_password ? "border-red-500" : ""}`}
                     placeholder="Your current password"
                   />
                   <button type="button" onClick={() => setShowOldPw(!showOldPw)}
@@ -508,7 +557,7 @@ function ProfilePage() {
                     {showOldPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {pwErrors.old_password && <p className="mt-1 text-xs text-red-500">{pwErrors.old_password}</p>}
+                {pwErrors.current_password && <p className="mt-1 text-xs text-red-500">{pwErrors.current_password}</p>}
               </div>
               <div>
                 <Label htmlFor="new_password">New Password</Label>
@@ -517,7 +566,7 @@ function ProfilePage() {
                     id="new_password"
                     type={showNewPw ? "text" : "password"}
                     value={pwForm.new_password}
-                    onChange={(e) => { setPwForm((f) => ({ ...f, new_password: e.target.value })); setPwErrors((e) => ({ ...e, new_password: "" })); }}
+                    onChange={(e) => { setPwForm((f) => ({ ...f, new_password: e.target.value })); setPwErrors((er) => ({ ...er, new_password: "" })); }}
                     className={`h-11 pr-10 ${pwErrors.new_password ? "border-red-500" : ""}`}
                     placeholder="Min. 8 characters"
                   />
@@ -526,23 +575,43 @@ function ProfilePage() {
                     {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {pwForm.new_password && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Password strength</span>
+                      <span className={`font-medium ${pwStrength.color.replace("bg-", "text-")}`}>{pwStrength.label}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full transition-all ${pwStrength.color}`} style={{ width: pwStrength.width }} />
+                    </div>
+                  </div>
+                )}
                 {pwErrors.new_password && <p className="mt-1 text-xs text-red-500">{pwErrors.new_password}</p>}
               </div>
               <div>
                 <Label htmlFor="confirm_password">Confirm New Password</Label>
-                <Input
-                  id="confirm_password"
-                  type="password"
-                  value={pwForm.confirm_password}
-                  onChange={(e) => { setPwForm((f) => ({ ...f, confirm_password: e.target.value })); setPwErrors((e) => ({ ...e, confirm_password: "" })); }}
-                  className={`mt-1.5 h-11 ${pwErrors.confirm_password ? "border-red-500" : ""}`}
-                  placeholder="Repeat new password"
-                />
+                <div className="relative mt-1.5">
+                  <Input
+                    id="confirm_password"
+                    type={showConfirmPw ? "text" : "password"}
+                    value={pwForm.confirm_password}
+                    onChange={(e) => { setPwForm((f) => ({ ...f, confirm_password: e.target.value })); setPwErrors((er) => ({ ...er, confirm_password: "" })); }}
+                    className={`h-11 pr-10 ${pwErrors.confirm_password ? "border-red-500" : ""}`}
+                    placeholder="Repeat new password"
+                  />
+                  <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {pwErrors.confirm_password && <p className="mt-1 text-xs text-red-500">{pwErrors.confirm_password}</p>}
               </div>
               <Button onClick={handleChangePassword} disabled={pwSaving} variant="outline">
                 {pwSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Lock className="mr-2 h-4 w-4" />Update Password</>}
               </Button>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ After changing your password, you will be logged out for security. You'll need to log in again with your new password.
+              </p>
             </div>
           </section>
         </div>
