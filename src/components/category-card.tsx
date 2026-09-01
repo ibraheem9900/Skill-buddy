@@ -22,7 +22,7 @@ const animVariants: Record<AnimKind, { hover: TargetAndTransition; transition?: 
 };
 
 interface CategoryCardProps {
-  category: CategoryDef;
+  category: CategoryDef & { icon_url?: string | null };
   /** When true, render with a green active state (no navigation — calls onSelect instead) */
   active?: boolean;
   /** If provided, clicking calls this instead of navigating */
@@ -49,13 +49,17 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
         <motion.div
           whileHover={v.hover}
           transition={v.transition}
-          className={`grid h-14 w-14 place-items-center rounded-2xl transition-all duration-200 ${
+          className={`grid h-14 w-14 place-items-center rounded-2xl overflow-hidden transition-all duration-200 ${
             active
               ? "bg-primary text-primary-foreground"
               : "bg-primary/10 text-primary group-hover:bg-[#F99912] group-hover:text-white"
           }`}
         >
-          <Icon className="h-7 w-7" />
+          {category.icon_url ? (
+            <img src={category.icon_url} alt={category.name} className="h-7 w-7 object-contain" />
+          ) : (
+            <Icon className="h-7 w-7" />
+          )}
         </motion.div>
         <div
           className={`min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200 ${
@@ -77,9 +81,13 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
       <motion.div
         whileHover={v.hover}
         transition={v.transition}
-        className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#F99912] group-hover:text-white"
+        className="grid h-14 w-14 place-items-center rounded-2xl overflow-hidden bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#F99912] group-hover:text-white"
       >
-        <Icon className="h-7 w-7" />
+        {category.icon_url ? (
+          <img src={category.icon_url} alt={category.name} className="h-7 w-7 object-contain" />
+        ) : (
+          <Icon className="h-7 w-7" />
+        )}
       </motion.div>
       <div className="min-h-[2.5rem] text-sm font-semibold leading-tight transition-colors duration-200">{displayName}</div>
     </Link>

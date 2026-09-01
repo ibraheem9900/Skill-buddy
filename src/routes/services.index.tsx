@@ -7,6 +7,7 @@ import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { SiteShell } from "@/components/site-shell";
 import { ServiceCard } from "@/components/service-card";
 import { CATEGORIES, SERVICES } from "@/lib/data";
+import { useCategories } from "@/hooks/use-categories";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -35,6 +36,7 @@ type SortOption = "popular" | "new" | "offers" | "upcoming";
 
 function ServicesPage() {
   const { t } = useI18n();
+  const { categories: apiCategories } = useCategories();
   const search = Route.useSearch();
   const [cat, setCat] = useState<string | undefined>(search.category);
   const [q, setQ] = useState(search.q ?? "");
@@ -72,7 +74,7 @@ function ServicesPage() {
     return r;
   }, [cat, q, sort]);
 
-  const activeCat = CATEGORIES.find((c) => c.slug === cat);
+  const activeCat = (apiCategories.length > 0 ? apiCategories : CATEGORIES).find((c) => c.slug === cat);
   const currentSortLabel = sortOptions.find((o) => o.value === sort)?.label ?? sortOptions[0].label;
 
   return (

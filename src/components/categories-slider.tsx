@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CategoryCard } from "@/components/category-card";
-import { CATEGORIES_FULL } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
+import { Loader as Loader2 } from "lucide-react";
 
 interface CategoriesSliderProps {
   /** When provided, one item will render as the active (selected) card */
@@ -12,6 +13,7 @@ interface CategoriesSliderProps {
 }
 
 export function CategoriesSlider({ activeSlug, onSelect }: CategoriesSliderProps = {}) {
+  const { categories, loading, error } = useCategories();
   const [emblaRef, embla] = useEmblaCarousel({ align: "start", loop: false, slidesToScroll: 1 });
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -45,7 +47,15 @@ export function CategoriesSlider({ activeSlug, onSelect }: CategoriesSliderProps
     <div className="relative px-8 sm:px-10">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
-          {CATEGORIES_FULL.map((c) => (
+          {loading && (
+            <div className="flex items-center gap-2 px-4 py-8 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading categories…
+            </div>
+          )}
+          {!loading && error && (
+            <div className="px-4 py-8 text-sm text-red-500">{error}</div>
+          )}
+          {categories.map((c) => (
             <div
               key={c.slug}
               className="shrink-0 grow-0 basis-1/2 px-2 sm:basis-1/3 md:basis-1/5 lg:basis-1/7 xl:basis-[11.111%]"
