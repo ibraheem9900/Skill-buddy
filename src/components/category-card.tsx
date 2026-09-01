@@ -22,7 +22,15 @@ const animVariants: Record<AnimKind, { hover: TargetAndTransition; transition?: 
 };
 
 interface CategoryCardProps {
-  category: CategoryDef & { icon_url?: string | null };
+  category: {
+    slug: string;
+    name: string;
+    icon: string;
+    description?: string;
+    nameKey?: string;
+    anim?: AnimKind;
+    icon_url?: string | null;
+  };
   /** When true, render with a green active state (no navigation — calls onSelect instead) */
   active?: boolean;
   /** If provided, clicking calls this instead of navigating */
@@ -32,7 +40,7 @@ interface CategoryCardProps {
 export function CategoryCard({ category, active, onSelect }: CategoryCardProps) {
   const { t } = useI18n();
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[category.icon] ?? Icons.Sparkles) as IconCmp;
-  const v = animVariants[category.anim];
+  const v = animVariants[category.anim ?? "scale"];
   const displayName = category.nameKey ? t(category.nameKey) : category.name;
 
   if (onSelect) {

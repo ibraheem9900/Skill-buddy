@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/lib/api-client";
+import type { AnimKind } from "@/lib/categories";
 
 export interface ApiCategory {
   id: number;
@@ -73,6 +74,8 @@ export function useCategories() {
     icon_url: c.icon_url,
     /** Fallback lucide icon name (used when icon_url is missing) */
     icon: "Sparkles" as string,
+    /** Default animation kind for the card */
+    anim: "scale" as AnimKind,
   }));
 
   return { categories: mapped, raw: categories, loading, error, retry };
