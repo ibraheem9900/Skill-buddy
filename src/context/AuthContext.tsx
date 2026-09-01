@@ -102,17 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const accessToken = tokenStore.getAccess();
-    const refreshToken = tokenStore.getRefresh();
-    if (accessToken && refreshToken) {
-      try {
-        await apiClient.post("/api/v1/users/logout", {
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          token_type: "bearer",
-        });
-      } catch {
-        // best-effort; clear regardless
-      }
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      await fetch(`${baseUrl}/api/v1/auth/logout`, {
+        method: "POST",
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+    } catch {
+      // best-effort; clear regardless
     }
     tokenStore.clear();
     setUser(null);
