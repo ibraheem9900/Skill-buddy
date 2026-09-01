@@ -319,6 +319,7 @@ function ProfilePage() {
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
   const logoutSession = async (sid: string) => {
+    if (!window.confirm("Log out this device?")) return;
     setLoggingOutSid(sid);
     try {
       const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
