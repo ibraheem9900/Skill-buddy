@@ -106,6 +106,26 @@ function Login() {
         return;
       }
 
+      // Check if the user's email is verified
+      if (data.user && data.user.is_verified === false) {
+        hideLoader();
+        setLoading(false);
+        // Store tokens so the user doesn't need to re-enter credentials
+        signIn(
+          data.user,
+          data.access_token,
+          data.refresh_token,
+          data.roles ?? [],
+          data.active_role ?? ""
+        );
+        // Redirect to verify-email page with their email pre-filled
+        navigate({
+          to: "/verify-email",
+          search: { email: data.user.email },
+        });
+        return;
+      }
+
       signIn(
         data.user,
         data.access_token,

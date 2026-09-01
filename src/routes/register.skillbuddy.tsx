@@ -1,10 +1,10 @@
 "use client";
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ENABLE_ROLE_SELECTION_ON_SIGNUP } from "@/lib/feature-flags";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, User, Mail, Lock, Loader as Loader2, CircleCheck as CheckCircle2, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, User, Mail, Lock, Loader as Loader2, CreditCard } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 function ProviderRegisterPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -143,34 +144,12 @@ function ProviderRegisterPage() {
   };
 
   if (success) {
-    return (
-      <SiteShell>
-        <div className="mx-auto flex min-h-[80vh] max-w-md flex-col items-center justify-center px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full rounded-2xl border border-border bg-card p-8 shadow-lg text-center"
-          >
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#2D7A5F]/10">
-              <CheckCircle2 className="h-9 w-9 text-[#2D7A5F]" />
-            </div>
-            <h1 className="text-2xl font-bold">Provider account created!</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We sent a verification link to <strong className="text-foreground">{submittedEmail}</strong>.
-              Click it to activate your account, then log in to complete your provider profile.
-            </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Button asChild className="w-full bg-[#2D7A5F] hover:bg-[#236B4F]">
-                <Link to="/auth/login">Go to Login</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/verify-email">Verify email</Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </SiteShell>
-    );
+    // Redirect to the dedicated verify-email page with the user's email
+    navigate({
+      to: "/verify-email",
+      search: { email: submittedEmail },
+    });
+    return null;
   }
 
   return (

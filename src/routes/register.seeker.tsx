@@ -3,8 +3,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ENABLE_ROLE_SELECTION_ON_SIGNUP } from "@/lib/feature-flags";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, User, Mail, Lock, Loader as Loader2, CircleCheck as CheckCircle2, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, User, Mail, Lock, Loader as Loader2, CreditCard } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +55,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 function ClientRegisterPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -145,37 +145,12 @@ function ClientRegisterPage() {
   };
 
   if (success) {
-    return (
-      <SiteShell>
-        <div className="mx-auto flex min-h-[80vh] max-w-md flex-col items-center justify-center px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full rounded-2xl border border-border bg-card p-8 shadow-lg text-center"
-          >
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
-              <CheckCircle2 className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h1 className="text-2xl font-bold">Account created!</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We sent a verification link to <strong className="text-foreground">{submittedEmail}</strong>.
-              Click it to activate your account.
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Once verified, log in to complete your profile.
-            </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Button asChild className="w-full">
-                <Link to="/auth/login">Go to Login</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/verify-email">Verify email</Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </SiteShell>
-    );
+    // Redirect to the dedicated verify-email page with the user's email
+    navigate({
+      to: "/verify-email",
+      search: { email: submittedEmail },
+    });
+    return null;
   }
 
   return (
