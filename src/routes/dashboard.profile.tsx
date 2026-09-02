@@ -114,19 +114,31 @@ function ProfilePage() {
       toast.error("Image must be under 5 MB.");
       return;
     }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
     setAvatarUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await apiClient.upload<{ avatar_url?: string; user?: { avatar_url?: string } }>(
-        "/api/v1/users/upload-profile-picture",
-        form
+      const formData = new FormData();
+      formData.append("file", file);
+      // POST /api/v1/users/profile-picture — multipart/form-data
+      // apiClient.upload handles auth headers and does NOT set Content-Type
+      // (browser sets the correct multipart boundary automatically)
+      const res = await apiClient.upload<{ message?: string; url?: string }>(
+        "/api/v1/users/profile-picture",
+        formData
       );
-      const newUrl = res?.avatar_url ?? res?.user?.avatar_url;
-      if (newUrl) updateUserLocal({ avatar_url: newUrl });
-      toast.success("Profile picture updated.");
+      const newUrl = res?.url;
+      if (newUrl) {
+        updateUserLocal({
+          avatar_url: newUrl,
+          profile_picture_url: newUrl,
+        });
+      }
+      toast.success(res?.message ?? "Profile picture updated.");
     } catch (err) {
-      toast.error(extractErrorMessage(err, "Upload failed."));
+      toast.error(extractErrorMessage(err, "Couldn't upload image. Please try a different file."));
     } finally {
       setAvatarUploading(false);
     }
