@@ -4,16 +4,10 @@ import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { toast } from "sonner";
 import {
-  ArrowLeft, User, MapPin, Phone, Shield, Save, Loader as Loader2,
+  ArrowLeft, User, Phone, Save, Loader as Loader2,
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
 } from "lucide-react";
@@ -26,12 +20,7 @@ export const Route = createFileRoute("/dashboard/profile")({
   component: ProfilePage,
 });
 
-const ESTONIAN_COUNTIES = [
-  "Harju County", "Ida-Viru County", "Järva County", "Jõgeva County",
-  "Lääne County", "Lääne-Viru County", "Pärnu County", "Põlva County",
-  "Rapla County", "Saare County", "Tartu County", "Valga County",
-  "Viljandi County", "Võru County",
-];
+
 
 function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
@@ -52,15 +41,11 @@ function ProfilePage() {
   const [form, setForm] = useState({
     first_name: user?.first_name ?? "",
     last_name: user?.last_name ?? "",
+    username: user?.username ?? "",
     phone_number: user?.phone_number ?? "",
-    role: (user?.role ?? "") as "CLIENT" | "PROVIDER" | "",
-    country: user?.country ?? "Estonia",
-    county: user?.county ?? "",
-    city: user?.city ?? "",
-    postal_code: user?.postal_code ?? "",
-    street_address: user?.street_address ?? "",
-    house_number: user?.house_number ?? "",
   });
+
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const update = (key: keyof typeof form, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -68,36 +53,53 @@ function ProfilePage() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    setFormErrors({});
     try {
-      const payload: Record<string, string | null> = {
-        first_name: form.first_name || null,
-        last_name: form.last_name || null,
-        phone_number: form.phone_number || null,
-        country: form.country || null,
-        county: form.county || null,
-        city: form.city || null,
-        postal_code: form.postal_code || null,
-        street_address: form.street_address || null,
-        house_number: form.house_number || null,
-      };
-      if (form.role) payload.role = form.role;
+      const payload: Record<string, string> = {};
+      if (form.first_name !== (user.first_name ?? "")) payload.first_name = form.first_name;
+      if (form.last_name !== (user.last_name ?? "")) payload.last_name = form.last_name;
+      if (form.username !== (user.username ?? "")) payload.username = form.username;
+      if (form.phone_number !== (user.phone_number ?? "")) payload.phone_number = form.phone_number;
 
-      await apiClient.patch("/api/v1/users/update-user", payload);
-      updateUserLocal({
+      // Always send all fields to be safe
+      const body = {
         first_name: form.first_name,
         last_name: form.last_name,
-        phone_number: form.phone_number,
-        role: form.role as "CLIENT" | "PROVIDER" | null,
-        country: form.country,
-        county: form.county,
-        city: form.city,
-        postal_code: form.postal_code,
-        street_address: form.street_address,
-        house_number: form.house_number,
-      });
+        username: form.username || undefined,
+        phone_number: form.phone_number || undefined,
+      };
+
+      const res = await apiClient.patch<Record<string, unknown>>("/api/v1/users/profile", body);
+      // The API returns the full updated user — update global state with it
+      if (res && typeof res === "object" && "id" in res) {
+        const updated: Record<string, unknown> = res;
+        updateUserLocal({
+          first_name: (updated.first_name as string) ?? form.first_name,
+          last_name: (updated.last_name as string) ?? form.last_name,
+          username: (updated.username as string) ?? form.username,
+          phone_number: (updated.phone_number as string) ?? form.phone_number,
+          avatar_url: (updated.profile_picture_url as string) ?? (updated.avatar_url as string) ?? user.avatar_url,
+          roles: Array.isArray(updated.roles) ? (updated.roles as string[]) : user.roles,
+        });
+      } else {
+        updateUserLocal({
+          first_name: form.first_name,
+          last_name: form.last_name,
+          username: form.username,
+          phone_number: form.phone_number,
+        });
+      }
       toast.success("Profile updated successfully.");
     } catch (err) {
-      toast.error(extractErrorMessage(err, "Failed to save profile."));
+      // Try to extract field-specific errors from 422 response
+      const msg = extractErrorMessage(err, "Failed to save profile.");
+      if (msg.includes("username")) {
+        setFormErrors({ username: msg });
+      } else if (msg.includes("phone")) {
+        setFormErrors({ phone_number: msg });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSaving(false);
     }
@@ -523,9 +525,9 @@ function ProfilePage() {
         </div>
 
         <div className="space-y-6">
-          {/* Personal Info */}
+          {/* Edit Profile */}
           <section className="rounded-2xl border border-border bg-card p-6">
-            <SectionHeader icon={User} title="Personal Information" />
+            <SectionHeader icon={User} title="Edit Profile" />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="first_name">First Name</Label>
@@ -547,99 +549,47 @@ function ProfilePage() {
                   placeholder="Doe"
                 />
               </div>
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  className={`mt-1.5 h-11 ${formErrors.username ? "border-red-500" : ""}`}
+                  value={form.username}
+                  onChange={(e) => { update("username", e.target.value); setFormErrors((er) => ({ ...er, username: "" })); }}
+                  placeholder="johndoe"
+                />
+                {formErrors.username && <p className="mt-1 text-xs text-red-500">{formErrors.username}</p>}
+              </div>
+              <div>
+                <Label htmlFor="phone_number">Phone Number</Label>
+                <Input
+                  id="phone_number"
+                  className={`mt-1.5 h-11 ${formErrors.phone_number ? "border-red-500" : ""}`}
+                  value={form.phone_number}
+                  onChange={(e) => { update("phone_number", e.target.value); setFormErrors((er) => ({ ...er, phone_number: "" })); }}
+                  placeholder="+372 5XXX XXXX"
+                />
+                {formErrors.phone_number && <p className="mt-1 text-xs text-red-500">{formErrors.phone_number}</p>}
+              </div>
               <div className="sm:col-span-2">
                 <Label>Email</Label>
                 <Input className="mt-1.5 h-11 bg-muted cursor-not-allowed" value={user?.email ?? ""} readOnly disabled />
                 <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed here.</p>
               </div>
+              {user?.personal_code && (
+                <div className="sm:col-span-2">
+                  <Label>Personal ID Code</Label>
+                  <Input className="mt-1.5 h-11 bg-muted cursor-not-allowed" value={user.personal_code} readOnly disabled />
+                  <p className="mt-1 text-xs text-muted-foreground">Personal ID code cannot be changed.</p>
+                </div>
+              )}
+            </div>
+            <div className="mt-5 flex justify-end">
+              <Button onClick={handleSave} disabled={saving} className="min-w-[140px]">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
+              </Button>
             </div>
           </section>
-
-          {/* Role selection */}
-          <section className="rounded-2xl border border-border bg-card p-6">
-            <SectionHeader icon={Shield} title="Account Role" />
-            <div>
-              <Label htmlFor="role">I am a…</Label>
-              <Select value={form.role} onValueChange={(v) => update("role", v)}>
-                <SelectTrigger className="mt-1.5 h-11">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CLIENT">Client — I hire services</SelectItem>
-                  <SelectItem value="PROVIDER">Provider — I offer services</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                ⚠️ Confirm with the backend team whether a single account can hold both CLIENT and PROVIDER roles simultaneously (active_role switching).
-              </p>
-            </div>
-          </section>
-
-          {/* Contact Info */}
-          <section className="rounded-2xl border border-border bg-card p-6">
-            <SectionHeader icon={Phone} title="Contact" />
-            <div>
-              <Label htmlFor="phone_number">Phone Number</Label>
-              <Input
-                id="phone_number"
-                className="mt-1.5 h-11"
-                value={form.phone_number}
-                onChange={(e) => update("phone_number", e.target.value)}
-                placeholder="+372 5XXX XXXX"
-              />
-            </div>
-          </section>
-
-          {/* Address */}
-          <section className="rounded-2xl border border-border bg-card p-6">
-            <SectionHeader icon={MapPin} title="Address" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Country</Label>
-                <Input className="mt-1.5 h-11 bg-muted cursor-not-allowed" value={form.country} readOnly disabled />
-              </div>
-              <div>
-                <Label htmlFor="county">County</Label>
-                <Select value={form.county} onValueChange={(v) => update("county", v)}>
-                  <SelectTrigger className="mt-1.5 h-11">
-                    <SelectValue placeholder="Select county" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESTONIAN_COUNTIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="city">City</Label>
-                <Input id="city" className="mt-1.5 h-11" value={form.city}
-                  onChange={(e) => update("city", e.target.value)} placeholder="Tallinn" />
-              </div>
-              <div>
-                <Label htmlFor="postal_code">Postal Code</Label>
-                <Input id="postal_code" className="mt-1.5 h-11" value={form.postal_code}
-                  onChange={(e) => update("postal_code", e.target.value)} placeholder="10001" />
-              </div>
-              <div>
-                <Label htmlFor="street_address">Street Address</Label>
-                <Input id="street_address" className="mt-1.5 h-11" value={form.street_address}
-                  onChange={(e) => update("street_address", e.target.value)} placeholder="Main St" />
-              </div>
-              <div>
-                <Label htmlFor="house_number">House / Apt Number</Label>
-                <Input id="house_number" className="mt-1.5 h-11" value={form.house_number}
-                  onChange={(e) => update("house_number", e.target.value)} placeholder="42B" />
-              </div>
-            </div>
-          </section>
-
-          {/* Save personal info */}
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} className="min-w-[140px]">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
-            </Button>
-          </div>
 
           {/* Documents */}
           <section className="rounded-2xl border border-border bg-card p-6">
