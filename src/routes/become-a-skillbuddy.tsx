@@ -47,6 +47,8 @@ type FormData = {
   preference1: string;
   preference2: string;
   bio: string;
+  hourlyRate: string;
+  serviceRadius: string;
   terms: boolean;
 };
 
@@ -165,6 +167,8 @@ function BecomeASkillBuddy() {
     if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
     if (data.category && !data.preference1) errors.preference1 = "Please select your Preference 1";
     if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
+    if (!data.hourlyRate || isNaN(Number(data.hourlyRate)) || Number(data.hourlyRate) <= 0) errors.hourlyRate = "Please enter a valid hourly rate.";
+    if (!data.serviceRadius || isNaN(Number(data.serviceRadius)) || Number(data.serviceRadius) <= 0) errors.serviceRadius = "Please enter a valid service radius.";
     if (!data.terms) errors.terms = t("becomeSkillbuddy.termsRequired");
     return errors;
   };
@@ -180,7 +184,7 @@ function BecomeASkillBuddy() {
   const [form, setForm] = useState<FormData>({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", personalCode: "", category: "", preference1: "",
-    preference2: "", bio: "", terms: false,
+    preference2: "", bio: "", hourlyRate: "", serviceRadius: "10", terms: false,
   });
 
   // PART 3: Pre-fill form with user data from auth context
@@ -228,26 +232,16 @@ function BecomeASkillBuddy() {
     setLoading(true);
 
     try {
-      // PART 3: Submit provider application to backend API.
-      // ⚠️  FLAG FOR BACKEND TEAM: The POST /api/v1/provider-applications endpoint
-      //     must accept this payload and store it with status "pending". The user's
-      //     role MUST NOT be changed on submission — approval is a separate admin action.
+      // POST /api/v1/providers/profile — creates the provider profile
+      // The user's role is NOT changed locally; approval is a separate backend action
       const payload = {
-        first_name: form.firstName,
-        last_name: form.lastName,
-        email: form.email,
-        phone_number: form.phone,
-        address: form.address,
-        personal_code: form.personalCode,
-        category: form.category,
-        preference1: form.preference1,
-        preference2: form.preference2 || null,
         bio: form.bio,
-        // NOTE: cvFile is not included in JSON payload — it should be uploaded
-        // separately via multipart/form-data if the backend supports it.
+        hourly_rate: Number(form.hourlyRate),
+        provider_type: form.preference1 || form.category,
+        service_radius: Number(form.serviceRadius),
       };
 
-      await apiClient.post("/api/v1/provider-applications", payload);
+      await apiClient.post("/api/v1/providers/profile", payload);
 
       setLoading(false);
       setSubmitted(true);
@@ -541,6 +535,36 @@ function BecomeASkillBuddy() {
                 <div className="mt-1 flex justify-between">
                   {errors.bio ? <p className="text-xs text-red-500">{errors.bio}</p> : <span />}
                   <p className={`text-xs ${form.bio.length < 50 ? "text-muted-foreground" : "text-[#2D7A5F]"}`}>{form.bio.length} / 1000</p>
+                </div>
+              </div>
+
+              {/* Hourly Rate + Service Radius */}
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Hourly Rate (€) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className={inputClass(errors.hourlyRate)}
+                    placeholder="e.g. 25"
+                    value={form.hourlyRate}
+                    onChange={(e) => set("hourlyRate", e.target.value)}
+                  />
+                  {errors.hourlyRate && <p className="mt-1 text-xs text-red-500">{errors.hourlyRate}</p>}
+                </div>
+                <div>
+                  <label className={labelClass}>Service Radius (km) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className={inputClass(errors.serviceRadius)}
+                    placeholder="e.g. 10"
+                    value={form.serviceRadius}
+                    onChange={(e) => set("serviceRadius", e.target.value)}
+                  />
+                  {errors.serviceRadius && <p className="mt-1 text-xs text-red-500">{errors.serviceRadius}</p>}
                 </div>
               </div>
 
