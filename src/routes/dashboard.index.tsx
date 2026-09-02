@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
 import { useProviderProfile } from "@/hooks/use-provider-profile";
 import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
-import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon } from "lucide-react";
+import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
+import { toast } from "sonner";
+import { apiClient, extractErrorMessage } from "@/lib/api-client";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -76,6 +78,34 @@ function DashboardIndex() {
   const { dashboard: providerDashboard, loading: dashLoading } = useProviderDashboard(isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
+
+  // ─── Provider Status Update ──────────────────────────────────────────────
+  const [statusForm, setStatusForm] = useState({ status: "", reason: "" });
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+
+  const STATUS_OPTIONS = [
+    { value: "active", label: "Active" },
+    { value: "on_leave", label: "On Leave" },
+    { value: "unavailable", label: "Unavailable" },
+  ];
+
+  const handleStatusUpdate = useCallback(async () => {
+    if (!statusForm.status) return;
+    setStatusSaving(true);
+    try {
+      await apiClient.post("/api/v1/providers/status", {
+        status: statusForm.status,
+        reason: statusForm.reason || undefined,
+      });
+      toast.success("Status updated.");
+      setStatusForm({ status: "", reason: "" });
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to update status. Please try again."));
+    } finally {
+      setStatusSaving(false);
+    }
+  }, [statusForm]);
 
   const sidebarItems: {
     id: string;
@@ -279,6 +309,83 @@ function DashboardIndex() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Status Update */}
+                        {providerProfile?.current_status && (
+                          <div className="rounded-xl border border-border bg-card p-4">
+                            <p className="text-xs text-muted-foreground mb-2">Current Status</p>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                providerProfile.current_status.status.toLowerCase() === "approved" || providerProfile.current_status.status.toLowerCase() === "active"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                  : providerProfile.current_status.status.toLowerCase() === "pending"
+                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                              }`}>
+                                {providerProfile.current_status.status}
+                              </span>
+                              {providerProfile.current_status.reason && (
+                                <span className="text-xs text-muted-foreground">— {providerProfile.current_status.reason}</span>
+                              )}
+                            </div>
+
+                            {/* Status Selector */}
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                              <div className="flex-1">
+                                <label className="text-xs font-medium text-muted-foreground">Update Status</label>
+                                <div className="relative mt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setStatusOpen((o) => !o)}
+                                    className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm transition hover:bg-accent"
+                                  >
+                                    <span className={statusForm.status ? "" : "text-muted-foreground"}>
+                                      {statusForm.status ? STATUS_OPTIONS.find((o) => o.value === statusForm.status)?.label : "Select status..."}
+                                    </span>
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  </button>
+                                  {statusOpen && (
+                                    <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-border bg-card shadow-lg">
+                                      {STATUS_OPTIONS.map((opt) => (
+                                        <button
+                                          key={opt.value}
+                                          type="button"
+                                          onClick={() => { setStatusForm((f) => ({ ...f, status: opt.value })); setStatusOpen(false); }}
+                                          className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent"
+                                        >
+                                          <span>{opt.label}</span>
+                                          {statusForm.status === opt.value && <Check className="h-4 w-4 text-primary" />}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              {statusForm.status && statusForm.status !== "active" && (
+                                <div className="flex-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Reason (optional)</label>
+                                  <input
+                                    type="text"
+                                    value={statusForm.reason}
+                                    onChange={(e) => setStatusForm((f) => ({ ...f, reason: e.target.value }))}
+                                    placeholder="e.g. Traveling until next week"
+                                    className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                                  />
+                                </div>
+                              )}
+                              {statusForm.status && (
+                                <Button
+                                  size="sm"
+                                  disabled={statusSaving}
+                                  onClick={handleStatusUpdate}
+                                  className="shrink-0"
+                                >
+                                  {statusSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update"}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : providerProfile ? (
                       <div className="space-y-4">
