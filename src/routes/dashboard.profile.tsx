@@ -10,12 +10,13 @@ import {
   ArrowLeft, User, Phone, Save, Loader as Loader2,
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
+  Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { useClientProfile } from "@/hooks/use-client-profile";
-import { Package, CheckCircle2, XCircle, Clock, Star, CreditCard } from "lucide-react";
+import { useI18n, LOCALES } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -40,6 +41,23 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const { profile: clientProfile, loading: clientLoading } = useClientProfile();
+  const { locale, setLocale } = useI18n();
+  const [langSaving, setLangSaving] = useState(false);
+
+  const handleLanguageChange = async (newLang: string) => {
+    setLangSaving(true);
+    try {
+      await apiClient.patch("/api/v1/clients/profile", {
+        preferred_language: newLang,
+      });
+      setLocale(newLang as "en" | "et" | "ru" | "lv" | "lt");
+      toast.success("Language preference updated.");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to update language."));
+    } finally {
+      setLangSaving(false);
+    }
+  };
 
   const [form, setForm] = useState({
     first_name: user?.first_name ?? "",
@@ -613,6 +631,36 @@ function ProfilePage() {
         </div>
 
         <div className="space-y-6">
+          {/* Language Preference */}
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <SectionHeader icon={Globe} title="Language Preference" />
+            <p className="text-sm text-muted-foreground mb-4">Choose your preferred language for the app interface.</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {LOCALES.map((l) => (
+                <button
+                  key={l.code}
+                  type="button"
+                  disabled={langSaving}
+                  onClick={() => handleLanguageChange(l.code)}
+                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                    locale === l.code
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border hover:border-primary/50 hover:bg-accent"
+                  }`}
+                >
+                  <span className="text-xl">{l.flag}</span>
+                  <div>
+                    <p className="text-sm font-medium">{l.name}</p>
+                    <p className="text-xs text-muted-foreground uppercase">{l.code}</p>
+                  </div>
+                  {locale === l.code && (
+                    <span className="ml-auto text-xs font-semibold text-primary">Active</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+
           {/* Edit Profile */}
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={User} title="Edit Profile" />
