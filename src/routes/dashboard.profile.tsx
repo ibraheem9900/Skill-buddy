@@ -152,24 +152,38 @@ function ProfilePage() {
   const [permitUploading, setPermitUploading] = useState(false);
 
   const handlePermitUpload = async () => {
-    // ⚠️  FLAG FOR BACKEND TEAM: Confirm whether front_file and back_file are both required
-    //     or if each can be uploaded independently. Swagger shows them as not strictly required.
-    //     Currently requiring both before submitting.
-    if (!permitFront || !permitBack) {
-      toast.error("Please select both front and back permit images.");
+    if (!permitFront && !permitBack) {
+      toast.error("Please select at least one permit image to upload.");
+      return;
+    }
+    // Client-side validation: check file sizes (max 10MB each)
+    const maxSize = 10 * 1024 * 1024;
+    if (permitFront && permitFront.size > maxSize) {
+      toast.error("Front image must be under 10 MB.");
+      return;
+    }
+    if (permitBack && permitBack.size > maxSize) {
+      toast.error("Back image must be under 10 MB.");
       return;
     }
     setPermitUploading(true);
     try {
       const formData = new FormData();
-      formData.append("front_file", permitFront);
-      formData.append("back_file", permitBack);
-      await apiClient.upload("/api/v1/users/upload-residence-permits", formData);
-      toast.success("Residence permits uploaded.");
+      if (permitFront) formData.append("front_file", permitFront);
+      if (permitBack) formData.append("back_file", permitBack);
+      // POST /api/v1/users/residence-permits — multipart/form-data
+      // apiClient.upload handles auth headers and does NOT set Content-Type
+      const res = await apiClient.upload<{
+        message?: string;
+        front_url?: string;
+        back_url?: string;
+      }>("/api/v1/users/residence-permits", formData);
+      toast.success(res?.message ?? "Residence permits uploaded successfully.");
+      // Show confirmation — clear selections after successful upload
       setPermitFront(null);
       setPermitBack(null);
     } catch (err) {
-      toast.error(extractErrorMessage(err, "Upload failed."));
+      toast.error(extractErrorMessage(err, "Couldn't upload documents. Please check the file format and try again."));
     } finally {
       setPermitUploading(false);
     }
