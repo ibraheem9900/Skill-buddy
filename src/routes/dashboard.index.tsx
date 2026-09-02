@@ -11,6 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { useProviderProfile } from "@/hooks/use-provider-profile";
 import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
 import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
+import { useProviderStatusHistory } from "@/hooks/use-provider-status-history";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
@@ -78,6 +79,8 @@ function DashboardIndex() {
   const { profile: providerProfile, loading: providerLoading } = useProviderProfile(isProvider);
   const { dashboard: providerDashboard, loading: dashLoading } = useProviderDashboard(isProvider);
   const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(isProvider);
+  const { history: statusHistory, loading: historyLoading, load: loadHistory } = useProviderStatusHistory();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -386,6 +389,65 @@ function DashboardIndex() {
                                 </Button>
                               )}
                             </div>
+                          </div>
+                        )}
+
+                        {/* Status History — expandable */}
+                        {currentStatus && (
+                          <div className="rounded-xl border border-border bg-card">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setHistoryOpen((o) => !o);
+                                if (!historyOpen) loadHistory(); // lazy-load on first expand
+                              }}
+                              className="flex w-full items-center justify-between p-4 text-sm font-medium text-muted-foreground hover:text-foreground transition"
+                            >
+                              <span>View Status History</span>
+                              <ChevronDown className={`h-4 w-4 transition-transform ${historyOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {historyOpen && (
+                              <div className="border-t border-border px-4 pb-4">
+                                {historyLoading ? (
+                                  <div className="flex items-center justify-center py-6">
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                  </div>
+                                ) : statusHistory.length === 0 ? (
+                                  <p className="py-4 text-center text-sm text-muted-foreground">No status history yet.</p>
+                                ) : (
+                                  <div className="space-y-3 pt-4">
+                                    {statusHistory.map((entry, i) => (
+                                      <div key={i} className="flex items-start gap-3">
+                                        <div className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                                          entry.is_current ? "bg-primary" : "bg-muted-foreground/30"
+                                        }`} />
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                              entry.status.toLowerCase() === "approved"
+                                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                                : entry.status.toLowerCase() === "pending"
+                                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                                  : entry.status.toLowerCase() === "declined" || entry.status.toLowerCase() === "suspended"
+                                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                                            }`}>
+                                              {entry.status}
+                                            </span>
+                                            {entry.is_current && (
+                                              <span className="text-[10px] font-semibold text-primary">Current</span>
+                                            )}
+                                          </div>
+                                          {entry.reason && (
+                                            <p className="mt-1 text-xs text-muted-foreground">{entry.reason}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
