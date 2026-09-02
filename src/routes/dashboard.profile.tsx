@@ -288,6 +288,13 @@ function ProfilePage() {
   const [confirmLogoutEverywhere, setConfirmLogoutEverywhere] = useState(false);
   const [loggingOutEverywhere, setLoggingOutEverywhere] = useState(false);
 
+  // ─── Deactivate Account ──────────────────────────────────────────────────
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState("");
+  const [deactivateConfirm, setDeactivateConfirm] = useState("");
+  const [deactivating, setDeactivating] = useState(false);
+  const deactivateEnabled = deactivateConfirm.toUpperCase() === "DEACTIVATE";
+
   const getAuthHeaders = useCallback(async () => {
     const { tokenStore } = await import("@/lib/auth-tokens");
     const accessToken = tokenStore.getAccess();
@@ -413,6 +420,42 @@ function ProfilePage() {
 
   const displayName = getFullName(user);
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
+
+  const handleDeactivate = async () => {
+    setDeactivating(true);
+    try {
+      const { tokenStore } = await import("@/lib/auth-tokens");
+      const accessToken = tokenStore.getAccess();
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const res = await fetch(`${baseUrl}/api/v1/users/me`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ reason: deactivateReason || undefined }),
+      });
+      if (!res.ok) {
+        let msg = "Failed to deactivate account. Please try again.";
+        try {
+          const data = await res.json();
+          if (typeof data.message === "string") msg = data.message;
+          else if (typeof data.detail === "string") msg = data.detail;
+          else if (Array.isArray(data.detail) && data.detail.length > 0) msg = data.detail[0]?.msg ?? msg;
+        } catch {}
+        toast.error(msg);
+        setDeactivating(false);
+        return;
+      }
+      // Success — clear session and redirect
+      tokenStore.clear();
+      toast.success("Your account has been deactivated.");
+      navigate({ to: "/" });
+    } catch {
+      toast.error("Couldn't deactivate your account. Please try again.");
+      setDeactivating(false);
+    }
+  };
 
   return (
     <SiteShell>
@@ -925,8 +968,106 @@ function ProfilePage() {
               </div>
             )}
           </section>
+
+          {/* Deactivate Account — Danger Zone */}
+          <section className="rounded-2xl border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/10 p-6">
+            <SectionHeader icon={AlertTriangle} title="Danger Zone" />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold">Deactivate Account</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Deactivating your account will sign you out and disable access.
+                  You can contact support to reactivate later.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setDeactivateOpen(true);
+                  setDeactivateReason("");
+                  setDeactivateConfirm("");
+                }}
+              >
+                Deactivate
+              </Button>
+            </div>
+          </section>
         </div>
       </div>
+
+      {/* Deactivate Account Confirmation Dialog */}
+      {deactivateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !deactivating && setDeactivateOpen(false)} />
+          <div className="relative w-full max-w-md rounded-2xl border border-red-200 bg-card p-6 shadow-xl dark:border-red-900/50">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Deactivate Account</h3>
+                <p className="text-sm text-muted-foreground">This action requires confirmation</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400">
+                <p className="font-medium">What happens when you deactivate:</p>
+                <ul className="mt-2 space-y-1 list-disc list-inside text-xs">
+                  <li>You will be signed out immediately</li>
+                  <li>You won't be able to log in until you contact support</li>
+                  <li>Your data will be preserved for potential reactivation</li>
+                </ul>
+              </div>
+
+              <div>
+                <Label htmlFor="deactivate-reason">Reason for leaving (optional)</Label>
+                <textarea
+                  id="deactivate-reason"
+                  value={deactivateReason}
+                  onChange={(e) => setDeactivateReason(e.target.value)}
+                  placeholder="Help us improve — tell us why you're leaving..."
+                  rows={3}
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="deactivate-confirm">Type <span className="font-bold">DEACTIVATE</span> to confirm</Label>
+                <Input
+                  id="deactivate-confirm"
+                  value={deactivateConfirm}
+                  onChange={(e) => setDeactivateConfirm(e.target.value)}
+                  placeholder="DEACTIVATE"
+                  className="mt-1.5 h-11"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setDeactivateOpen(false)}
+                disabled={deactivating}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!deactivateEnabled || deactivating}
+                onClick={handleDeactivate}
+              >
+                {deactivating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deactivating...</>
+                ) : (
+                  "Deactivate My Account"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </SiteShell>
   );
 }
