@@ -12,6 +12,7 @@ import { useProviderProfile } from "@/hooks/use-provider-profile";
 import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
 import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 import { useProviderStatusHistory } from "@/hooks/use-provider-status-history";
+import { useClientDashboard } from "@/hooks/use-client-dashboard";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
@@ -81,6 +82,7 @@ function DashboardIndex() {
   const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(isProvider);
   const { history: statusHistory, loading: historyLoading, load: loadHistory } = useProviderStatusHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { dashboard: clientDashboard, loading: clientDashLoading } = useClientDashboard(!isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -269,6 +271,41 @@ function DashboardIndex() {
                     </Button>
                   )}
                 </div>
+
+                {/* Client Dashboard Stats */}
+                {!isProvider && (
+                  <div className="mb-6">
+                    {clientDashLoading ? (
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
+                            <div className="h-4 w-20 bg-muted rounded mb-2" />
+                            <div className="h-7 w-12 bg-muted rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : clientDashboard ? (
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="rounded-xl border border-border bg-card p-4">
+                          <p className="text-xs text-muted-foreground">Total Bookings</p>
+                          <p className="text-2xl font-bold mt-1">{clientDashboard.total_bookings}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-4">
+                          <p className="text-xs text-muted-foreground">Completed</p>
+                          <p className="text-2xl font-bold mt-1">{clientDashboard.total_completed_jobs}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-4">
+                          <p className="text-xs text-muted-foreground">In Progress</p>
+                          <p className="text-2xl font-bold mt-1">{clientDashboard.total_active_jobs}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-4">
+                          <p className="text-xs text-muted-foreground">Amount Spent</p>
+                          <p className="text-2xl font-bold mt-1">€{Number(clientDashboard.total_amount_spent || 0).toLocaleString("en-EU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* Provider Dashboard Summary */}
                 {isProvider && (
