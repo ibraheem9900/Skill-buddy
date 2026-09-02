@@ -8,6 +8,7 @@ import { SiteShell } from "@/components/site-shell";
 import { ServiceCard } from "@/components/service-card";
 import { CATEGORIES, SERVICES } from "@/lib/data";
 import { useCategories } from "@/hooks/use-categories";
+import { useCategory } from "@/hooks/use-category";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -36,7 +37,7 @@ type SortOption = "popular" | "new" | "offers" | "upcoming";
 
 function ServicesPage() {
   const { t } = useI18n();
-  const { categories: apiCategories } = useCategories();
+  const { categories: apiCategories, getIdBySlug } = useCategories();
   const search = Route.useSearch();
   const [cat, setCat] = useState<string | undefined>(search.category);
   const [q, setQ] = useState(search.q ?? "");
@@ -74,7 +75,14 @@ function ServicesPage() {
     return r;
   }, [cat, q, sort]);
 
-  const activeCat = (apiCategories.length > 0 ? apiCategories : CATEGORIES).find((c) => c.slug === cat);
+  // Resolve the active category: first look up its numeric ID from the list, then fetch full details
+  const activeCatId = cat ? getIdBySlug(cat) : undefined;
+  const { category: activeCategoryDetail, loading: catLoading } = useCategory(activeCatId);
+  // Fallback to list data while loading or if API category isn't available
+  const activeCatFromList = (apiCategories.length > 0 ? apiCategories : CATEGORIES).find((c) => c.slug === cat);
+  const activeCat = activeCategoryDetail
+    ? { slug: cat ?? "", name: activeCategoryDetail.name, description: activeCategoryDetail.description, icon_url: activeCategoryDetail.icon_url, is_active: activeCategoryDetail.is_active }
+    : activeCatFromList;
   const currentSortLabel = sortOptions.find((o) => o.value === sort)?.label ?? sortOptions[0].label;
 
   return (
@@ -118,9 +126,14 @@ function ServicesPage() {
       <div className="border-b border-border bg-surface/10">
         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
           {activeCat && (
-            <div className="mb-3">
-              <h2 className="font-display text-xl font-bold">{activeCat.name}</h2>
-              <p className="text-sm text-muted-foreground">{activeCat.description}</p>
+            <div className="mb-3 flex items-center gap-3">
+              {activeCat.icon_url && (
+                <img src={activeCat.icon_url} alt={activeCat.name} className="h-8 w-8 rounded-lg object-contain" />
+              )}
+              <div>
+                <h2 className="font-display text-xl font-bold">{activeCat.name}</h2>
+                <p className="text-sm text-muted-foreground">{activeCat.description}</p>
+              </div>
             </div>
           )}
           <div className="flex flex-col gap-3 sm:flex-row items-start justify-center">

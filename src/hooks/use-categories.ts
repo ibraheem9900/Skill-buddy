@@ -78,5 +78,14 @@ export function useCategories() {
     anim: "scale" as AnimKind,
   }));
 
-  return { categories: mapped, raw: categories, loading, error, retry };
+  /** Lookup a category's numeric ID from its slug (useful for single-category fetch). */
+  const getIdBySlug = useCallback(
+    (slug: string): number | undefined => {
+      const raw = categories.find((c) => slugify(c.name) === slug);
+      return raw?.id;
+    },
+    [categories],
+  );
+
+  return { categories: mapped, raw: categories, loading, error, retry, getIdBySlug };
 }

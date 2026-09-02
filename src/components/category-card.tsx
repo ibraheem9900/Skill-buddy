@@ -40,7 +40,7 @@ interface CategoryCardProps {
 export function CategoryCard({ category, active, onSelect }: CategoryCardProps) {
   const { t } = useI18n();
   const Icon = ((Icons as unknown as Record<string, IconCmp>)[category.icon] ?? Icons.Sparkles) as IconCmp;
-  const v = animVariants[category.anim ?? "scale"];
+  const v = animVariants[category.anim ?? "scale"] ?? animVariants.scale;
   const displayName = category.nameKey ? t(category.nameKey) : category.name;
 
   if (onSelect) {

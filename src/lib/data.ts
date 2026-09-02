@@ -28,6 +28,7 @@ export type Category = {
   name: string;
   icon: string;
   description: string;
+  icon_url?: string | null;
 };
 
 export const CATEGORIES: Category[] = [
