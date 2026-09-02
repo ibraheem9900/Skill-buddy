@@ -9,6 +9,7 @@ import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
 import { useProviderProfile } from "@/hooks/use-provider-profile";
+import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -72,6 +73,7 @@ function DashboardIndex() {
   const firstName = user?.first_name || displayName.split(" ")[0] || "there";
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
   const { profile: providerProfile, loading: providerLoading } = useProviderProfile(isProvider);
+  const { dashboard: providerDashboard, loading: dashLoading } = useProviderDashboard(isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -233,12 +235,50 @@ function DashboardIndex() {
                   )}
                 </div>
 
-                {/* Provider Stats Section */}
+                {/* Provider Dashboard Summary */}
                 {isProvider && (
                   <div className="mb-6">
-                    {providerLoading ? (
+                    {(providerLoading || dashLoading) ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : providerDashboard ? (
+                      <div className="space-y-4">
+                        {/* Inactive Account Notice */}
+                        {!providerDashboard.is_active && (
+                          <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20 p-4">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                              Your provider account is currently inactive. Please contact support for assistance.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Quick Stats from Dashboard API */}
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          <StatCard
+                            icon={CheckCircle2}
+                            label="Jobs Completed"
+                            value={providerDashboard.total_jobs_completed}
+                          />
+                          <StatCard
+                            icon={Calendar}
+                            label="In Progress"
+                            value={providerDashboard.total_jobs_inprogress}
+                          />
+                          <div className="rounded-xl border border-border bg-card p-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                                <Wrench className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Availability</p>
+                                <p className={`text-sm font-bold ${providerDashboard.is_available ? "text-emerald-600" : "text-gray-500"}`}>
+                                  {providerDashboard.is_available ? "Available" : "Unavailable"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ) : providerProfile ? (
                       <div className="space-y-4">
