@@ -14,6 +14,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
+import { useClientProfile } from "@/hooks/use-client-profile";
+import { Package, CheckCircle2, XCircle, Clock, Star, CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -37,6 +39,7 @@ function ProfilePage() {
   const { user, refreshUser, updateUserLocal } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const { profile: clientProfile, loading: clientLoading } = useClientProfile();
 
   const [form, setForm] = useState({
     first_name: user?.first_name ?? "",
@@ -548,6 +551,65 @@ function ProfilePage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Client Stats */}
+        <div className="mb-6">
+          {clientLoading ? (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            </div>
+          ) : clientProfile ? (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-center gap-2 border-b border-border pb-3 mb-5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Package className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-bold text-base">My Activity</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <Package className="mx-auto h-5 w-5 text-primary mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.total_bookings}</p>
+                  <p className="text-xs text-muted-foreground">Total Bookings</p>
+                </div>
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <CheckCircle2 className="mx-auto h-5 w-5 text-emerald-500 mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.total_completed_jobs}</p>
+                  <p className="text-xs text-muted-foreground">Completed</p>
+                </div>
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <Clock className="mx-auto h-5 w-5 text-amber-500 mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.total_active_jobs}</p>
+                  <p className="text-xs text-muted-foreground">In Progress</p>
+                </div>
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <XCircle className="mx-auto h-5 w-5 text-red-500 mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.total_cancelled_jobs}</p>
+                  <p className="text-xs text-muted-foreground">Cancelled</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <Star className="mx-auto h-5 w-5 text-amber-500 mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.star_rating > 0 ? clientProfile.star_rating.toFixed(1) : "—"}</p>
+                  <p className="text-xs text-muted-foreground">Star Rating</p>
+                </div>
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <Star className="mx-auto h-5 w-5 text-primary mb-1" />
+                  <p className="text-2xl font-bold">{clientProfile.total_reviews}</p>
+                  <p className="text-xs text-muted-foreground">Reviews Given</p>
+                </div>
+                <div className="rounded-xl border border-border p-3 text-center">
+                  <CreditCard className="mx-auto h-5 w-5 text-primary mb-1" />
+                  <p className="text-2xl font-bold">€{Number(clientProfile.total_amount_spent || 0).toLocaleString("en-EU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                  <p className="text-xs text-muted-foreground">Total Spent</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-6">
