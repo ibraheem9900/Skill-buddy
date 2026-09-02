@@ -13,6 +13,7 @@ import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
 import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 import { useProviderStatusHistory } from "@/hooks/use-provider-status-history";
 import { useClientDashboard } from "@/hooks/use-client-dashboard";
+import { useClientBookings, getBookingTitle, getBookingStatus, getBookingDate, getBookingPrice, getBookingProvider } from "@/hooks/use-client-bookings";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
@@ -61,6 +62,57 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+function BookingsTabContent({ bookings, filter, emptyLabel }: { bookings: ReturnType<typeof useClientBookings>["bookings"]; filter: (b: ReturnType<typeof useClientBookings>["bookings"][number]) => boolean; emptyLabel: string }) {
+  const filtered = bookings.filter((b) => filter(b));
+
+  if (filtered.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-12 text-center">
+        <ShoppingBag className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <p className="text-sm font-medium text-muted-foreground">No {emptyLabel} bookings yet</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">When you book a service, it will appear here.</p>
+        <Button asChild className="mt-4" size="sm">
+          <Link to="/services">Browse services</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {filtered.map((booking, i) => {
+        const title = getBookingTitle(booking) || "Service Booking";
+        const status = getBookingStatus(booking);
+        const date = getBookingDate(booking);
+        const price = getBookingPrice(booking);
+        const provider = getBookingProvider(booking);
+        return (
+          <div key={booking.id ?? i} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition hover:shadow-card">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate">{title}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {provider && <span>{provider}</span>}
+                {date && <span>· {date}</span>}
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              {price && <p className="text-sm font-semibold">€{price}</p>}
+              {status && (
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">
+                  {status}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardIndex() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -83,6 +135,7 @@ function DashboardIndex() {
   const { history: statusHistory, loading: historyLoading, load: loadHistory } = useProviderStatusHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
   const { dashboard: clientDashboard, loading: clientDashLoading } = useClientDashboard(!isProvider);
+  const { bookings: clientBookings, total: bookingsTotal, loading: bookingsLoading } = useClientBookings(!isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -601,15 +654,56 @@ function DashboardIndex() {
                     <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
                     <TabsTrigger value="completed">Completed</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="upcoming" className="mt-5">
-                    <EmptyState label="upcoming" />
-                  </TabsContent>
-                  <TabsContent value="ongoing" className="mt-5">
-                    <EmptyState label="ongoing" />
-                  </TabsContent>
-                  <TabsContent value="completed" className="mt-5">
-                    <EmptyState label="completed" />
-                  </TabsContent>
+
+                  {bookingsLoading ? (
+                    <div className="mt-5 space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-muted" />
+                            <div className="flex-1 space-y-2">
+                              <div className="h-4 w-32 bg-muted rounded" />
+                              <div className="h-3 w-48 bg-muted rounded" />
+                            </div>
+                            <div className="h-6 w-16 bg-muted rounded-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <TabsContent value="upcoming" className="mt-5">
+                        <BookingsTabContent
+                          bookings={clientBookings}
+                          filter={(b) => {
+                            const s = getBookingStatus(b).toLowerCase();
+                            return s === "upcoming" || s === "pending" || s === "scheduled" || s === "booked";
+                          }}
+                          emptyLabel="upcoming"
+                        />
+                      </TabsContent>
+                      <TabsContent value="ongoing" className="mt-5">
+                        <BookingsTabContent
+                          bookings={clientBookings}
+                          filter={(b) => {
+                            const s = getBookingStatus(b).toLowerCase();
+                            return s === "ongoing" || s === "in_progress" || s === "in-progress" || s === "active";
+                          }}
+                          emptyLabel="ongoing"
+                        />
+                      </TabsContent>
+                      <TabsContent value="completed" className="mt-5">
+                        <BookingsTabContent
+                          bookings={clientBookings}
+                          filter={(b) => {
+                            const s = getBookingStatus(b).toLowerCase();
+                            return s === "completed" || s === "done" || s === "finished";
+                          }}
+                          emptyLabel="completed"
+                        />
+                      </TabsContent>
+                    </>
+                  )}
                 </Tabs>
               </>
             )}
