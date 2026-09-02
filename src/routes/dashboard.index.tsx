@@ -3,11 +3,13 @@ import { useState } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
+import { useProviderProfile } from "@/hooks/use-provider-profile";
+import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -22,6 +24,22 @@ export const Route = createFileRoute("/dashboard/")({
 function getInitials(name: string): string {
   if (!name) return "?";
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
+function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-bold">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function EmptyState({ label }: { label: string }) {
@@ -52,8 +70,9 @@ function DashboardIndex() {
 
   const displayName = getFullName(user);
   const firstName = user?.first_name || displayName.split(" ")[0] || "there";
+  const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
+  const { profile: providerProfile, loading: providerLoading } = useProviderProfile(isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
-  const isProvider = user?.role === "PROVIDER";
   const profileComplete = isProfileComplete(user);
 
   const sidebarItems: {
@@ -213,6 +232,120 @@ function DashboardIndex() {
                     </Button>
                   )}
                 </div>
+
+                {/* Provider Stats Section */}
+                {isProvider && (
+                  <div className="mb-6">
+                    {providerLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : providerProfile ? (
+                      <div className="space-y-4">
+                        {/* Status Banner */}
+                        {providerProfile.current_status && (
+                          <div className={`rounded-xl border p-4 ${
+                            providerProfile.current_status.status.toLowerCase() === "approved"
+                              ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20"
+                              : providerProfile.current_status.status.toLowerCase() === "pending"
+                                ? "border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20"
+                                : "border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20"
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                providerProfile.current_status.status.toLowerCase() === "approved"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                  : providerProfile.current_status.status.toLowerCase() === "pending"
+                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              }`}>
+                                {providerProfile.current_status.status}
+                              </span>
+                            </div>
+                            {providerProfile.current_status.reason && (
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {providerProfile.current_status.reason}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          <StatCard
+                            icon={CheckCircle2}
+                            label="Jobs Completed"
+                            value={providerProfile.total_jobs_completed}
+                          />
+                          <StatCard
+                            icon={Calendar}
+                            label="In Progress"
+                            value={providerProfile.total_jobs_inprogress}
+                          />
+                          <StatCard
+                            icon={Star}
+                            label="Star Rating"
+                            value={providerProfile.star_rating.toFixed(1)}
+                          />
+                          <StatCard
+                            icon={Award}
+                            label="Badges"
+                            value={providerProfile.badge_count}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          <StatCard
+                            icon={TrendingUp}
+                            label="Credibility"
+                            value={providerProfile.credibility_score}
+                          />
+                          <StatCard
+                            icon={Clock}
+                            label="Avg Response"
+                            value={`${providerProfile.response_time_avg}m`}
+                          />
+                          <StatCard
+                            icon={MapPinIcon}
+                            label="Radius"
+                            value={`${providerProfile.service_radius}km`}
+                          />
+                          <StatCard
+                            icon={Heart}
+                            label="Reviews"
+                            value={providerProfile.total_reviews}
+                          />
+                        </div>
+
+                        {/* Bio + Details */}
+                        <div className="rounded-xl border border-border bg-card p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold">{providerProfile.provider_type || "Service Provider"}</p>
+                              <p className="text-xs text-muted-foreground">{providerProfile.hourly_rate ? `€${providerProfile.hourly_rate}/hr` : "Rate not set"}</p>
+                            </div>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              providerProfile.is_available
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                            }`}>
+                              {providerProfile.is_available ? "Available" : "Unavailable"}
+                            </span>
+                          </div>
+                          {providerProfile.bio && (
+                            <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{providerProfile.bio}</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-border bg-card p-6 text-center">
+                        <p className="text-sm text-muted-foreground">Provider profile not available.</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3">
+                          <Link to="/become-a-skillbuddy">Apply to become a provider</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <Tabs defaultValue="upcoming">
                   <TabsList>
