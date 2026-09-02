@@ -9,6 +9,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { toast } from "sonner";
+import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -262,6 +263,9 @@ function BecomeASkillBuddy() {
   }
 
   if (submitted) {
+    // Fetch the current application status to display
+    const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(true);
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <motion.div
@@ -284,6 +288,32 @@ function BecomeASkillBuddy() {
           <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-muted-foreground mb-4 leading-relaxed">
             Your application has been submitted successfully. Our team will review it and get back to you.
           </motion.p>
+
+          {/* Application Status */}
+          {statusLoading ? (
+            <div className="mb-6 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : currentStatus ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mb-6 rounded-xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground mb-2">Application Status</p>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  currentStatus.status.toLowerCase() === "approved"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : currentStatus.status.toLowerCase() === "pending"
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                }`}>
+                  {currentStatus.status}
+                </span>
+              </div>
+              {currentStatus.reason && (
+                <p className="mt-2 text-sm text-muted-foreground">{currentStatus.reason}</p>
+              )}
+            </motion.div>
+          ) : null}
+
           <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="text-sm text-muted-foreground mb-8">
             Your account remains a client account until your application is approved. You will be notified once a decision has been made.
           </motion.p>

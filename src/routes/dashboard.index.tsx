@@ -10,6 +10,7 @@ import { QRDownloadModal } from "@/components/qr-download-modal";
 import { useI18n } from "@/lib/i18n";
 import { useProviderProfile } from "@/hooks/use-provider-profile";
 import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
+import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
@@ -76,6 +77,7 @@ function DashboardIndex() {
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
   const { profile: providerProfile, loading: providerLoading } = useProviderProfile(isProvider);
   const { dashboard: providerDashboard, loading: dashLoading } = useProviderDashboard(isProvider);
+  const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(isProvider);
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -311,21 +313,21 @@ function DashboardIndex() {
                         </div>
 
                         {/* Status Update */}
-                        {providerProfile?.current_status && (
+                        {(currentStatus ?? providerProfile?.current_status) && (
                           <div className="rounded-xl border border-border bg-card p-4">
-                            <p className="text-xs text-muted-foreground mb-2">Current Status</p>
+                            <p className="text-xs text-muted-foreground mb-2">Application Status</p>
                             <div className="flex items-center gap-2 mb-3">
                               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                providerProfile.current_status.status.toLowerCase() === "approved" || providerProfile.current_status.status.toLowerCase() === "active"
+                                (currentStatus?.status ?? providerProfile?.current_status?.status ?? "").toLowerCase() === "approved"
                                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                  : providerProfile.current_status.status.toLowerCase() === "pending"
+                                  : (currentStatus?.status ?? providerProfile?.current_status?.status ?? "").toLowerCase() === "pending"
                                     ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                                     : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                               }`}>
-                                {providerProfile.current_status.status}
+                                {currentStatus?.status ?? providerProfile?.current_status?.status}
                               </span>
-                              {providerProfile.current_status.reason && (
-                                <span className="text-xs text-muted-foreground">— {providerProfile.current_status.reason}</span>
+                              {(currentStatus?.reason || providerProfile?.current_status?.reason) && (
+                                <span className="text-xs text-muted-foreground">— {currentStatus?.reason ?? providerProfile?.current_status?.reason}</span>
                               )}
                             </div>
 
