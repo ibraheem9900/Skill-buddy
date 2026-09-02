@@ -412,7 +412,7 @@ function ProfilePage() {
   };
 
   const displayName = getFullName(user);
-  const isProvider = user?.role === "PROVIDER";
+  const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
 
   return (
     <SiteShell>
@@ -428,9 +428,9 @@ function ProfilePage() {
         {/* Hero card */}
         <div className="rounded-2xl border border-border bg-card p-6 mb-6 flex items-center gap-5">
           <div className="relative shrink-0">
-            {user?.avatar_url ? (
+            {(user?.avatar_url || user?.profile_picture_url) ? (
               <img
-                src={user.avatar_url}
+                src={user.avatar_url || user.profile_picture_url || ""}
                 alt={displayName}
                 className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
               />
@@ -470,11 +470,11 @@ function ProfilePage() {
                   Unverified
                 </span>
               )}
-              {user?.role && (
-                <span className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground capitalize">
-                  {user.role.toLowerCase()}
+              {(user?.roles ?? (user?.role ? [user.role] : [])).map((r) => (
+                <span key={r} className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground capitalize">
+                  {r.toLowerCase()}
                 </span>
-              )}
+              ))}
             </div>
           </div>
         </div>

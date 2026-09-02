@@ -63,6 +63,7 @@ export function Navbar() {
     : "?";
 
   const isFullyOnboarded = accountStatus === "authenticated_verified";
+  const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
 
   const mobileMenu = mounted && createPortal(
     <AnimatePresence>
@@ -227,8 +228,8 @@ export function Navbar() {
                   </Link>
                 </>
               )}
-              {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in users */}
-              {user && (
+              {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in CLIENT users (hidden for providers) */}
+              {user && !isProvider && (
                 <Link to="/become-a-skillbuddy" onClick={closeMenu}>
                   <button style={{
                     width: "100%", padding: "12px", borderRadius: 50,
@@ -355,8 +356,8 @@ export function Navbar() {
                   </>
                 )}
 
-                {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in users */}
-                {user && (
+                {/* PART 2: 'Become a SkillBuddy' — only visible for logged-in CLIENT users (hidden for providers) */}
+                {user && !isProvider && (
                   <Link to="/become-a-skillbuddy">
                     <motion.button
                       className="become-skillbuddy-btn gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold flex items-center"

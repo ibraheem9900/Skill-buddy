@@ -17,8 +17,10 @@ export interface FastAPIUser {
   last_name: string;
   username?: string | null;
   phone_number?: string | null;
-  /** "CLIENT" | "PROVIDER" — uppercase from backend */
+  /** "CLIENT" | "PROVIDER" — single role from login/signup */
   role?: "CLIENT" | "PROVIDER" | null;
+  /** Array of roles from GET /api/v1/users/me (e.g. ["CLIENT", "PROVIDER"]) */
+  roles?: string[];
   personal_code?: string | null;
   country?: string | null;
   county?: string | null;
@@ -29,6 +31,8 @@ export interface FastAPIUser {
   is_verified: boolean;
   deactivated?: boolean;
   avatar_url?: string | null;
+  /** Raw field from /api/v1/users/me — mapped to avatar_url internally */
+  profile_picture_url?: string | null;
   created_at?: string;
 }
 
@@ -76,9 +80,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
-    const data = await apiClient.get<{ user?: FastAPIUser } | FastAPIUser>("/api/v1/users/me");
-    const u = ("user" in (data as object) ? (data as { user: FastAPIUser }).user : data) as FastAPIUser;
+    const data = await apiClient.get<Record<string, unknown>>("/api/v1/users/me");
+    // The response may be the user object directly or wrapped in { user: ... }
+    const raw = ("user" in (data as object) ? (data as { user: Record<string, unknown> }).user : data) as Record<string, unknown>;
+    const u: FastAPIUser = {
+      id: raw.id as string | number,
+      email: raw.email as string,
+      first_name: raw.first_name as string,
+      last_name: raw.last_name as string,
+      username: (raw.username as string) ?? null,
+      phone_number: (raw.phone_number as string) ?? null,
+      personal_code: (raw.personal_code as string) ?? null,
+      is_verified: Boolean(raw.is_verified),
+      deactivated: Boolean(raw.deactivated),
+      created_at: (raw.created_at as string) ?? undefined,
+      // Map API fields to local fields
+      avatar_url: (raw.profile_picture_url as string) ?? (raw.avatar_url as string) ?? null,
+      profile_picture_url: (raw.profile_picture_url as string) ?? null,
+      roles: Array.isArray(raw.roles) ? (raw.roles as string[]) : undefined,
+      role: raw.role as "CLIENT" | "PROVIDER" | null | undefined,
+      // Address fields (may not be present on /me endpoint)
+      country: (raw.country as string) ?? undefined,
+      county: (raw.county as string) ?? undefined,
+      city: (raw.city as string) ?? undefined,
+      postal_code: (raw.postal_code as string) ?? undefined,
+      street_address: (raw.street_address as string) ?? undefined,
+      house_number: (raw.house_number as string) ?? undefined,
+    };
     setUser(u);
+    // Update roles from the API response
+    if (u.roles && u.roles.length > 0) {
+      setRoles(u.roles);
+      // Set active role to the first role if not already set
+      setActiveRole((prev) => prev ?? u.roles?.[0] ?? null);
+    }
     // Note: this intentionally throws on failure so callers (e.g. auth.callback)
     // can react deterministically. The auth:expired event handler covers signout.
   }, []);
