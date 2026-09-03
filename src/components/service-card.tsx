@@ -1,12 +1,44 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
 import type { Service } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
+import { useFavorites } from "@/hooks/use-favorites";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { addFavorite, loading: favLoading } = useFavorites();
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  const handleFavorite = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!user) {
+        navigate({ to: "/auth/login" });
+        return;
+      }
+      if (isFavorited || favLoading) return;
+      try {
+        // service.id is a string like "s1" — extract the numeric part for the API
+        const numericId = parseInt(service.id.replace("s", ""), 10);
+        await addFavorite(numericId);
+        setIsFavorited(true);
+        toast.success("Added to favorites!");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Couldn't add to favorites.";
+        toast.error(msg);
+      }
+    },
+    [user, isFavorited, favLoading, service.id, addFavorite, navigate]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -32,6 +64,16 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           <Badge className="absolute left-3 top-3 bg-background/85 text-foreground backdrop-blur" variant="secondary">
             {t("cat." + service.categorySlug.replace(/-/g, "_"))}
           </Badge>
+          <button
+            onClick={handleFavorite}
+            disabled={favLoading}
+            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background disabled:opacity-50"
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Heart
+              className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : "text-foreground/70"}`}
+            />
+          </button>
           <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-elegant">
               {t("common.viewDetails")} <ArrowRight className="h-3 w-3" />

@@ -4,11 +4,14 @@ import { getService, SERVICES } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X } from "lucide-react";
-import { useState } from "react";
+import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X, Heart } from "lucide-react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { ServiceCard } from "@/components/service-card";
+import { useFavorites } from "@/hooks/use-favorites";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/services/$id")({
   head: ({ params }) => {
@@ -43,6 +46,26 @@ function ServiceDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [activeTab, setActiveTab] = useState<TabKey>("about");
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { addFavorite, loading: favLoading } = useFavorites();
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  const handleFavorite = useCallback(async () => {
+    if (!user) {
+      navigate({ to: "/auth/login" });
+      return;
+    }
+    if (isFavorited || favLoading || !service) return;
+    try {
+      const numericId = parseInt(service.id.replace("s", ""), 10);
+      await addFavorite(numericId);
+      setIsFavorited(true);
+      toast.success("Added to favorites!");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn't add to favorites.";
+      toast.error(msg);
+    }
+  }, [user, isFavorited, favLoading, service, addFavorite, navigate]);
 
   const approxPrice = (price: number) => {
     const low = Math.round(price * 0.85 / 5) * 5;
@@ -111,7 +134,15 @@ function ServiceDetail() {
                 <ArrowLeft className="h-4 w-4" />
               </button>
             </div>
-            <div className="absolute right-4 top-4">
+            <div className="absolute right-4 top-4 flex gap-2">
+              <button
+                onClick={handleFavorite}
+                disabled={favLoading}
+                className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background disabled:opacity-50"
+                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+              </button>
               <button className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background">
                 <Share2 className="h-4 w-4" />
               </button>
