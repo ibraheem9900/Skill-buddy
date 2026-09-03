@@ -91,3 +91,44 @@ export async function fetchCountiesByCountryId(
     return [];
   }
 }
+
+/**
+ * Find a county by ID from any cached county list (client-side only).
+ * Searches across all cached country county lists.
+ * Returns undefined if no cache has the county.
+ */
+export function findCountyById(countyId: number): County | undefined {
+  for (const counties of countiesCache.values()) {
+    const found = counties.find((c) => c.id === countyId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/**
+ * Fetch a single county by ID.
+ * Checks all cached county lists first; only calls the API if not found.
+ *
+ * GET /api/v1/counties/{county_id} — public, no auth needed.
+ */
+export async function fetchCountyById(
+  countyId: number
+): Promise<County | null> {
+  // Check all cached county lists first
+  const cached = findCountyById(countyId);
+  if (cached) return cached;
+
+  // If any cache is loaded but county wasn't found, don't waste an API call
+  // (unless no caches are loaded at all — then try the direct endpoint)
+  if (countiesCache.size > 0) return null;
+
+  // No caches loaded — call the single-lookup endpoint
+  try {
+    const county = await apiClient.get<County>(
+      `/api/v1/counties/${countyId}`
+    );
+    return county ?? null;
+  } catch {
+    return null;
+  }
+}
