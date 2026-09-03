@@ -11,6 +11,7 @@ import {
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
+  MapPin, Home, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
@@ -18,6 +19,7 @@ import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { useClientProfile } from "@/hooks/use-client-profile";
 import { useI18n, LOCALES } from "@/lib/i18n";
 import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
+import { useAddress, formatAddress } from "@/hooks/use-address";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -45,6 +47,12 @@ function ProfilePage() {
   const { locale, setLocale } = useI18n();
   const [langSaving, setLangSaving] = useState(false);
   const { countries: countriesList, loading: countriesLoading } = useCountries();
+  const {
+    address: savedAddress,
+    loading: addressLoading,
+    error: addressError,
+    refetch: refetchAddress,
+  } = useAddress();
 
   const handleLanguageChange = async (newLang: string) => {
     setLangSaving(true);
@@ -766,6 +774,79 @@ function ProfilePage() {
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
               </Button>
             </div>
+          </section>
+
+          {/* Address */}
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <SectionHeader icon={MapPin} title="My Address" />
+            <p className="text-sm text-muted-foreground mb-4">
+              Your saved address from the backend — used as the default location for bookings.
+            </p>
+
+            {addressLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+
+            {addressError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 p-4 text-sm text-red-600 dark:text-red-400">
+                {addressError}
+                <Button variant="outline" size="sm" className="ml-3" onClick={refetchAddress}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry
+                </Button>
+              </div>
+            )}
+
+            {!addressLoading && !addressError && !savedAddress && (
+              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
+                <Home className="mx-auto h-8 w-8 text-muted-foreground/50" />
+                <p className="mt-2 text-sm font-medium">No saved address yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  You haven't saved an address on your account yet.
+                </p>
+              </div>
+            )}
+
+            {!addressLoading && !addressError && savedAddress && (
+              <div
+                className={`rounded-xl border p-5 ${
+                  savedAddress.is_default
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-border bg-card"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold leading-snug">
+                        {formatAddress(savedAddress)}
+                      </p>
+                      {savedAddress.landmark && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Near: {savedAddress.landmark}
+                        </p>
+                      )}
+                      {savedAddress.city?.name && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {[savedAddress.city?.name, savedAddress.county?.name, savedAddress.country?.name]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {savedAddress.is_default && (
+                    <span className="shrink-0 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                      Default
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Documents */}
