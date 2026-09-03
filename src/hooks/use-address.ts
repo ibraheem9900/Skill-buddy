@@ -104,3 +104,32 @@ export function useAddress() {
 
   return { address, loading, error, refetch: fetchAddress };
 }
+
+/** Payload for POST /api/v1/addresses — all fields optional per schema. */
+export type AddressCreatePayload = {
+  latitude?: number | null;
+  longitude?: number | null;
+  country_id?: number | null;
+  county_id?: number | null;
+  city_id?: number | null;
+  house_number?: string | null;
+  street_address?: string | null;
+  postal_code?: string | null;
+  landmark?: string | null;
+  formatted_address?: string | null;
+  is_default?: boolean;
+};
+
+/**
+ * Create a new address for the authenticated client.
+ *
+ * POST /api/v1/addresses — auth handled by apiClient (Authorization header +
+ * 401 auto-refresh/retry). On a 422 the API error (with detail[] loc/msg
+ * pairs) is re-thrown so the caller can render field-level errors via
+ * extractFieldErrors.
+ */
+export async function createAddress(
+  payload: AddressCreatePayload
+): Promise<AddressResponse> {
+  return apiClient.post<AddressResponse>("/api/v1/addresses", payload);
+}

@@ -11,15 +11,17 @@ import {
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
-  MapPin, Home, RefreshCw,
+  MapPin, Home, RefreshCw, Plus, X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
-import { apiClient, extractErrorMessage } from "@/lib/api-client";
+import { apiClient, extractErrorMessage, extractFieldErrors } from "@/lib/api-client";
 import { useClientProfile } from "@/hooks/use-client-profile";
 import { useI18n, LOCALES } from "@/lib/i18n";
 import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
-import { useAddress, formatAddress } from "@/hooks/use-address";
+import { useAddress, formatAddress, createAddress } from "@/hooks/use-address";
+import { useCounties } from "@/hooks/use-counties";
+import { useCities } from "@/hooks/use-cities";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -53,6 +55,96 @@ function ProfilePage() {
     error: addressError,
     refetch: refetchAddress,
   } = useAddress();
+
+  // ─── Add Address form ──────────────────────────────────────────────────────
+  const [addingAddress, setAddingAddress] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addrForm, setAddrForm] = useState({
+    country_id: "",
+    county_id: "",
+    city_id: "",
+    house_number: "",
+    street_address: "",
+    postal_code: "",
+    landmark: "",
+    is_default: false,
+  });
+  const [addrErrors, setAddrErrors] = useState<Record<string, string>>({});
+
+  const addrCountryId = addrForm.country_id ? Number(addrForm.country_id) : null;
+  const addrCountyId = addrForm.county_id ? Number(addrForm.county_id) : null;
+  const { counties: addrCounties, loading: addrCountiesLoading } = useCounties(addrCountryId);
+  const { cities: addrCities, loading: addrCitiesLoading } = useCities(addrCountyId);
+
+  const addrUpdate = (key: keyof typeof addrForm, value: string | boolean) =>
+    setAddrForm((f) => ({ ...f, [key]: value }));
+
+  // Cascading resets: changing country clears county+city; changing county clears city
+  const handleAddrCountryChange = (countryId: string) => {
+    addrUpdate("country_id", countryId);
+    setAddrForm((f) => ({ ...f, county_id: "", city_id: "" }));
+  };
+  const handleAddrCountyChange = (countyId: string) => {
+    addrUpdate("county_id", countyId);
+    setAddrForm((f) => ({ ...f, city_id: "" }));
+  };
+
+  const handleAddAddress = async () => {
+    // Only street address is sanity-required — every schema field is optional
+    const errs: Record<string, string> = {};
+    if (!addrForm.street_address.trim()) {
+      errs.street_address = "Street address is required.";
+    }
+    setAddrErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setSavingAddress(true);
+    try {
+      const selectedCountry = countriesList.find((c) => c.id === addrCountryId);
+      const selectedCounty = addrCounties.find((c) => c.id === addrCountyId);
+      const selectedCity = addrCities.find((c) => c.id === Number(addrForm.city_id));
+
+      const parts = [
+        [addrForm.house_number.trim(), addrForm.street_address.trim()].filter(Boolean).join(" "),
+        selectedCity?.name,
+        selectedCounty?.name,
+        addrForm.postal_code.trim(),
+        selectedCountry?.name,
+      ].filter(Boolean);
+
+      // POST /api/v1/addresses — auth handled by apiClient
+      await createAddress({
+        country_id: addrCountryId,
+        county_id: addrCountyId,
+        city_id: addrForm.city_id ? Number(addrForm.city_id) : null,
+        house_number: addrForm.house_number.trim() || null,
+        street_address: addrForm.street_address.trim() || null,
+        postal_code: addrForm.postal_code.trim() || null,
+        landmark: addrForm.landmark.trim() || null,
+        formatted_address: parts.join(", ") || null,
+        is_default: addrForm.is_default,
+      });
+
+      toast.success("Address added successfully.");
+      setAddingAddress(false);
+      setAddrForm({
+        country_id: "", county_id: "", city_id: "",
+        house_number: "", street_address: "",
+        postal_code: "", landmark: "", is_default: false,
+      });
+      refetchAddress(); // New address appears in the list immediately
+    } catch (err) {
+      // 422 → field-level errors under the matching inputs
+      const fieldErrs = extractFieldErrors(err);
+      if (Object.keys(fieldErrs).length > 0) {
+        setAddrErrors(fieldErrs);
+      } else {
+        toast.error(extractErrorMessage(err, "Couldn't save address. Please try again."));
+      }
+    } finally {
+      setSavingAddress(false);
+    }
+  };
 
   const handleLanguageChange = async (newLang: string) => {
     setLangSaving(true);
@@ -798,17 +890,20 @@ function ProfilePage() {
               </div>
             )}
 
-            {!addressLoading && !addressError && !savedAddress && (
+            {!addressLoading && !addressError && !savedAddress && !addingAddress && (
               <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
                 <Home className="mx-auto h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm font-medium">No saved address yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   You haven't saved an address on your account yet.
                 </p>
+                <Button className="mt-4" onClick={() => { setAddingAddress(true); setAddrErrors({}); }}>
+                  <Plus className="h-4 w-4 mr-1.5" /> Add Address
+                </Button>
               </div>
             )}
 
-            {!addressLoading && !addressError && savedAddress && (
+            {!addressLoading && !addressError && savedAddress && !addingAddress && (
               <div
                 className={`rounded-xl border p-5 ${
                   savedAddress.is_default
@@ -839,11 +934,149 @@ function ProfilePage() {
                       )}
                     </div>
                   </div>
-                  {savedAddress.is_default && (
-                    <span className="shrink-0 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                      Default
-                    </span>
-                  )}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {savedAddress.is_default && (
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                        Default
+                      </span>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => { setAddingAddress(true); setAddrErrors({}); }}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add New
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!addressLoading && !addressError && addingAddress && (
+              <div className="rounded-xl border border-border bg-muted/20 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">Add New Address</h3>
+                  <button
+                    type="button"
+                    onClick={() => setAddingAddress(false)}
+                    className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                    aria-label="Close address form"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Country → County → City cascade */}
+                  <div>
+                    <Label htmlFor="addr_country">Country</Label>
+                    <select
+                      id="addr_country"
+                      value={addrForm.country_id}
+                      onChange={(e) => handleAddrCountryChange(e.target.value)}
+                      className={`mt-1.5 h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm ${addrErrors.country_id ? "border-red-500" : ""}`}
+                    >
+                      <option value="">Select country</option>
+                      {countriesList.map((c) => (
+                        <option key={c.id} value={c.id}>{getFlagEmoji(c.iso2)} {c.name}</option>
+                      ))}
+                    </select>
+                    {addrErrors.country_id && <p className="mt-1 text-xs text-red-500">{addrErrors.country_id}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="addr_postal_code">Postal Code</Label>
+                    <Input
+                      id="addr_postal_code"
+                      className={`mt-1.5 h-11 ${addrErrors.postal_code ? "border-red-500" : ""}`}
+                      value={addrForm.postal_code}
+                      onChange={(e) => addrUpdate("postal_code", e.target.value)}
+                      placeholder="e.g. 10115"
+                    />
+                    {addrErrors.postal_code && <p className="mt-1 text-xs text-red-500">{addrErrors.postal_code}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="addr_county">County / Region</Label>
+                    <select
+                      id="addr_county"
+                      value={addrForm.county_id}
+                      onChange={(e) => handleAddrCountyChange(e.target.value)}
+                      disabled={!addrForm.country_id}
+                      className={`mt-1.5 h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm disabled:opacity-50 ${addrErrors.county_id ? "border-red-500" : ""}`}
+                    >
+                      <option value="">
+                        {addrCountiesLoading ? "Loading…" : !addrForm.country_id ? "Select country first" : "Select county"}
+                      </option>
+                      {addrCounties.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                    {addrErrors.county_id && <p className="mt-1 text-xs text-red-500">{addrErrors.county_id}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="addr_house_number">House Number</Label>
+                    <Input
+                      id="addr_house_number"
+                      className={`mt-1.5 h-11 ${addrErrors.house_number ? "border-red-500" : ""}`}
+                      value={addrForm.house_number}
+                      onChange={(e) => addrUpdate("house_number", e.target.value)}
+                      placeholder="e.g. 12A"
+                    />
+                    {addrErrors.house_number && <p className="mt-1 text-xs text-red-500">{addrErrors.house_number}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="addr_city">City</Label>
+                    <select
+                      id="addr_city"
+                      value={addrForm.city_id}
+                      onChange={(e) => addrUpdate("city_id", e.target.value)}
+                      disabled={!addrForm.county_id}
+                      className={`mt-1.5 h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm disabled:opacity-50 ${addrErrors.city_id ? "border-red-500" : ""}`}
+                    >
+                      <option value="">
+                        {addrCitiesLoading ? "Loading…" : !addrForm.county_id ? "Select county first" : "Select city"}
+                      </option>
+                      {addrCities.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                    {addrErrors.city_id && <p className="mt-1 text-xs text-red-500">{addrErrors.city_id}</p>}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="addr_street">Street Address</Label>
+                    <Input
+                      id="addr_street"
+                      className={`mt-1.5 h-11 ${addrErrors.street_address ? "border-red-500" : ""}`}
+                      value={addrForm.street_address}
+                      onChange={(e) => addrUpdate("street_address", e.target.value)}
+                      placeholder="Street name"
+                    />
+                    {addrErrors.street_address && <p className="mt-1 text-xs text-red-500">{addrErrors.street_address}</p>}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="addr_landmark">Landmark (optional)</Label>
+                    <Input
+                      id="addr_landmark"
+                      className={`mt-1.5 h-11 ${addrErrors.landmark ? "border-red-500" : ""}`}
+                      value={addrForm.landmark}
+                      onChange={(e) => addrUpdate("landmark", e.target.value)}
+                      placeholder="e.g. Near the central park"
+                    />
+                    {addrErrors.landmark && <p className="mt-1 text-xs text-red-500">{addrErrors.landmark}</p>}
+                  </div>
+                  <label className="sm:col-span-2 mt-1 flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={addrForm.is_default}
+                      onChange={(e) => addrUpdate("is_default", e.target.checked)}
+                      className="h-4 w-4 rounded border-input accent-primary"
+                    />
+                    Set as my default address
+                  </label>
+                </div>
+
+                <div className="mt-5 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAddingAddress(false)} disabled={savingAddress}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddAddress} disabled={savingAddress} className="min-w-[140px]">
+                    {savingAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <><MapPin className="mr-2 h-4 w-4" />Save Address</>}
+                  </Button>
                 </div>
               </div>
             )}
