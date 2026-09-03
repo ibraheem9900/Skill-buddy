@@ -187,8 +187,13 @@ function ProfilePage() {
       };
 
       if (addrMode === "edit" && editingAddr) {
-        // PUT /api/v1/addresses/{id} — auth handled by apiClient
-        await updateAddress(editingAddr.id, payload);
+        // PUT replaces the FULL object — carry over fields this form doesn't edit
+        // (e.g. lat/long from the freshly fetched address) so they aren't wiped
+        await updateAddress(editingAddr.id, {
+          ...payload,
+          latitude: editingAddr.latitude ?? null,
+          longitude: editingAddr.longitude ?? null,
+        });
         toast.success("Address updated successfully.");
       } else {
         // POST /api/v1/addresses — auth handled by apiClient

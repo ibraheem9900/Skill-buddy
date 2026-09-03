@@ -105,10 +105,11 @@ export function useAddress() {
   return { address, loading, error, refetch: fetchAddress };
 }
 
-/** Payload for POST /api/v1/addresses — all fields optional per schema. */
+/** Payload for create/update address endpoints — all fields optional per schema. */
 export type AddressCreatePayload = {
-  latitude?: number | null;
-  longitude?: number | null;
+  // Decimal values arrive as strings from the API but the schema accepts numbers too
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   country_id?: number | null;
   county_id?: number | null;
   city_id?: number | null;
