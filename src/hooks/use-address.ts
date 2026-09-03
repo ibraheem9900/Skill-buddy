@@ -176,3 +176,12 @@ export async function updateAddress(
 ): Promise<AddressResponse> {
   return apiClient.put<AddressResponse>(`/api/v1/addresses/${addressId}`, payload);
 }
+
+/**
+ * Delete an address (DELETE /api/v1/addresses/{address_id}).
+ * Auth handled by apiClient. Success is HTTP 204 (no content) —
+ * apiClient.parseResponse tolerates an empty body on ok responses.
+ */
+export async function deleteAddress(addressId: number): Promise<void> {
+  await apiClient.delete<unknown>(`/api/v1/addresses/${addressId}`);
+}

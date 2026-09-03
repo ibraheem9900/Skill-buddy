@@ -21,7 +21,7 @@ import { useI18n, LOCALES } from "@/lib/i18n";
 import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
 import {
   useAddress, formatAddress, createAddress,
-  updateAddress, fetchAddressById,
+  updateAddress, fetchAddressById, deleteAddress,
   type AddressResponse,
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
@@ -60,12 +60,14 @@ function ProfilePage() {
     refetch: refetchAddress,
   } = useAddress();
 
-  // ─── Add / Edit Address form ──────────────────────────────────────────────
+  // ─── Add / Edit / Delete Address ──────────────────────────────────────────
   // "view" shows the saved card; "add"/"edit" show the address form
   const [addrMode, setAddrMode] = useState<"view" | "add" | "edit">("view");
   const [editingAddr, setEditingAddr] = useState<AddressResponse | null>(null);
   const [addrFetching, setAddrFetching] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [confirmDeleteAddr, setConfirmDeleteAddr] = useState(false);
+  const [deletingAddress, setDeletingAddress] = useState(false);
   const [addrForm, setAddrForm] = useState({
     country_id: "",
     county_id: "",
@@ -115,6 +117,24 @@ function ProfilePage() {
     setEditingAddr(null);
     setAddrErrors({});
     setAddrFetching(false);
+    setConfirmDeleteAddr(false);
+  };
+
+  // DELETE /api/v1/addresses/{id} — auth handled by apiClient; success is 204
+  const handleDeleteAddress = async () => {
+    if (!savedAddress) return;
+    setDeletingAddress(true);
+    try {
+      await deleteAddress(savedAddress.id);
+      toast.success("Address deleted.");
+      setConfirmDeleteAddr(false);
+      closeAddrForm();
+      refetchAddress(); // list refreshes → shows empty state + Add CTA
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Couldn't delete address. Please try again."));
+    } finally {
+      setDeletingAddress(false);
+    }
   };
 
   // Open the Edit form with the address's FRESH data fetched by its real ID
@@ -1016,8 +1036,44 @@ function ProfilePage() {
                     <Button variant="outline" size="sm" onClick={openAddForm}>
                       <Plus className="h-3.5 w-3.5 mr-1" /> Add New
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      onClick={() => setConfirmDeleteAddr(true)}
+                      aria-label="Delete address"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
+
+                {confirmDeleteAddr && (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/40 dark:bg-red-950/20">
+                    <div>
+                      <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete this address?</p>
+                      <p className="text-xs text-red-600/80 dark:text-red-400/80">This can't be undone.</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={deletingAddress}
+                        onClick={() => setConfirmDeleteAddr(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={deletingAddress}
+                        onClick={handleDeleteAddress}
+                      >
+                        {deletingAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
