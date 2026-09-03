@@ -1,11 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { getService, SERVICES } from "@/lib/data";
+import {
+  fetchServiceDetail,
+  formatPriceRange,
+  parseDecimal,
+  serviceDetailImages,
+  type ServiceDetail,
+} from "@/lib/services-api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X, Heart } from "lucide-react";
-import { useState, useCallback } from "react";
+import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X, Heart, Loader2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { ServiceCard } from "@/components/service-card";
@@ -72,6 +79,13 @@ function ServiceDetail() {
     const high = Math.round(price * 1.15 / 5) * 5;
     return low === high ? `~€${low}` : `~€${low} – €${high}`;
   };
+
+  // Numeric deep links (e.g. /services/3 from the live catalog) resolve through
+  // GET /api/v1/services/{service_id} — the seed catalog only knows its own slugs.
+  const numericId = /^\d+$/.test(id) ? Number(id) : null;
+  if (!service && numericId != null) {
+    return <LiveServiceDetail serviceId={numericId} />;
+  }
 
   if (!service) {
     return (
@@ -436,6 +450,173 @@ function ServiceDetail() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <QRDownloadModal open={modalOpen} onOpenChange={setModalOpen} />
+    </SiteShell>
+  );
+}
+
+/**
+ * Detail view for backend services (GET /api/v1/services/{service_id}).
+ * Rendered for numeric deep links the seed catalog can't resolve; shows the
+ * full fields the list endpoint lacks (what_to_expect, status, media,
+ * inclusion_options). Handles loading and 404/not-found states gracefully.
+ */
+function LiveServiceDetail({ serviceId }: { serviceId: number }) {
+  const navigate = useNavigate();
+  const [detail, setDetail] = useState<ServiceDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    void fetchServiceDetail(serviceId).then((d) => {
+      if (!alive) return;
+      setDetail(d);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [serviceId]);
+
+  if (loading) {
+    return (
+      <SiteShell>
+        <div className="mx-auto flex max-w-2xl items-center justify-center gap-3 px-4 py-40">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-sm font-medium text-muted-foreground">Loading service…</span>
+        </div>
+      </SiteShell>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <SiteShell>
+        <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+          <h1 className="text-2xl font-bold">Service not found</h1>
+          <p className="mt-2 text-muted-foreground">
+            This service may have been removed, or the link is incorrect.
+          </p>
+          <Button asChild className="mt-6"><Link to="/services">Back to services</Link></Button>
+        </div>
+      </SiteShell>
+    );
+  }
+
+  const images = serviceDetailImages(detail);
+  const hero = images[0];
+  const low = parseDecimal(detail.price_from);
+  const high = parseDecimal(detail.price_to);
+  const priceText = formatPriceRange(low, high) ?? "Price on request";
+  const statusShown =
+    detail.status && detail.status.toLowerCase() !== "active"
+      ? detail.status.charAt(0).toUpperCase() + detail.status.slice(1)
+      : null;
+
+  return (
+    <SiteShell>
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_320px]">
+        {/* LEFT: main content */}
+        <div className="min-w-0">
+          <button
+            onClick={() => navigate({ to: "/services" })}
+            className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+
+          {/* Hero media (or branded placeholder when the service has none) */}
+          <div className="relative aspect-[16/10] overflow-hidden rounded-3xl bg-muted">
+            {hero ? (
+              <img src={hero} alt={detail.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/25 via-card to-card">
+                <span className="select-none font-display text-7xl font-extrabold text-primary/25 sm:text-8xl">
+                  {detail.title.trim().charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="mt-8">
+            <div className="flex flex-wrap items-center gap-2">
+              {detail.category_name && (
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/20">{detail.category_name}</Badge>
+              )}
+              {statusShown && (
+                <Badge variant="secondary" className="capitalize">{statusShown}</Badge>
+              )}
+            </div>
+            <h1 className="mt-3 font-display text-[22px] font-extrabold leading-tight sm:text-[28px]">
+              {detail.title}
+            </h1>
+            {!detail.is_active && (
+              <div className="mt-4 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                This service is currently unavailable. You can still view its details.
+              </div>
+            )}
+          </div>
+
+          {/* Body: description, what to expect, inclusions */}
+          <div className="mt-8 space-y-6">
+            {detail.description && (
+              <div>
+                <h3 className="font-bold">About</h3>
+                <p className="mt-2 leading-relaxed text-foreground/90">{detail.description}</p>
+              </div>
+            )}
+            {detail.what_to_expect && (
+              <div>
+                <h3 className="font-bold">What to Expect</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{detail.what_to_expect}</p>
+              </div>
+            )}
+            {detail.inclusion_options && detail.inclusion_options.length > 0 && (
+              <div>
+                <h3 className="font-bold">What's included</h3>
+                <ul className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                  {detail.inclusion_options.map((o) => (
+                    <li key={o.id} className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />{o.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: price summary rail */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 rounded-3xl border border-border bg-card p-5">
+            <div className="text-xs text-muted-foreground">Price range</div>
+            <div className="mt-1 font-mono text-2xl font-bold text-primary">{priceText}</div>
+            {detail.price_range && (
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{detail.price_range}</p>
+            )}
+            {(low != null || high != null) && (
+              <p className="mt-3 text-xs text-muted-foreground">Rates vary with job scope and location.</p>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* Sticky bottom bar */}
+      <div className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div>
+            <div className="text-xs text-muted-foreground">Price range</div>
+            <div className="font-mono text-xl font-bold text-primary">{priceText}</div>
+          </div>
+          <Button onClick={() => setModalOpen(true)} size="lg" className="gap-2 shadow-elegant">
+            <ClipboardList className="h-5 w-5" /> Post a Job
+          </Button>
+        </div>
+      </div>
 
       <QRDownloadModal open={modalOpen} onOpenChange={setModalOpen} />
     </SiteShell>

@@ -28,6 +28,40 @@ export interface ApiService {
   thumbnail_url: string | null;
 }
 
+/** One media item from GET /api/v1/services/{id} (media array or /media list). */
+export interface ServiceMedia {
+  id: number;
+  media_type: string;
+  media_url: string | null;
+  position: number;
+  is_thumbnail: boolean;
+}
+
+/** One inclusion option from GET /api/v1/services/{id} (inclusion_options). */
+export interface ServiceInclusionOption {
+  id: number;
+  name: string;
+}
+
+/** Full detail returned by GET /api/v1/services/{service_id}. */
+export interface ServiceDetail {
+  id: number;
+  category_id: number;
+  category_name: string | null;
+  title: string;
+  description: string | null;
+  price_from: string | null;
+  price_to: string | null;
+  price_range: string | null;
+  what_to_expect: string | null;
+  is_active: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  media: ServiceMedia[];
+  inclusion_options: ServiceInclusionOption[];
+}
+
 /** Derived slug (mirrors use-categories slugify so filters stay consistent). */
 function slugify(name: string): string {
   return name
@@ -73,10 +107,56 @@ export function clearServicesCache(): void {
 /**
  * Resolve a single service by ID from the cached catalog (client-side).
  * Returns null if the catalog hasn't been fetched yet or the ID is unknown.
+ * Only for SUMMARY fields — full detail needs fetchServiceDetail.
  */
 export async function fetchServiceById(id: number): Promise<ApiService | null> {
   if (cachedServices === null) return null; // catalog not loaded — no single endpoint exists
   return cachedServices.find((s) => s.id === id) ?? null;
+}
+
+// ─── Single-service detail (GET /api/v1/services/{service_id}) ────────────────
+
+/** Per-session cache so revisiting a service doesn't re-fetch its detail. */
+const detailCache = new Map<number, ServiceDetail>();
+
+/**
+ * Fetch the FULL detail for one service. Only used on detail views that need
+ * fields the cached list lacks (what_to_expect, status, media, inclusions).
+ * Returns null on 404 / 422 / network failure — callers show a fallback.
+ */
+export async function fetchServiceDetail(serviceId: number): Promise<ServiceDetail | null> {
+  const cached = detailCache.get(serviceId);
+  if (cached) return cached;
+  try {
+    const detail = await apiClient.get<ServiceDetail>(`/api/v1/services/${serviceId}`);
+    if (detail && typeof detail === "object" && typeof (detail as { id?: unknown }).id === "number") {
+      detailCache.set(serviceId, detail);
+      return detail;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Force detail refetch on next call (e.g. after a manual refresh). */
+export function clearServiceDetailCache(): void {
+  detailCache.clear();
+}
+
+/**
+ * Image URLs for a service detail: image-type media, ordered by position with
+ * the thumbnail flagged item first. Empty when the service has no media.
+ */
+export function serviceDetailImages(detail: ServiceDetail): string[] {
+  return (detail.media ?? [])
+    .filter((m) => m.media_type === "image" && !!m.media_url)
+    .sort(
+      (a, b) =>
+        Number(b.is_thumbnail) - Number(a.is_thumbnail) ||
+        a.position - b.position,
+    )
+    .map((m) => m.media_url as string);
 }
 
 // ─── Price helpers — backend sends Numeric values as strings ─────────────────
