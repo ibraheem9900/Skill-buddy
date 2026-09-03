@@ -87,6 +87,47 @@ export function findCountryByPhoneCode(
 }
 
 /**
+ * Find a country by numeric ID from the cached list (client-side only).
+ * Returns undefined if the cache isn't loaded yet or ID isn't found.
+ */
+export function findCountryById(
+  countries: Country[],
+  id: number
+): Country | undefined {
+  return countries.find((c) => c.id === id);
+}
+
+/**
+ * Fetch a single country by ID.
+ * Checks the in-memory cache first; only calls the API if the cache
+ * doesn't have the country (or hasn't been loaded yet).
+ *
+ * GET /api/v1/countries/{country_id} — public, no auth needed.
+ */
+export async function fetchCountryById(
+  countryId: number
+): Promise<Country | null> {
+  // Prefer cached list if available
+  if (cachedCountries) {
+    const found = cachedCountries.find((c) => c.id === countryId);
+    if (found) return found;
+  }
+
+  // If cache is loaded but country not found, don't waste an API call
+  if (cachedCountries !== null) return null;
+
+  // Cache not loaded yet — try the single-lookup endpoint
+  try {
+    const country = await apiClient.get<Country>(
+      `/api/v1/countries/${countryId}`
+    );
+    return country ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get a flag emoji from ISO2 code.
  * Uses Unicode regional indicator symbols.
  */
