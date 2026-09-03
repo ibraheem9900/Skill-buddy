@@ -17,6 +17,7 @@ import { getFullName } from "@/lib/user-helpers";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { useClientProfile } from "@/hooks/use-client-profile";
 import { useI18n, LOCALES } from "@/lib/i18n";
+import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -43,6 +44,7 @@ function ProfilePage() {
   const { profile: clientProfile, loading: clientLoading } = useClientProfile();
   const { locale, setLocale } = useI18n();
   const [langSaving, setLangSaving] = useState(false);
+  const { countries: countriesList, loading: countriesLoading } = useCountries();
 
   const handleLanguageChange = async (newLang: string) => {
     setLangSaving(true);
@@ -70,6 +72,27 @@ function ProfilePage() {
 
   const update = (key: keyof typeof form, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  // Parse phone number to extract country code and local number
+  const parsePhoneNumber = (phone: string) => {
+    if (!phone) return { countryCode: "+372", localNumber: "" };
+    const match = phone.match(/^(\+\d{1,4})\s*(.*)$/);
+    if (match) {
+      return { countryCode: match[1], localNumber: match[2] };
+    }
+    return { countryCode: "+372", localNumber: phone };
+  };
+
+  const parsed = parsePhoneNumber(form.phone_number);
+  const [phoneCountryCode, setPhoneCountryCode] = useState(parsed.countryCode);
+  const [phoneLocalNumber, setPhoneLocalNumber] = useState(parsed.localNumber);
+
+  // Update the full phone_number when either part changes
+  const updatePhone = (code: string, local: string) => {
+    setPhoneCountryCode(code);
+    setPhoneLocalNumber(local);
+    update("phone_number", local ? `${code} ${local}` : "");
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -698,13 +721,31 @@ function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="phone_number">Phone Number</Label>
-                <Input
-                  id="phone_number"
-                  className={`mt-1.5 h-11 ${formErrors.phone_number ? "border-red-500" : ""}`}
-                  value={form.phone_number}
-                  onChange={(e) => { update("phone_number", e.target.value); setFormErrors((er) => ({ ...er, phone_number: "" })); }}
-                  placeholder="+372 5XXX XXXX"
-                />
+                <div className="mt-1.5 flex gap-2">
+                  <select
+                    value={phoneCountryCode}
+                    onChange={(e) => updatePhone(e.target.value, phoneLocalNumber)}
+                    disabled={countriesLoading}
+                    className="h-11 w-28 shrink-0 rounded-md border border-input bg-transparent px-2 text-sm"
+                  >
+                    {countriesLoading ? (
+                      <option>Loading...</option>
+                    ) : (
+                      countriesList.map((c) => (
+                        <option key={c.id} value={c.phone_code}>
+                          {getFlagEmoji(c.iso2)} {c.phone_code}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <Input
+                    id="phone_number"
+                    className={`h-11 flex-1 ${formErrors.phone_number ? "border-red-500" : ""}`}
+                    value={phoneLocalNumber}
+                    onChange={(e) => updatePhone(phoneCountryCode, e.target.value)}
+                    placeholder="5XXX XXXX"
+                  />
+                </div>
                 {formErrors.phone_number && <p className="mt-1 text-xs text-red-500">{formErrors.phone_number}</p>}
               </div>
               <div className="sm:col-span-2">
