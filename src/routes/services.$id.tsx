@@ -3,11 +3,13 @@ import { SiteShell } from "@/components/site-shell";
 import { getService, SERVICES } from "@/lib/data";
 import {
   fetchServiceDetail,
+  fetchServiceInclusionOptions,
   fetchServiceMedia,
   formatPriceRange,
   parseDecimal,
   sortServiceMedia,
   type ServiceDetail,
+  type ServiceInclusionOption,
   type ServiceMedia,
 } from "@/lib/services-api";
 import { Button } from "@/components/ui/button";
@@ -470,6 +472,7 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [externalMedia, setExternalMedia] = useState<ServiceMedia[] | null>(null);
+  const [externalInclusions, setExternalInclusions] = useState<ServiceInclusionOption[] | null>(null);
   const [activeMedia, setActiveMedia] = useState(0);
 
   useEffect(() => {
@@ -494,6 +497,20 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
     void fetchServiceMedia(serviceId).then((m) => {
       if (!alive) return;
       if (m) setExternalMedia(m);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [detail, serviceId]);
+
+  // Inclusion options: same pattern as media — use the embedded array when the
+  // backend populates it, otherwise lazy-fetch the dedicated endpoint once.
+  useEffect(() => {
+    if (!detail || (detail.inclusion_options?.length ?? 0) > 0) return;
+    let alive = true;
+    void fetchServiceInclusionOptions(serviceId).then((list) => {
+      if (!alive) return;
+      if (list) setExternalInclusions(list);
     });
     return () => {
       alive = false;
@@ -529,6 +546,7 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
   const activeIdx = Math.min(activeMedia, Math.max(mediaItems.length - 1, 0));
   const currentMedia = mediaItems[activeIdx] ?? null;
   const currentIsVideo = currentMedia?.media_type === "video";
+  const inclusionOptions = externalInclusions ?? detail.inclusion_options ?? [];
   const low = parseDecimal(detail.price_from);
   const high = parseDecimal(detail.price_to);
   const priceText = formatPriceRange(low, high) ?? "Price on request";
@@ -635,11 +653,11 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{detail.what_to_expect}</p>
               </div>
             )}
-            {detail.inclusion_options && detail.inclusion_options.length > 0 && (
+            {inclusionOptions.length > 0 && (
               <div>
                 <h3 className="font-bold">What's included</h3>
                 <ul className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                  {detail.inclusion_options.map((o) => (
+                  {inclusionOptions.map((o) => (
                     <li key={o.id} className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />{o.name}
                     </li>

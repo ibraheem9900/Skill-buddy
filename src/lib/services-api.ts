@@ -197,6 +197,40 @@ export function clearServiceMediaCache(): void {
   mediaCache.clear();
 }
 
+// ─── Service inclusion options (GET /api/v1/services/{id}/inclusion-options) ──
+
+/** Per-session cache so revisiting a service doesn't re-fetch its inclusions. */
+const inclusionCache = new Map<number, ServiceInclusionOption[]>();
+
+/**
+ * Fetch the dedicated inclusion-options list for a service. Only called on
+ * detail views when the embedded "inclusion_options" array from
+ * GET /services/{id} comes back empty (that field defaults to [] server-side)
+ * — never fetched twice for the same service load. Returns null on
+ * 404/422/network failure (callers hide the section rather than break).
+ */
+export async function fetchServiceInclusionOptions(
+  serviceId: number,
+): Promise<ServiceInclusionOption[] | null> {
+  const cached = inclusionCache.get(serviceId);
+  if (cached) return cached;
+  try {
+    const data = await apiClient.get<ServiceInclusionOption[]>(
+      `/api/v1/services/${serviceId}/inclusion-options`,
+    );
+    const list = Array.isArray(data) ? data : null;
+    if (list) inclusionCache.set(serviceId, list);
+    return list;
+  } catch {
+    return null;
+  }
+}
+
+/** Force inclusion-options refetch on next call (e.g. after a manual refresh). */
+export function clearServiceInclusionOptionsCache(): void {
+  inclusionCache.clear();
+}
+
 // ─── Price helpers — backend sends Numeric values as strings ─────────────────
 
 /** Parse a backend Numeric string to a finite number; null for empty/junk. */
