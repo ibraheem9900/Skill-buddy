@@ -3,6 +3,7 @@ import { ArrowRight, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import type { Service } from "@/lib/data";
+import { formatPriceRange } from "@/lib/services-api";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -15,6 +16,14 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
   const navigate = useNavigate();
   const { addFavorite, loading: favLoading } = useFavorites();
   const [isFavorited, setIsFavorited] = useState(false);
+
+  // Real backend price bounds when this service came from the live catalog;
+  // otherwise derive an approximate range from the seed price (as before).
+  const low = Math.round((service.price * 0.85) / 5) * 5;
+  const high = Math.round((service.price * 1.15) / 5) * 5;
+  const priceDisplay =
+    formatPriceRange(service.priceFrom, service.priceTo) ??
+    (low === high ? `~€${low}` : `~€${low} – €${high}`);
 
   const handleFavorite = useCallback(
     async (e: React.MouseEvent) => {
@@ -62,7 +71,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
           <Badge className="absolute left-3 top-3 bg-background/85 text-foreground backdrop-blur" variant="secondary">
-            {t("cat." + service.categorySlug.replace(/-/g, "_"))}
+            {service.categoryLabel ?? t("cat." + service.categorySlug.replace(/-/g, "_"))}
           </Badge>
           <button
             onClick={handleFavorite}
@@ -87,7 +96,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           <div className="mt-auto flex items-end justify-between border-t border-border pt-3">
             <div>
               <div className="text-xs text-muted-foreground">{t("common.from")}</div>
-              <div className="font-mono text-lg font-bold text-primary">~€{Math.round(service.price * 0.85 / 5) * 5} – €{Math.round(service.price * 1.15 / 5) * 5}</div>
+              <div className="font-mono text-lg font-bold text-primary">{priceDisplay}</div>
             </div>
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               {t("common.postJob")} →

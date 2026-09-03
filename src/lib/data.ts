@@ -21,6 +21,11 @@ export type Service = {
     location: string;
     bio: string;
   };
+  /** Live API extras (present on services mapped from GET /api/v1/services) */
+  apiId?: number;
+  categoryLabel?: string;
+  priceFrom?: number | null;
+  priceTo?: number | null;
 };
 
 export type Category = {

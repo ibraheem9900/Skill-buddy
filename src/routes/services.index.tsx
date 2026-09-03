@@ -6,8 +6,9 @@ import { z } from "zod";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { SiteShell } from "@/components/site-shell";
 import { ServiceCard } from "@/components/service-card";
-import { CATEGORIES, SERVICES } from "@/lib/data";
+import { CATEGORIES } from "@/lib/data";
 import { useCategories } from "@/hooks/use-categories";
+import { useServices } from "@/hooks/use-services";
 import { useCategory } from "@/hooks/use-category";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ type SortOption = "popular" | "new" | "offers" | "upcoming";
 function ServicesPage() {
   const { t } = useI18n();
   const { categories: apiCategories, getIdBySlug } = useCategories();
+  // Services catalog — live API data when the backend has services, seed fallback otherwise
+  const { services: SERVICES, error: servicesError } = useServices();
   const search = Route.useSearch();
   const [cat, setCat] = useState<string | undefined>(search.category);
   const [q, setQ] = useState(search.q ?? "");
@@ -202,6 +205,12 @@ function ServicesPage() {
             </button>
           )}
         </div>
+
+        {servicesError && (
+          <div className="mb-4 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+            {servicesError}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center">

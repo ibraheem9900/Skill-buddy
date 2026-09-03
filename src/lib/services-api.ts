@@ -1,37 +1,162 @@
 /**
- * Services API module — structured for easy swap to real FastAPI endpoints.
+ * Services API module — GET /api/v1/services (public, no auth required).
  *
- * ⚠️  The backend team is still building the Services endpoints.
- *     Watch https://api.skillbuddy.zeyshan.com/docs for new routes.
- *     When ready, replace the mock implementations below with apiClient calls.
+ * The full services catalog is returned in one call with no pagination or
+ * filtering, so it is fetched ONCE per session and cached in memory. Screens
+ * that need service data reuse the cached list instead of re-fetching.
  *
- * Pattern:
- *   import { servicesApi } from "@/lib/services-api";
- *   const services = await servicesApi.list();
+ * Single-service lookups resolve client-side from this cached array — the
+ * backend has no dedicated "Get Service by ID" endpoint yet.
+ *
+ * Prices arrive as backend Numeric strings (e.g. "20.00"). They must be parsed
+ * and formatted before display — never dump the raw strings into the UI.
  */
 
-import { MOCK_SERVICES } from "@/lib/data";
+import type { Service } from "@/lib/data";
+import { apiClient } from "@/lib/api-client";
 
-export interface Service {
-  id: string;
+/** Exact shape returned by GET /api/v1/services. */
+export interface ApiService {
+  id: number;
+  category_id: number;
+  category_name: string;
   title: string;
-  category: string;
-  provider_name?: string;
-  price?: number;
-  rating?: number;
-  image_url?: string;
-  description?: string;
+  description: string;
+  price_from: string | null;
+  price_to: string | null;
+  price_range: string | null;
+  thumbnail_url: string | null;
 }
 
-export const servicesApi = {
-  /** List all services. Replace with: apiClient.get<Service[]>("/api/v1/services") */
-  list: async (): Promise<Service[]> => {
-    return MOCK_SERVICES as Service[];
-  },
+/** Derived slug (mirrors use-categories slugify so filters stay consistent). */
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
-  /** Get a single service by ID. Replace with: apiClient.get<Service>(`/api/v1/services/${id}`) */
-  get: async (id: string): Promise<Service | null> => {
-    const all = MOCK_SERVICES as Service[];
-    return all.find((s) => s.id === id) ?? null;
-  },
+// ─── Session-wide in-memory cache (single fetch, shared by all consumers) ────
+let cachedServices: ApiService[] | null = null;
+let fetchPromise: Promise<ApiService[]> | null = null;
+
+async function fetchServicesOnce(): Promise<ApiService[]> {
+  if (cachedServices) return cachedServices;
+  if (fetchPromise) return fetchPromise;
+
+  fetchPromise = apiClient
+    .get<ApiService[]>("/api/v1/services")
+    .then((data) => {
+      cachedServices = Array.isArray(data) ? data : [];
+      return cachedServices;
+    })
+    .catch((err) => {
+      // Reset so the next call can retry
+      fetchPromise = null;
+      throw err;
+    });
+
+  return fetchPromise;
+}
+
+/** Fetch (or return the cached) services catalog. */
+export async function fetchServices(): Promise<ApiService[]> {
+  return fetchServicesOnce();
+}
+
+/** Force a refetch on next call (e.g. after a manual refresh action). */
+export function clearServicesCache(): void {
+  cachedServices = null;
+  fetchPromise = null;
+}
+
+/**
+ * Resolve a single service by ID from the cached catalog (client-side).
+ * Returns null if the catalog hasn't been fetched yet or the ID is unknown.
+ */
+export async function fetchServiceById(id: number): Promise<ApiService | null> {
+  if (cachedServices === null) return null; // catalog not loaded — no single endpoint exists
+  return cachedServices.find((s) => s.id === id) ?? null;
+}
+
+// ─── Price helpers — backend sends Numeric values as strings ─────────────────
+
+/** Parse a backend Numeric string to a finite number; null for empty/junk. */
+export function parseDecimal(value: string | null | undefined): number | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Format one EUR amount for display (whole euros, thousands separator). */
+export function formatEuro(n: number): string {
+  return `€${Math.round(n).toLocaleString("en-IE")}`;
+}
+
+/**
+ * Format a service's price range for display, e.g. "€85 – €115".
+ * Falls back gracefully when one or both bounds are missing.
+ */
+export function formatPriceRange(
+  priceFrom: number | null | undefined,
+  priceTo: number | null | undefined,
+): string | null {
+  const lo = priceFrom ?? null;
+  const hi = priceTo ?? null;
+  if (lo == null && hi == null) return null;
+  if (lo != null && hi != null) {
+    return lo === hi ? formatEuro(lo) : `${formatEuro(lo)} – ${formatEuro(hi)}`;
+  }
+  if (lo != null) return `from ${formatEuro(lo)}`;
+  return `up to ${formatEuro(hi!)}`;
+}
+
+// ─── Mapping — backend catalog entry → the card shape used by the UI ─────────
+
+const PLACEHOLDER_PROVIDER = {
+  id: "",
+  name: "",
+  avatar: "",
+  verified: false,
+  location: "",
+  bio: "",
 };
+
+/**
+ * Map a backend service onto the app's Service display shape.
+ * Fields the backend doesn't provide yet (rating, gallery, provider) get safe
+ * neutral defaults — the catalog grid only reads image/title/category/price.
+ */
+export function toServiceShape(api: ApiService): Service {
+  const lo = parseDecimal(api.price_from);
+  const hi = parseDecimal(api.price_to);
+  const price =
+    lo != null && hi != null
+      ? Math.round((lo + hi) / 2)
+      : (lo ?? hi ?? 0);
+
+  return {
+    id: String(api.id),
+    // No dedicated detail endpoint exists — numeric ID is the stable handle
+    slug: String(api.id),
+    titleKey: "", // empty → title fallback in the card's t() guard
+    title: api.title,
+    category: api.category_name,
+    categorySlug: slugify(api.category_name) || "uncategorized",
+    description: api.description ?? "",
+    longDescription: api.description ?? "",
+    price,
+    rating: 0,
+    reviewCount: 0,
+    image: api.thumbnail_url ?? "",
+    gallery: api.thumbnail_url ? [api.thumbnail_url] : [],
+    provider: { ...PLACEHOLDER_PROVIDER, id: String(api.id) },
+    // Live extras the card uses to render real labels/prices
+    apiId: api.id,
+    categoryLabel: api.category_name,
+    priceFrom: lo,
+    priceTo: hi,
+  };
+}
