@@ -3,10 +3,12 @@ import { SiteShell } from "@/components/site-shell";
 import { getService, SERVICES } from "@/lib/data";
 import {
   fetchServiceDetail,
+  fetchServiceMedia,
   formatPriceRange,
   parseDecimal,
-  serviceDetailImages,
+  sortServiceMedia,
   type ServiceDetail,
+  type ServiceMedia,
 } from "@/lib/services-api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -467,6 +469,8 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
   const [detail, setDetail] = useState<ServiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [externalMedia, setExternalMedia] = useState<ServiceMedia[] | null>(null);
+  const [activeMedia, setActiveMedia] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -480,6 +484,21 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
       alive = false;
     };
   }, [serviceId]);
+
+  // Media source: use the embedded "media" array when the backend populates it;
+  // otherwise lazy-fetch the dedicated media endpoint — never both for the
+  // same service load.
+  useEffect(() => {
+    if (!detail || (detail.media?.length ?? 0) > 0) return;
+    let alive = true;
+    void fetchServiceMedia(serviceId).then((m) => {
+      if (!alive) return;
+      if (m) setExternalMedia(m);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [detail, serviceId]);
 
   if (loading) {
     return (
@@ -506,8 +525,10 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
     );
   }
 
-  const images = serviceDetailImages(detail);
-  const hero = images[0];
+  const mediaItems = sortServiceMedia(externalMedia ?? detail.media ?? []);
+  const activeIdx = Math.min(activeMedia, Math.max(mediaItems.length - 1, 0));
+  const currentMedia = mediaItems[activeIdx] ?? null;
+  const currentIsVideo = currentMedia?.media_type === "video";
   const low = parseDecimal(detail.price_from);
   const high = parseDecimal(detail.price_to);
   const priceText = formatPriceRange(low, high) ?? "Price on request";
@@ -528,10 +549,25 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
 
-          {/* Hero media (or branded placeholder when the service has none) */}
+          {/* Hero media — image or video by media_type (or a branded placeholder) */}
           <div className="relative aspect-[16/10] overflow-hidden rounded-3xl bg-muted">
-            {hero ? (
-              <img src={hero} alt={detail.title} className="h-full w-full object-cover" />
+            {currentMedia?.media_url ? (
+              currentIsVideo ? (
+                <video
+                  key={currentMedia.id}
+                  src={currentMedia.media_url}
+                  controls
+                  playsInline
+                  className="h-full w-full bg-black object-contain"
+                />
+              ) : (
+                <img
+                  key={currentMedia.id}
+                  src={currentMedia.media_url}
+                  alt={detail.title}
+                  className="h-full w-full object-cover"
+                />
+              )
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/25 via-card to-card">
                 <span className="select-none font-display text-7xl font-extrabold text-primary/25 sm:text-8xl">
@@ -540,6 +576,30 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
               </div>
             )}
           </div>
+
+          {/* Media strip — ordered by position, thumbnail item first */}
+          {mediaItems.length > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {mediaItems.map((m, i) => (
+                <button
+                  key={m.id}
+                  onClick={() => setActiveMedia(i)}
+                  className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition ${
+                    i === activeIdx ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={m.media_type === "video" ? "Play video" : "View image"}
+                >
+                  {m.media_type === "video" ? (
+                    <span className="grid h-full w-full place-items-center">
+                      <Play className="h-5 w-5 text-foreground/60" />
+                    </span>
+                  ) : m.media_url ? (
+                    <img src={m.media_url} alt="" className="h-full w-full object-cover" />
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Info */}
           <div className="mt-8">

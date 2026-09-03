@@ -145,18 +145,56 @@ export function clearServiceDetailCache(): void {
 }
 
 /**
- * Image URLs for a service detail: image-type media, ordered by position with
- * the thumbnail flagged item first. Empty when the service has no media.
+ * Order media by position, keeping the thumbnail-flagged item first
+ * (it acts as the hero/cover image when present).
+ */
+export function sortServiceMedia(items: ServiceMedia[]): ServiceMedia[] {
+  return [...items].sort(
+    (a, b) =>
+      Number(b.is_thumbnail) - Number(a.is_thumbnail) ||
+      a.position - b.position,
+  );
+}
+
+/**
+ * Image URLs for a service detail: image-type media in display order
+ * (hero first). Empty when the service has no image media.
  */
 export function serviceDetailImages(detail: ServiceDetail): string[] {
-  return (detail.media ?? [])
+  return sortServiceMedia(detail.media ?? [])
     .filter((m) => m.media_type === "image" && !!m.media_url)
-    .sort(
-      (a, b) =>
-        Number(b.is_thumbnail) - Number(a.is_thumbnail) ||
-        a.position - b.position,
-    )
     .map((m) => m.media_url as string);
+}
+
+// ─── Service media list (GET /api/v1/services/{service_id}/media) ─────────────
+
+/** Per-session cache so revisiting a service doesn't re-fetch its media. */
+const mediaCache = new Map<number, ServiceMedia[]>();
+
+/**
+ * Fetch the dedicated media list for a service. Only called on detail views
+ * when the embedded "media" array from GET /services/{id} comes back empty
+ * (that field defaults to [] server-side) — so media is never fetched twice
+ * for the same service load. Returns null on 404/422/network failure.
+ */
+export async function fetchServiceMedia(serviceId: number): Promise<ServiceMedia[] | null> {
+  const cached = mediaCache.get(serviceId);
+  if (cached) return cached;
+  try {
+    const data = await apiClient.get<ServiceMedia[]>(
+      `/api/v1/services/${serviceId}/media`,
+    );
+    const list = Array.isArray(data) ? data : null;
+    if (list) mediaCache.set(serviceId, list);
+    return list;
+  } catch {
+    return null;
+  }
+}
+
+/** Force media refetch on next call (e.g. after a manual refresh). */
+export function clearServiceMediaCache(): void {
+  mediaCache.clear();
 }
 
 // ─── Price helpers — backend sends Numeric values as strings ─────────────────
