@@ -11,7 +11,7 @@ import {
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
-  MapPin, Home, RefreshCw, Plus, X,
+  MapPin, Home, RefreshCw, Plus, X, Pencil,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
@@ -19,7 +19,11 @@ import { apiClient, extractErrorMessage, extractFieldErrors } from "@/lib/api-cl
 import { useClientProfile } from "@/hooks/use-client-profile";
 import { useI18n, LOCALES } from "@/lib/i18n";
 import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
-import { useAddress, formatAddress, createAddress } from "@/hooks/use-address";
+import {
+  useAddress, formatAddress, createAddress,
+  updateAddress, fetchAddressById,
+  type AddressResponse,
+} from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
 
@@ -56,8 +60,11 @@ function ProfilePage() {
     refetch: refetchAddress,
   } = useAddress();
 
-  // ─── Add Address form ──────────────────────────────────────────────────────
-  const [addingAddress, setAddingAddress] = useState(false);
+  // ─── Add / Edit Address form ──────────────────────────────────────────────
+  // "view" shows the saved card; "add"/"edit" show the address form
+  const [addrMode, setAddrMode] = useState<"view" | "add" | "edit">("view");
+  const [editingAddr, setEditingAddr] = useState<AddressResponse | null>(null);
+  const [addrFetching, setAddrFetching] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
   const [addrForm, setAddrForm] = useState({
     country_id: "",
@@ -89,7 +96,62 @@ function ProfilePage() {
     setAddrForm((f) => ({ ...f, city_id: "" }));
   };
 
-  const handleAddAddress = async () => {
+  const resetAddrForm = () =>
+    setAddrForm({
+      country_id: "", county_id: "", city_id: "",
+      house_number: "", street_address: "",
+      postal_code: "", landmark: "", is_default: false,
+    });
+
+  const openAddForm = () => {
+    resetAddrForm();
+    setEditingAddr(null);
+    setAddrErrors({});
+    setAddrMode("add");
+  };
+
+  const closeAddrForm = () => {
+    setAddrMode("view");
+    setEditingAddr(null);
+    setAddrErrors({});
+    setAddrFetching(false);
+  };
+
+  // Open the Edit form with the address's FRESH data fetched by its real ID
+  const openEditForm = async () => {
+    if (!savedAddress) return;
+    setAddrMode("edit");
+    setAddrErrors({});
+    setAddrFetching(true);
+    try {
+      // GET /api/v1/addresses/{id} — never reuse stale list data
+      const fresh = await fetchAddressById(savedAddress.id);
+      if (!fresh) {
+        toast.error("This address no longer exists. It may have been deleted.");
+        setAddrMode("view");
+        refetchAddress();
+        return;
+      }
+      setEditingAddr(fresh);
+      setAddrForm({
+        country_id: fresh.country?.id != null ? String(fresh.country.id) : "",
+        county_id: fresh.county?.id != null ? String(fresh.county.id) : "",
+        city_id: fresh.city?.id != null ? String(fresh.city.id) : "",
+        house_number: fresh.house_number ?? "",
+        street_address: fresh.street_address ?? "",
+        postal_code: fresh.postal_code ?? "",
+        landmark: fresh.landmark ?? "",
+        is_default: fresh.is_default,
+      });
+    } catch {
+      toast.error("Couldn't load this address. Please try again.");
+      setAddrMode("view");
+    } finally {
+      setAddrFetching(false);
+    }
+  };
+
+  const handleSaveAddress = async () => {
     // Only street address is sanity-required — every schema field is optional
     const errs: Record<string, string> = {};
     if (!addrForm.street_address.trim()) {
@@ -112,8 +174,7 @@ function ProfilePage() {
         selectedCountry?.name,
       ].filter(Boolean);
 
-      // POST /api/v1/addresses — auth handled by apiClient
-      await createAddress({
+      const payload = {
         country_id: addrCountryId,
         county_id: addrCountyId,
         city_id: addrForm.city_id ? Number(addrForm.city_id) : null,
@@ -123,16 +184,20 @@ function ProfilePage() {
         landmark: addrForm.landmark.trim() || null,
         formatted_address: parts.join(", ") || null,
         is_default: addrForm.is_default,
-      });
+      };
 
-      toast.success("Address added successfully.");
-      setAddingAddress(false);
-      setAddrForm({
-        country_id: "", county_id: "", city_id: "",
-        house_number: "", street_address: "",
-        postal_code: "", landmark: "", is_default: false,
-      });
-      refetchAddress(); // New address appears in the list immediately
+      if (addrMode === "edit" && editingAddr) {
+        // PUT /api/v1/addresses/{id} — auth handled by apiClient
+        await updateAddress(editingAddr.id, payload);
+        toast.success("Address updated successfully.");
+      } else {
+        // POST /api/v1/addresses — auth handled by apiClient
+        await createAddress(payload);
+        toast.success("Address added successfully.");
+      }
+
+      closeAddrForm();
+      refetchAddress(); // Updated list appears immediately
     } catch (err) {
       // 422 → field-level errors under the matching inputs
       const fieldErrs = extractFieldErrors(err);
@@ -890,20 +955,20 @@ function ProfilePage() {
               </div>
             )}
 
-            {!addressLoading && !addressError && !savedAddress && !addingAddress && (
+            {!addressLoading && !addressError && !savedAddress && addrMode === "view" && (
               <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
                 <Home className="mx-auto h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm font-medium">No saved address yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   You haven't saved an address on your account yet.
                 </p>
-                <Button className="mt-4" onClick={() => { setAddingAddress(true); setAddrErrors({}); }}>
+                <Button className="mt-4" onClick={openAddForm}>
                   <Plus className="h-4 w-4 mr-1.5" /> Add Address
                 </Button>
               </div>
             )}
 
-            {!addressLoading && !addressError && savedAddress && !addingAddress && (
+            {!addressLoading && !addressError && savedAddress && addrMode === "view" && (
               <div
                 className={`rounded-xl border p-5 ${
                   savedAddress.is_default
@@ -940,7 +1005,10 @@ function ProfilePage() {
                         Default
                       </span>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => { setAddingAddress(true); setAddrErrors({}); }}>
+                    <Button variant="outline" size="sm" onClick={openEditForm}>
+                      <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={openAddForm}>
                       <Plus className="h-3.5 w-3.5 mr-1" /> Add New
                     </Button>
                   </div>
@@ -948,13 +1016,15 @@ function ProfilePage() {
               </div>
             )}
 
-            {!addressLoading && !addressError && addingAddress && (
+            {!addressLoading && !addressError && addrMode !== "view" && (
               <div className="rounded-xl border border-border bg-muted/20 p-5">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">Add New Address</h3>
+                  <h3 className="font-semibold text-sm">
+                    {addrMode === "edit" ? "Edit Address" : "Add New Address"}
+                  </h3>
                   <button
                     type="button"
-                    onClick={() => setAddingAddress(false)}
+                    onClick={closeAddrForm}
                     className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
                     aria-label="Close address form"
                   >
@@ -962,6 +1032,12 @@ function ProfilePage() {
                   </button>
                 </div>
 
+                {addrMode === "edit" && addrFetching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {/* Country → County → City cascade */}
                   <div>
@@ -1071,13 +1147,15 @@ function ProfilePage() {
                 </div>
 
                 <div className="mt-5 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setAddingAddress(false)} disabled={savingAddress}>
+                  <Button variant="outline" onClick={closeAddrForm} disabled={savingAddress}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddAddress} disabled={savingAddress} className="min-w-[140px]">
-                    {savingAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <><MapPin className="mr-2 h-4 w-4" />Save Address</>}
+                  <Button onClick={handleSaveAddress} disabled={savingAddress} className="min-w-[140px]">
+                    {savingAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <><MapPin className="mr-2 h-4 w-4" />{addrMode === "edit" ? "Update Address" : "Save Address"}</>}
                   </Button>
                 </div>
+                </>
+                )}
               </div>
             )}
           </section>

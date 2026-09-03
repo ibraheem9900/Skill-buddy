@@ -147,6 +147,9 @@ export const apiClient = {
   patch: async <T>(path: string, body?: ApiRequestInit["body"], init?: ApiRequestInit) =>
     parseResponse<T>(await _request(path, { ...init, method: "PATCH", body })),
 
+  put: async <T>(path: string, body?: ApiRequestInit["body"], init?: ApiRequestInit) =>
+    parseResponse<T>(await _request(path, { ...init, method: "PUT", body })),
+
   delete: async <T>(path: string, body?: ApiRequestInit["body"], init?: ApiRequestInit) =>
     parseResponse<T>(await _request(path, { ...init, method: "DELETE", body })),
 

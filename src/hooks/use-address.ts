@@ -133,3 +133,45 @@ export async function createAddress(
 ): Promise<AddressResponse> {
   return apiClient.post<AddressResponse>("/api/v1/addresses", payload);
 }
+
+/**
+ * Fetch a single address by its ID — used to pre-fill the Edit Address form
+ * with fresh data (never stale list data).
+ *
+ * GET /api/v1/addresses/{address_id} — auth handled by apiClient.
+ * Returns null on 404/not-found so callers can show a "not found" message.
+ */
+export async function fetchAddressById(
+  addressId: number
+): Promise<AddressResponse | null> {
+  try {
+    const addr = await apiClient.get<AddressResponse>(
+      `/api/v1/addresses/${addressId}`
+    );
+    return addr ?? null;
+  } catch (err) {
+    const raw = err as { status?: number; detail?: unknown; message?: string } | null;
+    const status = raw?.status ?? (err as { response?: { status?: number } } | null)?.response?.status;
+    const detail = typeof raw?.detail === "string" ? raw.detail.toLowerCase() : "";
+    const msg = typeof raw?.message === "string" ? raw.message.toLowerCase() : "";
+    const isNotFound =
+      status === 404 ||
+      status === 403 ||
+      detail.includes("not found") ||
+      msg.includes("not found");
+    if (isNotFound) return null;
+    throw err;
+  }
+}
+
+/**
+ * Update an existing address (PUT /api/v1/addresses/{address_id}).
+ * Auth handled by apiClient. 422 detail[] is re-thrown so callers can
+ * render field-level errors via extractFieldErrors.
+ */
+export async function updateAddress(
+  addressId: number,
+  payload: AddressCreatePayload
+): Promise<AddressResponse> {
+  return apiClient.put<AddressResponse>(`/api/v1/addresses/${addressId}`, payload);
+}
