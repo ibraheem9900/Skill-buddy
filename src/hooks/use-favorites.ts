@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useReducer } from "react";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
 
+/** POST /api/v1/clients/favorites success body — note: no favorite_id, only service_id. */
 export interface FavoriteResponse {
   message: string;
   service_id: number;
@@ -21,36 +22,174 @@ export interface FavoriteListResponse {
 }
 
 /**
- * Hook for adding a service to favorites.
- *
- * The heart toggle is local UI state; to see which services are actually
- * saved use useFavoritesList() (GET /api/v1/clients/favorites).
+ * Resolve the numeric backend service id for a card/service. Live catalog items
+ * carry `apiId`; seed-fallback ids look like "s12" (strip the non-numeric part).
  */
-export function useFavorites() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+export function toFavoriteServiceId(
+  id: string | number,
+  apiId?: number | null
+): number | null {
+  if (apiId != null && Number.isFinite(Number(apiId)) && Number(apiId) > 0) {
+    return Number(apiId);
+  }
+  const n = Number(String(id).replace(/\D/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
-  const addFavorite = useCallback(
-    async (serviceId: number): Promise<FavoriteResponse | null> => {
-      if (!user) return null;
-      setLoading(true);
-      try {
-        const res = await apiClient.post<FavoriteResponse>(
-          "/api/v1/clients/favorites",
-          { service_id: serviceId }
-        );
-        return res;
-      } catch (err) {
-        const msg = extractErrorMessage(err, "Couldn't add to favorites.");
-        throw new Error(msg);
-      } finally {
-        setLoading(false);
+// ─── Session-wide favorites membership (service_id → favorite_id) ─────────────
+// Shared by every heart so all cards agree without per-card network calls.
+// null = not resolved yet; {} = resolved (possibly empty). Reset per signed-in
+// user so one account's hearts can never leak into another session.
+let favByService: Record<number, number> | null = null;
+let favFetchPromise: Promise<void> | null = null;
+let favMembershipUserId: string | number | null | undefined;
+const favListeners = new Set<() => void>();
+
+function notifyFavChanged(): void {
+  for (const listener of favListeners) listener();
+}
+
+/**
+ * Load GET /api/v1/clients/favorites once per session (deduped) into the
+ * shared membership map. Never throws — a heart must not crash the catalog;
+ * an unreachable/denied list simply reads as "nothing saved" (the add path
+ * force-reloads afterward, which self-heals the map).
+ */
+async function ensureFavMembership(force = false): Promise<void> {
+  if (!force && favByService) return;
+  if (!force && favFetchPromise) return favFetchPromise;
+  favFetchPromise = (async () => {
+    try {
+      const data = await apiClient.get<FavoriteListResponse>(
+        "/api/v1/clients/favorites"
+      );
+      const next: Record<number, number> = {};
+      for (const f of data?.favorites ?? []) next[f.service_id] = f.id;
+      favByService = next;
+    } catch (err) {
+      favByService = favByService ?? {};
+      console.warn(
+        "[favorites] membership list unavailable; hearts default to unsaved.",
+        err
+      );
+    } finally {
+      favFetchPromise = null;
+      notifyFavChanged();
+    }
+  })();
+  return favFetchPromise;
+}
+
+export interface UseFavoriteResult {
+  /** True when this service is in the client's saved favorites. */
+  isFavorited: boolean;
+  /** True while the add/remove request is in flight. */
+  toggling: boolean;
+  /** False only while the membership list is still loading for a client user. */
+  ready: boolean;
+  /** Add or remove the service; resolves true = now favorited, false = removed. */
+  toggleFavorite: () => Promise<boolean>;
+}
+
+/**
+ * Server-backed favorite heart for one service.
+ *
+ * Membership (which services are saved, and their real favorite ids) comes
+ * from GET /api/v1/clients/favorites, fetched once per session and shared by
+ * every heart, so the UI reflects reality on load and stays in sync across
+ * cards without extra network calls.
+ *
+ * Toggling on POSTs { service_id } — the response carries only { message,
+ * service_id }, so afterward the membership list is reloaded to learn the real
+ * favorite_id (needed by PATCH/DELETE). Toggling off DELETEs via the stored
+ * favorite_id.
+ */
+export function useFavorite(serviceId: number | null): UseFavoriteResult {
+  const { user, roles } = useAuth();
+  const [toggling, setToggling] = useState(false);
+  const [, bump] = useReducer((x: number) => x + 1, 0);
+
+  // A client favorites list only exists for CLIENT accounts (logged out →
+  // allow the flow so the heart can route to login).
+  const userRoles =
+    roles.length > 0
+      ? roles
+      : user?.roles ?? (user?.role ? [user.role] : []);
+  const canHaveFavorites = !user || userRoles.includes("CLIENT");
+  const needsMembership = !!user && canHaveFavorites;
+
+  // Reset + reload when the signed-in user changes; skip fetches entirely for
+  // logged-out visitors and PROVIDER-only accounts.
+  useEffect(() => {
+    if (favMembershipUserId !== (user?.id ?? null)) {
+      favByService = null;
+      favFetchPromise = null;
+      favMembershipUserId = user?.id ?? null;
+    }
+    if (user && canHaveFavorites && serviceId != null) {
+      void ensureFavMembership();
+    }
+  }, [user, canHaveFavorites, serviceId]);
+
+  // Re-render when the shared membership map changes (initial load, or another
+  // card favorited/unfavorited something).
+  useEffect(() => {
+    favListeners.add(bump);
+    return () => {
+      favListeners.delete(bump);
+    };
+  }, []);
+
+  const favId =
+    serviceId != null && favByService ? favByService[serviceId] ?? null : null;
+  const isFavorited = favId != null;
+  const membershipLoading = needsMembership && favByService === null;
+
+  const toggleFavorite = useCallback(async (): Promise<boolean> => {
+    if (serviceId == null) throw new Error("Missing service id.");
+    setToggling(true);
+    try {
+      // Remove — needs the real favorite_id this session learned from the list.
+      if (favId != null) {
+        await removeFavorite(favId); // rethrows except not-found
+        if (favByService) delete favByService[serviceId];
+        notifyFavChanged();
+        return false;
       }
-    },
-    [user]
-  );
+      // Add — POST returns only { message, service_id }; reload the list so the
+      // real favorite_id is known for later update/delete calls.
+      try {
+        await apiClient.post<FavoriteResponse>("/api/v1/clients/favorites", {
+          service_id: serviceId,
+        });
+      } catch (err) {
+        const detail = (err as { detail?: unknown } | null)?.detail;
+        const hint = `${err}`.toLowerCase();
+        const alreadySaved =
+          !Array.isArray(detail) &&
+          (hint.includes("already") || hint.includes("duplicate"));
+        if (Array.isArray(detail)) {
+          console.warn(
+            `[favorites] addFavorite(${serviceId}) validation error (422):`,
+            detail
+          );
+        } else if (!alreadySaved) {
+          console.warn(
+            `[favorites] addFavorite(${serviceId}) failed (network/server):`,
+            err
+          );
+        }
+        if (!alreadySaved) throw err;
+        // Duplicate save is a no-op success: reconcile below and heart fills.
+      }
+      await ensureFavMembership(true);
+      return true;
+    } finally {
+      setToggling(false);
+    }
+  }, [serviceId, favId]);
 
-  return { addFavorite, loading };
+  return { isFavorited, toggling, ready: !membershipLoading, toggleFavorite };
 }
 
 /**

@@ -20,7 +20,8 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRDownloadModal } from "@/components/qr-download-modal";
 import { ServiceCard } from "@/components/service-card";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorite, toFavoriteServiceId } from "@/hooks/use-favorites";
+import { extractErrorMessage } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -58,25 +59,25 @@ function ServiceDetail() {
   const [activeTab, setActiveTab] = useState<TabKey>("about");
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const { user } = useAuth();
-  const { addFavorite, loading: favLoading } = useFavorites();
-  const [isFavorited, setIsFavorited] = useState(false);
+  const favServiceId = toFavoriteServiceId(service?.id ?? "", service?.apiId);
+  const { isFavorited, toggling, ready, toggleFavorite } = useFavorite(
+    service ? favServiceId : null
+  );
+  const favBusy = toggling || !ready;
 
   const handleFavorite = useCallback(async () => {
     if (!user) {
       navigate({ to: "/auth/login" });
       return;
     }
-    if (isFavorited || favLoading || !service) return;
+    if (favBusy || !favServiceId) return;
     try {
-      const numericId = parseInt(service.id.replace("s", ""), 10);
-      await addFavorite(numericId);
-      setIsFavorited(true);
-      toast.success("Added to favorites!");
+      const nowFavorited = await toggleFavorite();
+      toast.success(nowFavorited ? "Added to favorites!" : "Removed from favorites.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Couldn't add to favorites.";
-      toast.error(msg);
+      toast.error(extractErrorMessage(err, "Couldn't update favorites. Please try again."));
     }
-  }, [user, isFavorited, favLoading, service, addFavorite, navigate]);
+  }, [user, favBusy, favServiceId, toggleFavorite, navigate]);
 
   const approxPrice = (price: number) => {
     const low = Math.round(price * 0.85 / 5) * 5;
@@ -155,11 +156,16 @@ function ServiceDetail() {
             <div className="absolute right-4 top-4 flex gap-2">
               <button
                 onClick={handleFavorite}
-                disabled={favLoading}
+                disabled={favBusy}
                 className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background disabled:opacity-50"
                 aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                aria-busy={toggling}
               >
-                <Heart className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+                {toggling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Heart className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+                )}
               </button>
               <button className="grid h-10 w-10 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background">
                 <Share2 className="h-4 w-4" />

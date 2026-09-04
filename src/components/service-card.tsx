@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight, Heart, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { Service } from "@/lib/data";
 import { formatPriceRange } from "@/lib/services-api";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorite, toFavoriteServiceId } from "@/hooks/use-favorites";
+import { extractErrorMessage } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -14,8 +15,9 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { addFavorite, loading: favLoading } = useFavorites();
-  const [isFavorited, setIsFavorited] = useState(false);
+  const numericId = toFavoriteServiceId(service.id, service.apiId);
+  const { isFavorited, toggling, ready, toggleFavorite } = useFavorite(numericId);
+  const favBusy = toggling || !ready || numericId == null;
 
   // Real backend price bounds when this service came from the live catalog;
   // otherwise derive an approximate range from the seed price (as before).
@@ -33,19 +35,15 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         navigate({ to: "/auth/login" });
         return;
       }
-      if (isFavorited || favLoading) return;
+      if (favBusy) return;
       try {
-        // service.id is a string like "s1" — extract the numeric part for the API
-        const numericId = parseInt(service.id.replace("s", ""), 10);
-        await addFavorite(numericId);
-        setIsFavorited(true);
-        toast.success("Added to favorites!");
+        const nowFavorited = await toggleFavorite();
+        toast.success(nowFavorited ? "Added to favorites!" : "Removed from favorites.");
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Couldn't add to favorites.";
-        toast.error(msg);
+        toast.error(extractErrorMessage(err, "Couldn't update favorites. Please try again."));
       }
     },
-    [user, isFavorited, favLoading, service.id, addFavorite, navigate]
+    [user, favBusy, toggleFavorite, navigate]
   );
 
   return (
@@ -75,13 +73,18 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           </Badge>
           <button
             onClick={handleFavorite}
-            disabled={favLoading}
+            disabled={favBusy}
             className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-background/80 backdrop-blur transition hover:bg-background disabled:opacity-50"
             aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            aria-busy={toggling}
           >
-            <Heart
-              className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : "text-foreground/70"}`}
-            />
+            {toggling ? (
+              <Loader2 className="h-4 w-4 animate-spin text-foreground/70" />
+            ) : (
+              <Heart
+                className={`h-4 w-4 transition ${isFavorited ? "fill-red-500 text-red-500" : "text-foreground/70"}`}
+              />
+            )}
           </button>
           <div className="absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-elegant">
