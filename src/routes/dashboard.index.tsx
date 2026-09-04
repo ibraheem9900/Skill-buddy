@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -160,6 +160,7 @@ function DashboardIndex() {
     retry: retryFavorites,
     updateNotes,
     removeFavorite,
+    loadDetail,
   } = useFavoritesList();
   const { apiServices } = useServices();
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
@@ -179,6 +180,35 @@ function DashboardIndex() {
   // ─── Saved Services — editable notes (PATCH /api/v1/clients/favorites/{id}) ──
   const [notesDrafts, setNotesDrafts] = useState<Record<number, string>>({});
   const [savingNotesId, setSavingNotesId] = useState<number | null>(null);
+  // Single-favorite detail sync (GET /api/v1/clients/favorites/{id}): when
+  // the client starts editing a row's notes, reconcile the editor with the
+  // freshest record from the server (the list can be stale). Fires once per
+  // row per visit; the draft is only prefilled while untouched by the user.
+  const [syncingNotesId, setSyncingNotesId] = useState<number | null>(null);
+  const syncedFavIds = useRef<Set<number>>(new Set());
+
+  const handleFocusNotes = async (fav: FavoriteItem) => {
+    if (syncedFavIds.current.has(fav.id)) return;
+    setSyncingNotesId(fav.id);
+    try {
+      const fresh = await loadDetail(fav.id);
+      if (!fresh) return; // 404/not-found — keep the list value
+      syncedFavIds.current.add(fav.id);
+      setNotesDrafts((d) => {
+        const current = d[fav.id] ?? "";
+        if (current === (fav.notes ?? "")) {
+          return { ...d, [fav.id]: fresh.notes ?? "" };
+        }
+        return d;
+      });
+    } catch (err) {
+      toast.error(
+        extractErrorMessage(err, "Couldn't load this favorite. Please try again.")
+      );
+    } finally {
+      setSyncingNotesId(null);
+    }
+  };
 
   const handleSaveNotes = async (fav: FavoriteItem) => {
     const draft = (notesDrafts[fav.id] ?? "").trim();
@@ -892,10 +922,16 @@ function DashboardIndex() {
                             </div>
                           )}
                           <div className="mt-3">
-                            <label className="text-xs font-medium text-muted-foreground">Notes</label>
+                            <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                              Notes
+                              {syncingNotesId === fav.id && (
+                                <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                              )}
+                            </label>
                             <textarea
                               value={draft}
                               maxLength={500}
+                              onFocus={() => void handleFocusNotes(fav)}
                               onChange={(e) =>
                                 setNotesDrafts((d) => ({ ...d, [fav.id]: e.target.value }))
                               }

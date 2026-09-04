@@ -226,6 +226,58 @@ export async function updateFavoriteNotes(
 }
 
 /**
+ * GET /api/v1/clients/favorites/{favorite_id} — fetches one saved favorite
+ * by id ({ id, service_id, notes, created_at }). Auth handled by apiClient.
+ *
+ * Returns the favorite, or null when it no longer exists (404/403/"not
+ * found") so callers can fall back to list data gracefully. 422 detail
+ * arrays are logged for debugging; network/server failures are logged
+ * separately — both are rethrown so the caller can show a user-facing error.
+ */
+export async function fetchFavorite(
+  favoriteId: number
+): Promise<FavoriteItem | null> {
+  try {
+    return await apiClient.get<FavoriteItem>(
+      `/api/v1/clients/favorites/${favoriteId}`
+    );
+  } catch (err) {
+    const raw =
+      err as { status?: number; detail?: unknown; message?: string } | null;
+    const status =
+      raw?.status ??
+      (err as { response?: { status?: number } } | null)?.response?.status;
+    const detail =
+      typeof raw?.detail === "string" ? raw.detail.toLowerCase() : "";
+    const msg = typeof raw?.message === "string" ? raw.message.toLowerCase() : "";
+    const isNotFound =
+      status === 404 ||
+      status === 403 ||
+      detail.includes("not found") ||
+      msg.includes("not found");
+    if (isNotFound) {
+      console.info(
+        `[favorites] fetchFavorite(${favoriteId}) not found; returning null.`,
+        err
+      );
+      return null;
+    }
+    if (Array.isArray(raw?.detail)) {
+      console.warn(
+        `[favorites] fetchFavorite(${favoriteId}) validation error (422):`,
+        raw.detail
+      );
+    } else {
+      console.warn(
+        `[favorites] fetchFavorite(${favoriteId}) failed (network/server):`,
+        err
+      );
+    }
+    throw err;
+  }
+}
+
+/**
  * DELETE /api/v1/clients/favorites/{favorite_id} — removes a saved favorite.
  *
  * Success is 204 No Content: there is no response body, so this never tries
@@ -325,5 +377,14 @@ export function useFavoritesList() {
     setTotal((t) => Math.max(0, t - 1));
   }, []);
 
-  return { favorites, total, loading, error, retry: load, updateNotes, removeFavorite: remove };
+  return {
+    favorites,
+    total,
+    loading,
+    error,
+    retry: load,
+    updateNotes,
+    removeFavorite: remove,
+    loadDetail: fetchFavorite,
+  };
 }
