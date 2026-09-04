@@ -30,6 +30,7 @@ import {
   useCertifications,
   uploadCertification,
   updateCertification,
+  deleteCertification,
   fetchCertificationById,
   type Certification,
 } from "@/hooks/use-certifications";
@@ -160,6 +161,7 @@ function ProfilePage() {
   }, []);
 
   const toggleCertDetail = (certId: number) => {
+    setConfirmDeleteCert(false);
     if (openCertId === certId) {
       setOpenCertId(null);
       return;
@@ -227,6 +229,30 @@ function ProfilePage() {
   const cancelReplace = () => {
     setReplaceFile(null);
     setReplaceError("");
+  };
+
+  // ─── Certification delete — DELETE /api/v1/certifications/{id} ────────────
+  const [confirmDeleteCert, setConfirmDeleteCert] = useState(false);
+  const [deletingCert, setDeletingCert] = useState(false);
+
+  const handleDeleteCert = async (certId: number) => {
+    setDeletingCert(true);
+    try {
+      const msg = await deleteCertification(certId);
+      toast.success(msg || "Certification deleted.");
+      setConfirmDeleteCert(false);
+      cancelReplace();
+      setOpenCertId(null); // close the detail panel — the row is gone
+      setCertDetail(null);
+      syncCertifications(); // list reflects the deletion immediately
+    } catch (err) {
+      // 422 detail already logged by the service; keep the item in place
+      toast.error(
+        extractErrorMessage(err, "Couldn't delete certification. Please try again."),
+      );
+    } finally {
+      setDeletingCert(false);
+    }
   };
 
   const {
@@ -1740,6 +1766,54 @@ function ProfilePage() {
                                   >
                                     <Upload className="h-3.5 w-3.5" />
                                     Replace file
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Delete — requires explicit confirmation, never single-click */}
+                              <div className="mt-3 border-t border-border pt-3">
+                                {confirmDeleteCert ? (
+                                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/40 dark:bg-red-950/20">
+                                    <div>
+                                      <p className="text-xs font-medium text-red-700 dark:text-red-300">
+                                        Delete this certification?
+                                      </p>
+                                      <p className="text-[11px] text-red-600/80 dark:text-red-400/80">
+                                        This can't be undone.
+                                      </p>
+                                    </div>
+                                    <div className="flex shrink-0 gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={deletingCert}
+                                        onClick={() => setConfirmDeleteCert(false)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        disabled={deletingCert}
+                                        onClick={() => void handleDeleteCert(certDetail.id)}
+                                      >
+                                        {deletingCert ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          "Delete"
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={deletingCert || replacing || !!replaceFile}
+                                    onClick={() => setConfirmDeleteCert(true)}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 transition hover:underline disabled:opacity-50 dark:text-red-400"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Delete certification
                                   </button>
                                 )}
                               </div>

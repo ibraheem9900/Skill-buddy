@@ -166,6 +166,80 @@ export async function updateCertification(
   }
 }
 
+/** Remove a certification record from the session cache. */
+function removeCertificationFromCache(certificationId: number) {
+  if (!cachedCertifications) return;
+  const next = cachedCertifications.certifications.filter(
+    (c) => c.id !== certificationId,
+  );
+  if (next.length === cachedCertifications.certifications.length) return;
+  cachedCertifications = {
+    certifications: next,
+    total: Math.max(0, (cachedCertifications.total ?? next.length) - 1),
+  };
+}
+
+/**
+ * DELETE /api/v1/certifications/{certification_id} via the centralized
+ * authenticated apiClient (Bearer token + 401 refresh automatic).
+ *
+ * Success (200) returns a plain confirmation string — callers should treat it
+ * as a message, not an object with fields. Error handling is split:
+ * - 422 (detail array): logged to console for debugging, rethrown so the
+ *   caller shows a user-facing toast.
+ * - 404/403/"not found": the record is already gone — logged and treated as a
+ *   successful delete so a stale list row clears instead of blocking forever.
+ * - Network / timeout / 5xx / unexpected: logged separately, rethrown.
+ */
+export async function deleteCertification(
+  certificationId: number,
+): Promise<string | null> {
+  try {
+    const res = await apiClient.delete<string>(
+      `/api/v1/certifications/${certificationId}`,
+    );
+    removeCertificationFromCache(certificationId);
+    return typeof res === "string" && res.trim() ? res.trim() : null;
+  } catch (err) {
+    const raw = err as { status?: number; detail?: unknown; message?: string } | null;
+    const status =
+      raw?.status ??
+      (err as { response?: { status?: number } } | null)?.response?.status;
+    const detail = raw?.detail;
+
+    if (Array.isArray(detail)) {
+      // FastAPI 422 — log the full {loc,msg,type,input,ctx} list for debugging
+      console.warn(
+        `[certifications] deleteCertification(${certificationId}) validation error (422):`,
+        detail,
+      );
+    } else {
+      const detailText = typeof detail === "string" ? detail.toLowerCase() : "";
+      const msg = typeof raw?.message === "string" ? raw.message.toLowerCase() : "";
+      const isNotFound =
+        status === 404 ||
+        status === 403 ||
+        detailText.includes("not found") ||
+        msg.includes("not found");
+      if (isNotFound) {
+        // Already gone server-side — stale-row cleanup path (distinct from 422)
+        console.info(
+          `[certifications] deleteCertification(${certificationId}) already absent; treating as deleted.`,
+          err,
+        );
+        removeCertificationFromCache(certificationId);
+        return null;
+      }
+      // Network / timeout / 5xx / unexpected
+      console.warn(
+        `[certifications] deleteCertification(${certificationId}) failed (network/server):`,
+        err,
+      );
+    }
+    throw err;
+  }
+}
+
 /** In-memory cache for the current provider's certifications. */
 let cachedCertifications: CertificationsResponse | null = null;
 let fetchPromise: Promise<CertificationsResponse | null> | null = null;
