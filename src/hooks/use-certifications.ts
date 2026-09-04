@@ -16,6 +16,33 @@ export interface CertificationsResponse {
   total: number;
 }
 
+export interface CertificationUploadResponse {
+  message: string;
+  certification: Certification;
+}
+
+/**
+ * POST /api/v1/certifications — multipart/form-data file upload.
+ * Auth header + 401 refresh handled by apiClient; Content-Type is left to the
+ * browser so the multipart boundary is set correctly (never set manually).
+ */
+export async function uploadCertification(file: File): Promise<Certification> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await apiClient.upload<CertificationUploadResponse>(
+    "/api/v1/certifications",
+    formData,
+  );
+  const cert = res?.certification;
+  if (!cert) throw new Error("Upload succeeded but returned no certification.");
+  // Keep the session cache in sync so the new item survives re-mounts.
+  cachedCertifications = {
+    certifications: [cert, ...(cachedCertifications?.certifications ?? [])],
+    total: (cachedCertifications?.total ?? 0) + 1,
+  };
+  return cert;
+}
+
 /** In-memory cache for the current provider's certifications. */
 let cachedCertifications: CertificationsResponse | null = null;
 let fetchPromise: Promise<CertificationsResponse | null> | null = null;

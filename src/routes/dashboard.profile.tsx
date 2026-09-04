@@ -26,7 +26,7 @@ import {
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
-import { useCertifications } from "@/hooks/use-certifications";
+import { useCertifications, uploadCertification } from "@/hooks/use-certifications";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -62,6 +62,52 @@ function ProfilePage() {
     error: certificationsError,
     retry: retryCertifications,
   } = useCertifications(isProvider);
+
+  // ─── Certification upload ──────────────────────────────────────────────
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certFileError, setCertFileError] = useState("");
+  const [certUploading, setCertUploading] = useState(false);
+  const MAX_CERT_SIZE = 10 * 1024 * 1024; // 10 MB
+
+  const handleCertFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    const isAllowed = file.type.startsWith("image/") || file.type === "application/pdf";
+    if (!isAllowed) {
+      setCertFile(null);
+      setCertFileError("Only image files (JPG, PNG, etc.) or PDF documents are supported.");
+      return;
+    }
+    if (file.size > MAX_CERT_SIZE) {
+      setCertFile(null);
+      setCertFileError("File must be under 10 MB.");
+      return;
+    }
+    setCertFileError("");
+    setCertFile(file);
+  };
+
+  const handleCertUpload = async () => {
+    if (!certFile) return;
+    setCertUploading(true);
+    try {
+      await uploadCertification(certFile);
+      toast.success("Certification uploaded successfully.");
+      setCertFile(null);
+      setCertFileError("");
+      retryCertifications(); // refetch the list — the new item appears
+    } catch (err) {
+      // Keep the selected file so the user can retry without reselecting
+      toast.error(
+        extractErrorMessage(err, "Couldn't upload certification. Please check the file and try again.")
+      );
+    } finally {
+      setCertUploading(false);
+    }
+  };
+
   const {
     address: savedAddress,
     loading: addressLoading,
@@ -1316,7 +1362,70 @@ function ProfilePage() {
           {/* Certifications (provider only) */}
           {isProvider && (
             <section className="rounded-2xl border border-border bg-card p-6">
-              <SectionHeader icon={Award} title="Certifications" />
+              <div className="flex items-start justify-between gap-3">
+                <SectionHeader icon={Award} title="Certifications" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  disabled={certUploading}
+                  onClick={() => certInputRef.current?.click()}
+                >
+                  {certUploading ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {certUploading ? "Uploading…" : "Add Certification"}
+                </Button>
+              </div>
+              <input
+                ref={certInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={handleCertFileChange}
+              />
+
+              {certFileError && (
+                <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400">
+                  {certFileError}
+                </p>
+              )}
+
+              {/* Selected file — confirm before uploading */}
+              {certFile && !certificationsLoading && (
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{certFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(certFile.size / (1024 * 1024)).toFixed(2)} MB — ready to upload
+                    </p>
+                  </div>
+                  <Button size="sm" className="shrink-0" disabled={certUploading} onClick={handleCertUpload}>
+                    {certUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <><Upload className="mr-1.5 h-3.5 w-3.5" />Upload</>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                    disabled={certUploading}
+                    onClick={() => {
+                      setCertFile(null);
+                      setCertFileError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
 
               {certificationsLoading ? (
                 <div className="flex items-center justify-center py-8">
@@ -1337,6 +1446,16 @@ function ProfilePage() {
                   <p className="mt-1 text-xs text-muted-foreground/60">
                     Uploaded certificates and credentials will appear here.
                   </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-4"
+                    disabled={certUploading}
+                    onClick={() => certInputRef.current?.click()}
+                  >
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                    Upload Certification
+                  </Button>
                 </div>
               ) : (
                 <div>
