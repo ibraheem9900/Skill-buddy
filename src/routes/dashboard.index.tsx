@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2, RefreshCw } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
@@ -159,6 +159,7 @@ function DashboardIndex() {
     error: favsError,
     retry: retryFavorites,
     updateNotes,
+    removeFavorite,
   } = useFavoritesList();
   const { apiServices } = useServices();
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
@@ -198,6 +199,30 @@ function DashboardIndex() {
       toast.error(extractErrorMessage(err, "Couldn't update notes. Please try again."));
     } finally {
       setSavingNotesId(null);
+    }
+  };
+
+  // ─── Remove favorite (DELETE /api/v1/clients/favorites/{id}) ────────────────
+  const [confirmRemoveFavId, setConfirmRemoveFavId] = useState<number | null>(null);
+  const [removingFavId, setRemovingFavId] = useState<number | null>(null);
+
+  const handleRemoveFavorite = async (favId: number) => {
+    setRemovingFavId(favId);
+    try {
+      await removeFavorite(favId);
+      toast.success("Removed from favorites.");
+      setConfirmRemoveFavId(null);
+      setNotesDrafts((d) => {
+        const next = { ...d };
+        delete next[favId];
+        return next;
+      });
+    } catch (err) {
+      toast.error(
+        extractErrorMessage(err, "Couldn't remove favorite. Please try again.")
+      );
+    } finally {
+      setRemovingFavId(null);
     }
   };
 
@@ -816,7 +841,56 @@ function DashboardIndex() {
                                 Saved {formatSavedDate(fav.created_at)}
                               </p>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRemoveFavId(fav.id)}
+                              disabled={removingFavId === fav.id}
+                              aria-label="Remove from favorites"
+                              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/20"
+                            >
+                              {removingFavId === fav.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
                           </div>
+
+                          {/* Remove confirmation — never single-click */}
+                          {confirmRemoveFavId === fav.id && (
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/40 dark:bg-red-950/20">
+                              <div>
+                                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                                  Remove from favorites?
+                                </p>
+                                <p className="text-xs text-red-600/80 dark:text-red-400/80">
+                                  This service will be removed from your saved list.
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={removingFavId === fav.id}
+                                  onClick={() => setConfirmRemoveFavId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={removingFavId === fav.id}
+                                  onClick={() => void handleRemoveFavorite(fav.id)}
+                                >
+                                  {removingFavId === fav.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Remove"
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                           <div className="mt-3">
                             <label className="text-xs font-medium text-muted-foreground">Notes</label>
                             <textarea

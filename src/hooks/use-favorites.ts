@@ -87,6 +87,55 @@ export async function updateFavoriteNotes(
 }
 
 /**
+ * DELETE /api/v1/clients/favorites/{favorite_id} — removes a saved favorite.
+ *
+ * Success is 204 No Content: there is no response body, so this never tries
+ * to parse JSON on success. Error handling is split:
+ * - 404/403/"not found": already removed — treated as success (stale cleanup,
+ *   logged) so the row clears instead of blocking forever.
+ * - 422 (detail array): logged to console for debugging, rethrown.
+ * - Network / timeout / 5xx / unexpected: logged separately, rethrown.
+ */
+export async function removeFavorite(favoriteId: number): Promise<void> {
+  try {
+    // 204 → empty body; apiClient.parseResponse tolerates ok responses with
+    // no JSON (returns the empty text as-is) — no JSON-parse crash.
+    await apiClient.delete<unknown>(`/api/v1/clients/favorites/${favoriteId}`);
+  } catch (err) {
+    const raw = err as { status?: number; detail?: unknown; message?: string } | null;
+    const status =
+      raw?.status ??
+      (err as { response?: { status?: number } } | null)?.response?.status;
+    const detail = typeof raw?.detail === "string" ? raw.detail.toLowerCase() : "";
+    const msg = typeof raw?.message === "string" ? raw.message.toLowerCase() : "";
+    const isNotFound =
+      status === 404 ||
+      status === 403 ||
+      detail.includes("not found") ||
+      msg.includes("not found");
+    if (isNotFound) {
+      console.info(
+        `[favorites] removeFavorite(${favoriteId}) already absent; treating as removed.`,
+        err
+      );
+      return;
+    }
+    if (Array.isArray(raw?.detail)) {
+      console.warn(
+        `[favorites] removeFavorite(${favoriteId}) validation error (422):`,
+        raw.detail
+      );
+    } else {
+      console.warn(
+        `[favorites] removeFavorite(${favoriteId}) failed (network/server):`,
+        err
+      );
+    }
+    throw err;
+  }
+}
+
+/**
  * Hook for the authenticated client's saved favorites list.
  *
  * GET /api/v1/clients/favorites via the centralized authenticated apiClient.
@@ -131,5 +180,11 @@ export function useFavoritesList() {
     []
   );
 
-  return { favorites, total, loading, error, retry: load, updateNotes };
+  const remove = useCallback(async (favoriteId: number): Promise<void> => {
+    await removeFavorite(favoriteId); // rethrows except not-found
+    setFavorites((prev) => prev.filter((f) => f.id !== favoriteId));
+    setTotal((t) => Math.max(0, t - 1));
+  }, []);
+
+  return { favorites, total, loading, error, retry: load, updateNotes, removeFavorite: remove };
 }
