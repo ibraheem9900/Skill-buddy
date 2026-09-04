@@ -490,24 +490,35 @@ function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) return;
+
+    // Client-side validation — matches the backend's optional-field contract
+    // (phone_number maxLength 20). Light E.164-ish shape check; no other screen
+    // validates phone format yet, so this is the first.
+    const errs: Record<string, string> = {};
+    const phone = form.phone_number.trim();
+    if (phone && (phone.length > 20 || !/^\+?[\d\s\-()]{6,19}$/.test(phone))) {
+      errs.phone_number = "Enter a valid phone number (e.g. +372 5123 4567).";
+    }
+    setFormErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    // True partial update — send ONLY the changed fields. The PATCH schema has
+    // no required fields, so unchanged/empty values are never sent as nulls.
+    const payload: Record<string, string> = {};
+    if (form.first_name !== (user.first_name ?? "")) payload.first_name = form.first_name;
+    if (form.last_name !== (user.last_name ?? "")) payload.last_name = form.last_name;
+    if (form.username !== (user.username ?? "")) payload.username = form.username;
+    if (form.phone_number !== (user.phone_number ?? "")) payload.phone_number = form.phone_number;
+
+    if (Object.keys(payload).length === 0) {
+      toast.success("No changes to save.");
+      return;
+    }
+
     setSaving(true);
     setFormErrors({});
     try {
-      const payload: Record<string, string> = {};
-      if (form.first_name !== (user.first_name ?? "")) payload.first_name = form.first_name;
-      if (form.last_name !== (user.last_name ?? "")) payload.last_name = form.last_name;
-      if (form.username !== (user.username ?? "")) payload.username = form.username;
-      if (form.phone_number !== (user.phone_number ?? "")) payload.phone_number = form.phone_number;
-
-      // Always send all fields to be safe
-      const body = {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        username: form.username || undefined,
-        phone_number: form.phone_number || undefined,
-      };
-
-      const res = await apiClient.patch<Record<string, unknown>>("/api/v1/users/profile", body);
+      const res = await apiClient.patch<Record<string, unknown>>("/api/v1/users/profile", payload);
       // The API returns the full updated user — update global state with it
       if (res && typeof res === "object" && "id" in res) {
         const updated: Record<string, unknown> = res;
@@ -529,14 +540,17 @@ function ProfilePage() {
       }
       toast.success("Profile updated successfully.");
     } catch (err) {
-      // Try to extract field-specific errors from 422 response
-      const msg = extractErrorMessage(err, "Failed to save profile.");
-      if (msg.includes("username")) {
-        setFormErrors({ username: msg });
-      } else if (msg.includes("phone")) {
-        setFormErrors({ phone_number: msg });
+      // Log the raw 422 detail array for debugging, then map detail[].loc pairs
+      // to the matching form fields (e.g. loc ["body","username"] → username).
+      const rawDetail = (err as { detail?: unknown } | null)?.detail;
+      if (Array.isArray(rawDetail)) {
+        console.warn("[users/profile] PATCH validation error (422):", rawDetail);
+      }
+      const fieldErrs = extractFieldErrors(err);
+      if (Object.keys(fieldErrs).length > 0) {
+        setFormErrors(fieldErrs);
       } else {
-        toast.error(msg);
+        toast.error(extractErrorMessage(err, "Failed to save profile."));
       }
     } finally {
       setSaving(false);
