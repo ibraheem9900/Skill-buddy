@@ -11,7 +11,7 @@ import {
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
-  MapPin, Home, RefreshCw, Plus, X, Pencil,
+  MapPin, Home, RefreshCw, Plus, X, Pencil, Award, ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
@@ -26,6 +26,7 @@ import {
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
+import { useCertifications } from "@/hooks/use-certifications";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -53,6 +54,14 @@ function ProfilePage() {
   const { locale, setLocale } = useI18n();
   const [langSaving, setLangSaving] = useState(false);
   const { countries: countriesList, loading: countriesLoading } = useCountries();
+  const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
+  const {
+    certifications,
+    total: certificationsTotal,
+    loading: certificationsLoading,
+    error: certificationsError,
+    retry: retryCertifications,
+  } = useCertifications(isProvider);
   const {
     address: savedAddress,
     loading: addressLoading,
@@ -681,7 +690,6 @@ function ProfilePage() {
   };
 
   const displayName = getFullName(user);
-  const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
 
   const handleDeactivate = async () => {
     setDeactivating(true);
@@ -1304,6 +1312,77 @@ function ProfilePage() {
               </div>
             </div>
           </section>
+
+          {/* Certifications (provider only) */}
+          {isProvider && (
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <SectionHeader icon={Award} title="Certifications" />
+
+              {certificationsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : certificationsError ? (
+                <div className="rounded-xl border border-border bg-muted/30 p-6 text-center">
+                  <p className="text-sm text-muted-foreground">{certificationsError}</p>
+                  <Button size="sm" variant="outline" className="mt-3" onClick={retryCertifications}>
+                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                    Retry
+                  </Button>
+                </div>
+              ) : certifications.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 py-8 text-center">
+                  <Award className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm font-medium text-muted-foreground">No certifications uploaded yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground/60">
+                    Uploaded certificates and credentials will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {certificationsTotal} {certificationsTotal === 1 ? "certification" : "certifications"} on file
+                  </p>
+                  <div className="space-y-3">
+                    {certifications.map((cert) => (
+                      <div
+                        key={cert.id}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                          <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">Certification #{cert.id}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Uploaded{" "}
+                            {cert.created_at
+                              ? new Date(cert.created_at).toLocaleDateString("en-GB", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                })
+                              : "—"}
+                          </p>
+                        </div>
+                        {cert.certification_url && (
+                          <a
+                            href={cert.certification_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent"
+                          >
+                            View
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Change Password */}
           <section className="rounded-2xl border border-border bg-card p-6">
