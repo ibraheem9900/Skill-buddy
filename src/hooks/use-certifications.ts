@@ -99,6 +99,73 @@ export async function uploadCertification(file: File): Promise<Certification> {
   return cert;
 }
 
+/** Replace/refresh a certification record inside the session cache. */
+function applyCertificationToCache(updated: Certification) {
+  if (!cachedCertifications) {
+    cachedCertifications = { certifications: [updated], total: 1 };
+    return;
+  }
+  const idx = cachedCertifications.certifications.findIndex(
+    (c) => c.id === updated.id,
+  );
+  if (idx >= 0) {
+    const next = [...cachedCertifications.certifications];
+    next[idx] = updated;
+    cachedCertifications = {
+      certifications: next,
+      total: cachedCertifications.total,
+    };
+  } else {
+    cachedCertifications = {
+      certifications: [updated, ...cachedCertifications.certifications],
+      total: cachedCertifications.total + 1,
+    };
+  }
+}
+
+/**
+ * PUT /api/v1/certifications/{certification_id} — multipart/form-data file
+ * replace for an existing certification. Same body field as POST ("file"),
+ * sent via the centralized authenticated apiClient so the Authorization header
+ * and 401 refresh are automatic and Content-Type is left for the browser's
+ * multipart boundary.
+ *
+ * Returns { message, certification } on 200. On 422 the detail array is logged
+ * and the error is rethrown (caller shows a user-facing toast). Network/server
+ * failures are logged separately before rethrowing.
+ */
+export async function updateCertification(
+  certificationId: number,
+  file: File,
+): Promise<CertificationUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const res = await apiClient.put<CertificationUploadResponse>(
+      `/api/v1/certifications/${certificationId}`,
+      formData,
+    );
+    if (res?.certification) applyCertificationToCache(res.certification);
+    return res;
+  } catch (err) {
+    const detail = (err as { detail?: unknown } | null)?.detail;
+    if (Array.isArray(detail)) {
+      // FastAPI 422 — log the full {loc,msg,type,input,ctx} list for debugging
+      console.warn(
+        `[certifications] updateCertification(${certificationId}) validation error (422):`,
+        detail,
+      );
+    } else {
+      // Network / timeout / 5xx / file-too-large / unsupported type
+      console.warn(
+        `[certifications] updateCertification(${certificationId}) failed (network/server):`,
+        err,
+      );
+    }
+    throw err;
+  }
+}
+
 /** In-memory cache for the current provider's certifications. */
 let cachedCertifications: CertificationsResponse | null = null;
 let fetchPromise: Promise<CertificationsResponse | null> | null = null;
@@ -164,5 +231,11 @@ export function useCertifications(enabled = true) {
     load();
   }, [load]);
 
-  return { certifications, total, loading, error, retry };
+  /** Re-read the session cache into state — used after in-place mutations. */
+  const sync = useCallback(() => {
+    setCertifications(cachedCertifications?.certifications ?? []);
+    setTotal(cachedCertifications?.total ?? 0);
+  }, []);
+
+  return { certifications, total, loading, error, retry, sync };
 }

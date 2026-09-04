@@ -29,6 +29,7 @@ import { useCities } from "@/hooks/use-cities";
 import {
   useCertifications,
   uploadCertification,
+  updateCertification,
   fetchCertificationById,
   type Certification,
 } from "@/hooks/use-certifications";
@@ -78,6 +79,7 @@ function ProfilePage() {
     loading: certificationsLoading,
     error: certificationsError,
     retry: retryCertifications,
+    sync: syncCertifications,
   } = useCertifications(isProvider);
 
   // ─── Certification upload ──────────────────────────────────────────────
@@ -164,6 +166,67 @@ function ProfilePage() {
     }
     setOpenCertId(certId);
     void loadCertDetail(certId);
+  };
+
+  // ─── Certification replace — PUT /api/v1/certifications/{id} (multipart) ──
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [replaceFile, setReplaceFile] = useState<File | null>(null);
+  const [replaceError, setReplaceError] = useState("");
+  const [replacing, setReplacing] = useState(false);
+
+  const handleReplaceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    const isAllowed =
+      file.type.startsWith("image/") || file.type === "application/pdf";
+    if (!isAllowed) {
+      setReplaceFile(null);
+      setReplaceError(
+        "Only image files (JPG, PNG, etc.) or PDF documents are supported.",
+      );
+      return;
+    }
+    if (file.size > MAX_CERT_SIZE) {
+      setReplaceFile(null);
+      setReplaceError("File must be under 10 MB.");
+      return;
+    }
+    setReplaceError("");
+    setReplaceFile(file);
+  };
+
+  const handleReplaceCert = async (certId: number) => {
+    if (!replaceFile) return;
+    setReplacing(true);
+    try {
+      const res = await updateCertification(certId, replaceFile);
+      const fresh = res?.certification;
+      toast.success(res?.message ?? "Certification updated successfully.");
+      setReplaceFile(null);
+      setReplaceError("");
+      if (fresh) {
+        // Reflect the returned object immediately — no manual refresh
+        setCertDetail(fresh);
+        syncCertifications();
+      }
+    } catch (err) {
+      // 422 detail already logged by the service; surface a clear message.
+      // Keep the selected file so the user can retry without reselecting.
+      toast.error(
+        extractErrorMessage(
+          err,
+          "Couldn't update certification. Please check the file and try again.",
+        ),
+      );
+    } finally {
+      setReplacing(false);
+    }
+  };
+
+  const cancelReplace = () => {
+    setReplaceFile(null);
+    setReplaceError("");
   };
 
   const {
@@ -1583,6 +1646,7 @@ function ProfilePage() {
                                 </Button>
                               </div>
                             ) : certDetail ? (
+                              <>
                               <div className="grid gap-3 text-xs sm:grid-cols-2">
                                 <div>
                                   <p className="text-muted-foreground">Uploaded</p>
@@ -1618,6 +1682,68 @@ function ProfilePage() {
                                   </div>
                                 )}
                               </div>
+
+                              {/* Replace the certification file (PUT, multipart) */}
+                              <div className="mt-4 border-t border-border pt-3">
+                                <input
+                                  ref={replaceInputRef}
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  className="hidden"
+                                  onChange={handleReplaceFileChange}
+                                />
+                                {replaceError && (
+                                  <p className="mb-2 text-xs text-red-600 dark:text-red-400">
+                                    {replaceError}
+                                  </p>
+                                )}
+                                {replaceFile ? (
+                                  <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                      <FileText className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-xs font-medium">
+                                        {replaceFile.name}
+                                      </p>
+                                      <p className="text-[11px] text-muted-foreground">
+                                        {(replaceFile.size / (1024 * 1024)).toFixed(2)} MB — will replace the current file
+                                      </p>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      className="shrink-0"
+                                      disabled={replacing}
+                                      onClick={() => void handleReplaceCert(certDetail.id)}
+                                    >
+                                      {replacing ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <><Upload className="mr-1.5 h-3.5 w-3.5" />Replace</>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="shrink-0"
+                                      disabled={replacing}
+                                      onClick={cancelReplace}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => replaceInputRef.current?.click()}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-primary transition hover:underline"
+                                  >
+                                    <Upload className="h-3.5 w-3.5" />
+                                    Replace file
+                                  </button>
+                                )}
+                              </div>
+                              </>
                             ) : null}
                           </div>
                         )}
