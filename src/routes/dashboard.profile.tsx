@@ -26,6 +26,7 @@ import {
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
+import { useProfilePicture } from "@/hooks/use-profile-picture";
 import {
   useCertifications,
   uploadCertification,
@@ -74,6 +75,7 @@ function ProfilePage() {
   const [langSaving, setLangSaving] = useState(false);
   const { countries: countriesList, loading: countriesLoading } = useCountries();
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
+  const { url: fetchedAvatar } = useProfilePicture(!!user && !user?.avatar_url);
   const {
     certifications,
     total: certificationsTotal,
@@ -883,6 +885,8 @@ function ProfilePage() {
   };
 
   const displayName = getFullName(user);
+  const heroAvatarSrc =
+    fetchedAvatar ?? user?.avatar_url ?? user?.profile_picture_url ?? null;
 
   const handleDeactivate = async () => {
     setDeactivating(true);
@@ -934,9 +938,9 @@ function ProfilePage() {
         {/* Hero card */}
         <div className="rounded-2xl border border-border bg-card p-6 mb-6 flex items-center gap-5">
           <div className="relative shrink-0">
-            {(user?.avatar_url || user?.profile_picture_url) ? (
+            {heroAvatarSrc ? (
               <img
-                src={user.avatar_url || user.profile_picture_url || ""}
+                src={heroAvatarSrc}
                 alt={displayName}
                 className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
               />

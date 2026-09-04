@@ -13,6 +13,7 @@ import { useProviderDashboard } from "@/hooks/use-provider-dashboard";
 import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 import { useProviderStatusHistory } from "@/hooks/use-provider-status-history";
 import { useClientDashboard } from "@/hooks/use-client-dashboard";
+import { useProfilePicture } from "@/hooks/use-profile-picture";
 import { useClientBookings, getBookingTitle, getBookingStatus, getBookingDate, getBookingPrice, getBookingProvider } from "@/hooks/use-client-bookings";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -126,7 +127,9 @@ function DashboardIndex() {
     setQrOpen(true);
   };
 
+  const { url: fetchedAvatar } = useProfilePicture(!!user && !user?.avatar_url);
   const displayName = getFullName(user);
+  const avatarSrc = fetchedAvatar ?? user?.avatar_url ?? null;
   const firstName = user?.first_name || displayName.split(" ")[0] || "there";
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
   const { profile: providerProfile, loading: providerLoading } = useProviderProfile(isProvider);
@@ -224,9 +227,9 @@ function DashboardIndex() {
           {/* Sidebar */}
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
-              {user?.avatar_url ? (
+              {avatarSrc ? (
                 <img
-                  src={user.avatar_url}
+                  src={avatarSrc}
                   alt={displayName}
                   className="mx-auto h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
                 />

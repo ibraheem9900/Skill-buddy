@@ -18,6 +18,7 @@ import { useTheme } from "@/components/theme-provider";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/context/AuthContext";
+import { useProfilePicture } from "@/hooks/use-profile-picture";
 import { getFullName } from "@/lib/user-helpers";
 
 export function Navbar() {
@@ -56,8 +57,10 @@ export function Navbar() {
     navigate({ to: "/" });
   };
 
+  // Fetch the persisted picture only when the auth user has none cached.
+  const { url: fetchedAvatar } = useProfilePicture(!!user && !user?.avatar_url);
   const displayName = getFullName(user);
-  const avatarUrl = user?.avatar_url ?? undefined;
+  const avatarUrl = fetchedAvatar ?? user?.avatar_url ?? undefined;
   const initials = displayName
     ? displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
