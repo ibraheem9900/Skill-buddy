@@ -65,6 +65,62 @@ async function fetchProfilePictureOnce(): Promise<string | null> {
   return fetchPromise;
 }
 
+/**
+ * DELETE /api/v1/users/profile-picture — removes the authenticated user's
+ * profile picture. Returns the success message (or null).
+ *
+ * On success the session cache is cleared (cachedUrl = null, checked = true)
+ * so no later GET resurrects the deleted URL, and callers must also clear
+ * the avatar in the auth context so every consumer flips to the placeholder.
+ *
+ * - 200 { message } → message returned, cache cleared
+ * - 404/403/"not found" (nothing to delete) → treated as already-removed
+ *   (logged, cache cleared, null returned) so stale state can't trap the user
+ * - 401 handled upstream by apiClient (refresh → retry → auth:expired)
+ * - Network / 5xx / unexpected → logged and rethrown (caller toasts)
+ */
+export async function deleteProfilePicture(): Promise<string | null> {
+  try {
+    const res = await apiClient.delete<{ message?: unknown } | string>(
+      "/api/v1/users/profile-picture",
+    );
+    cachedUrl = null;
+    checked = true;
+    if (typeof res === "string") {
+      return res.trim() || null;
+    }
+    if (res && typeof res === "object") {
+      const m = (res as { message?: unknown }).message;
+      if (typeof m === "string" && m.trim()) return m.trim();
+    }
+    return null;
+  } catch (err) {
+    const raw = err as { status?: number; detail?: unknown; message?: string } | null;
+    const status =
+      raw?.status ??
+      (err as { response?: { status?: number } } | null)?.response?.status;
+    const detail = typeof raw?.detail === "string" ? raw.detail.toLowerCase() : "";
+    const msg = typeof raw?.message === "string" ? raw.message.toLowerCase() : "";
+    const isNotFound =
+      status === 404 ||
+      status === 403 ||
+      detail.includes("not found") ||
+      msg.includes("not found");
+    if (isNotFound) {
+      // Nothing to delete — the picture is already gone; clear local state.
+      console.info(
+        "[profile-picture] delete: no picture existed; treating as removed.",
+        err,
+      );
+      cachedUrl = null;
+      checked = true;
+      return null;
+    }
+    console.warn("[profile-picture] delete failed (network/server):", err);
+    throw err;
+  }
+}
+
 export function useProfilePicture(enabled = true) {
   const [url, setUrl] = useState<string | null>(
     enabled && checked ? cachedUrl : null,

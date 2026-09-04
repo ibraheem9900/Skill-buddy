@@ -26,7 +26,10 @@ import {
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
-import { useProfilePicture } from "@/hooks/use-profile-picture";
+import {
+  useProfilePicture,
+  deleteProfilePicture,
+} from "@/hooks/use-profile-picture";
 import {
   useCertifications,
   uploadCertification,
@@ -557,9 +560,30 @@ function ProfilePage() {
     }
   };
 
-  // ─── Profile picture upload ────────────────────────────────────────────────
+  // ─── Profile picture upload / remove ────────────────────────────────────────
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [confirmRemovePic, setConfirmRemovePic] = useState(false);
+  const [removingPic, setRemovingPic] = useState(false);
+
+  // DELETE /api/v1/users/profile-picture — auth handled by apiClient
+  const handleRemovePicture = async () => {
+    setRemovingPic(true);
+    try {
+      const msg = await deleteProfilePicture();
+      toast.success(msg || "Profile picture removed.");
+      // Clear the avatar in shared context → navbar/dashboard/profile all
+      // revert to the initials placeholder without a manual refresh.
+      updateUserLocal({ avatar_url: null, profile_picture_url: null });
+      setConfirmRemovePic(false);
+    } catch (err) {
+      toast.error(
+        extractErrorMessage(err, "Couldn't remove profile picture. Please try again."),
+      );
+    } finally {
+      setRemovingPic(false);
+    }
+  };
 
   const handleAvatarUpload = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
@@ -970,6 +994,17 @@ function ProfilePage() {
             >
               {avatarUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             </button>
+            {heroAvatarSrc && !confirmRemovePic && (
+              <button
+                type="button"
+                onClick={() => setConfirmRemovePic(true)}
+                disabled={removingPic}
+                aria-label="Remove profile picture"
+                className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-red-500 text-white shadow hover:bg-red-600 disabled:opacity-50"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
             <input
               ref={avatarInputRef}
               type="file"
@@ -1001,6 +1036,38 @@ function ProfilePage() {
               ))}
             </div>
           </div>
+
+          {/* Remove-picture confirmation — never single-click */}
+          {confirmRemovePic && (
+            <div className="flex flex-col items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/40 dark:bg-red-950/20">
+              <div>
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  Remove your profile picture?
+                </p>
+                <p className="text-xs text-red-600/80 dark:text-red-400/80">
+                  Your avatar will revert to your initials.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={removingPic}
+                  onClick={() => setConfirmRemovePic(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={removingPic}
+                  onClick={handleRemovePicture}
+                >
+                  {removingPic ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Client Stats */}
