@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2 } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
@@ -15,6 +15,8 @@ import { useProviderStatusHistory } from "@/hooks/use-provider-status-history";
 import { useClientDashboard } from "@/hooks/use-client-dashboard";
 import { useProfilePicture } from "@/hooks/use-profile-picture";
 import { useClientBookings, getBookingTitle, getBookingStatus, getBookingDate, getBookingPrice, getBookingProvider } from "@/hooks/use-client-bookings";
+import { useFavoritesList, type FavoriteItem } from "@/hooks/use-favorites";
+import { useServices } from "@/hooks/use-services";
 import { Star, TrendingUp, Clock, Award, MapPin as MapPinIcon, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
@@ -32,6 +34,18 @@ export const Route = createFileRoute("/dashboard/")({
 function getInitials(name: string): string {
   if (!name) return "?";
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
+/** Format an ISO timestamp for display — never render raw ISO strings. */
+function formatSavedDate(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
@@ -139,6 +153,14 @@ function DashboardIndex() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const { dashboard: clientDashboard, loading: clientDashLoading } = useClientDashboard(!isProvider);
   const { bookings: clientBookings, total: bookingsTotal, loading: bookingsLoading } = useClientBookings(!isProvider);
+  const {
+    favorites,
+    loading: favsLoading,
+    error: favsError,
+    retry: retryFavorites,
+    updateNotes,
+  } = useFavoritesList();
+  const { apiServices } = useServices();
   const location = [user?.city, user?.county].filter(Boolean).join(", ");
   const profileComplete = isProfileComplete(user);
 
@@ -152,6 +174,32 @@ function DashboardIndex() {
     { value: "on_leave", label: "On Leave" },
     { value: "unavailable", label: "Unavailable" },
   ];
+
+  // ─── Saved Services — editable notes (PATCH /api/v1/clients/favorites/{id}) ──
+  const [notesDrafts, setNotesDrafts] = useState<Record<number, string>>({});
+  const [savingNotesId, setSavingNotesId] = useState<number | null>(null);
+
+  const handleSaveNotes = async (fav: FavoriteItem) => {
+    const draft = (notesDrafts[fav.id] ?? "").trim();
+    if (draft.length > 500) {
+      toast.error("Notes must be under 500 characters.");
+      return;
+    }
+    setSavingNotesId(fav.id);
+    try {
+      await updateNotes(fav.id, draft);
+      toast.success("Notes updated.");
+      setNotesDrafts((d) => {
+        const next = { ...d };
+        delete next[fav.id];
+        return next;
+      });
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Couldn't update notes. Please try again."));
+    } finally {
+      setSavingNotesId(null);
+    }
+  };
 
   const handleStatusUpdate = useCallback(async () => {
     if (!statusForm.status) return;
@@ -180,14 +228,7 @@ function DashboardIndex() {
     appMessage?: string;
   }[] = [
     { id: "bookings", icon: Calendar, label: isProvider ? "My Jobs" : "My Bookings" },
-    {
-      id: "favorites",
-      icon: Heart,
-      label: "Saved Services",
-      appOnly: true,
-      appTitle: "Save services in the app",
-      appMessage: "Tap the heart on any service to save it for later. Available in the SkillBuddy app.",
-    },
+    { id: "favorites", icon: Heart, label: "Saved Services" },
     {
       id: "notifications",
       icon: Bell,
@@ -709,6 +750,102 @@ function DashboardIndex() {
                   )}
                 </Tabs>
               </>
+            )}
+
+            {activeNav === "favorites" && (
+              <div>
+                <div className="mb-6">
+                  <h1 className="flex items-center gap-2 text-3xl font-extrabold">
+                    Saved Services
+                    <Heart className="h-6 w-6 text-primary" />
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Services you've saved — add notes to remember why.
+                  </p>
+                </div>
+
+                {favsLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : favsError ? (
+                  <div className="rounded-xl border border-border bg-card p-6 text-center">
+                    <p className="text-sm text-muted-foreground">{favsError}</p>
+                    <Button size="sm" variant="outline" className="mt-3" onClick={retryFavorites}>
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                      Retry
+                    </Button>
+                  </div>
+                ) : favorites.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
+                    <Heart className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">No saved services yet</p>
+                    <p className="mt-1 text-xs text-muted-foreground/60">
+                      Tap the heart on any service to save it for later.
+                    </p>
+                    <Button asChild className="mt-5" size="sm">
+                      <Link to="/services">Browse services</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {favorites.map((fav) => {
+                      const svc = apiServices.find((s) => s.id === fav.service_id);
+                      const draft = notesDrafts[fav.id] ?? fav.notes ?? "";
+                      const changed = draft.trim() !== (fav.notes ?? "").trim();
+                      const saving = savingNotesId === fav.id;
+                      return (
+                        <div key={fav.id} className="rounded-xl border border-border bg-card p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                              <Heart className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              {svc ? (
+                                <Link
+                                  to="/services/$id"
+                                  params={{ id: String(svc.id) }}
+                                  className="text-sm font-semibold hover:text-primary"
+                                >
+                                  {svc.title}
+                                </Link>
+                              ) : (
+                                <p className="text-sm font-semibold">Service #{fav.service_id}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                Saved {formatSavedDate(fav.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <label className="text-xs font-medium text-muted-foreground">Notes</label>
+                            <textarea
+                              value={draft}
+                              maxLength={500}
+                              onChange={(e) =>
+                                setNotesDrafts((d) => ({ ...d, [fav.id]: e.target.value }))
+                              }
+                              placeholder="e.g. Need this every month — ask about a package."
+                              rows={2}
+                              className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none"
+                            />
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground">{draft.length}/500</span>
+                              <Button
+                                size="sm"
+                                disabled={!changed || saving}
+                                onClick={() => void handleSaveNotes(fav)}
+                              >
+                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save notes"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {activeNav === "settings" && (
