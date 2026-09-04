@@ -11,7 +11,7 @@ import {
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
   Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
-  MapPin, Home, RefreshCw, Plus, X, Pencil, Award, ExternalLink,
+  MapPin, Home, RefreshCw, Plus, X, Pencil, Award, ExternalLink, ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName } from "@/lib/user-helpers";
@@ -26,7 +26,12 @@ import {
 } from "@/hooks/use-address";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
-import { useCertifications, uploadCertification } from "@/hooks/use-certifications";
+import {
+  useCertifications,
+  uploadCertification,
+  fetchCertificationById,
+  type Certification,
+} from "@/hooks/use-certifications";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
@@ -44,6 +49,18 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: 
       <h2 className="font-bold text-base">{title}</h2>
     </div>
   );
+}
+
+/** Format an ISO timestamp for display — never render raw ISO strings. */
+function formatCertDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function ProfilePage() {
@@ -106,6 +123,47 @@ function ProfilePage() {
     } finally {
       setCertUploading(false);
     }
+  };
+
+  // ─── Certification detail — GET /api/v1/certifications/{id} on expand ────
+  // Lazy + fresh on demand (like the status-history expand): never trusts the
+  // possibly-stale list row for a detail interaction.
+  const [openCertId, setOpenCertId] = useState<number | null>(null);
+  const [certDetail, setCertDetail] = useState<Certification | null>(null);
+  const [certDetailLoading, setCertDetailLoading] = useState(false);
+  const [certDetailError, setCertDetailError] = useState<string | null>(null);
+
+  const loadCertDetail = useCallback(async (certId: number) => {
+    setCertDetailLoading(true);
+    setCertDetailError(null);
+    setCertDetail(null);
+    try {
+      const fresh = await fetchCertificationById(certId);
+      if (!fresh) {
+        // 422/404 — could not be loaded (removed or invalid)
+        setCertDetailError(
+          "This certification could not be loaded. It may have been removed.",
+        );
+        return;
+      }
+      setCertDetail(fresh);
+    } catch {
+      // Network/server errors — separate message + retry
+      setCertDetailError(
+        "Couldn't load this certification. Please check your connection and try again.",
+      );
+    } finally {
+      setCertDetailLoading(false);
+    }
+  }, []);
+
+  const toggleCertDetail = (certId: number) => {
+    if (openCertId === certId) {
+      setOpenCertId(null);
+      return;
+    }
+    setOpenCertId(certId);
+    void loadCertDetail(certId);
   };
 
   const {
@@ -1464,36 +1522,104 @@ function ProfilePage() {
                   </p>
                   <div className="space-y-3">
                     {certifications.map((cert) => (
-                      <div
-                        key={cert.id}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5"
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                          <FileText className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">Certification #{cert.id}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Uploaded{" "}
-                            {cert.created_at
-                              ? new Date(cert.created_at).toLocaleDateString("en-GB", {
-                                  day: "numeric",
-                                  month: "long",
-                                  year: "numeric",
-                                })
-                              : "—"}
-                          </p>
-                        </div>
-                        {cert.certification_url && (
-                          <a
-                            href={cert.certification_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent"
+                      <div key={cert.id} className="rounded-xl border border-border bg-card">
+                        <div className="flex items-center gap-3 p-3.5">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                            <FileText className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium">Certification #{cert.id}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Uploaded {formatCertDate(cert.created_at)}
+                            </p>
+                          </div>
+                          {cert.certification_url && (
+                            <a
+                              href={cert.certification_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent"
+                            >
+                              View
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => toggleCertDetail(cert.id)}
+                            aria-expanded={openCertId === cert.id}
+                            aria-label={
+                              openCertId === cert.id
+                                ? "Hide certification details"
+                                : "Show certification details"
+                            }
+                            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
                           >
-                            View
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${openCertId === cert.id ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Detail — fetched fresh from GET /api/v1/certifications/{id} */}
+                        {openCertId === cert.id && (
+                          <div className="border-t border-border px-4 py-4">
+                            {certDetailLoading ? (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                              </div>
+                            ) : certDetailError ? (
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-xs text-red-600 dark:text-red-400">
+                                  {certDetailError}
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void loadCertDetail(cert.id)}
+                                >
+                                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                                  Retry
+                                </Button>
+                              </div>
+                            ) : certDetail ? (
+                              <div className="grid gap-3 text-xs sm:grid-cols-2">
+                                <div>
+                                  <p className="text-muted-foreground">Uploaded</p>
+                                  <p className="font-medium">
+                                    {formatCertDate(certDetail.created_at)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Last updated</p>
+                                  <p className="font-medium">
+                                    {formatCertDate(certDetail.updated_at)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Record ID</p>
+                                  <p className="font-medium">#{certDetail.id}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Provider record</p>
+                                  <p className="font-medium">#{certDetail.provider_id}</p>
+                                </div>
+                                {certDetail.certification_url && (
+                                  <div className="sm:col-span-2">
+                                    <a
+                                      href={certDetail.certification_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent"
+                                    >
+                                      Open document
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+                          </div>
                         )}
                       </div>
                     ))}
