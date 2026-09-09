@@ -64,7 +64,15 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
           }`}
         >
           {category.icon_url ? (
-            <img src={category.icon_url} alt={category.name} className="h-7 w-7 object-contain" />
+            <img
+              src={category.icon_url}
+              alt={category.name}
+              className={`h-9 w-9 object-contain transition-[filter] duration-200 ${
+                active
+                  ? "brightness-0 invert dark:brightness-0 dark:invert-0"
+                  : "group-hover:brightness-0 group-hover:invert dark:brightness-0 dark:invert"
+              }`}
+            />
           ) : (
             <Icon className="h-7 w-7" />
           )}
@@ -92,7 +100,11 @@ export function CategoryCard({ category, active, onSelect }: CategoryCardProps) 
         className="grid h-14 w-14 place-items-center rounded-2xl overflow-hidden bg-primary/10 text-primary transition-all duration-200 group-hover:bg-[#F99912] group-hover:text-white"
       >
         {category.icon_url ? (
-          <img src={category.icon_url} alt={category.name} className="h-7 w-7 object-contain" />
+          <img
+            src={category.icon_url}
+            alt={category.name}
+            className="h-9 w-9 object-contain transition-[filter] duration-200 group-hover:brightness-0 group-hover:invert dark:brightness-0 dark:invert"
+          />
         ) : (
           <Icon className="h-7 w-7" />
         )}
