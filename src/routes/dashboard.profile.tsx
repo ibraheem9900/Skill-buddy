@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, User, Phone, Save, Loader as Loader2,
   Lock, Upload, FileVideo, ImageIcon, FileText, Eye, EyeOff,
-  Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe,
+  Monitor, Smartphone, Tablet, Trash2, LogOut, AlertTriangle, Globe, ShieldCheck, Settings,
   Package, CheckCircle2, XCircle, Clock, Star, CreditCard,
   MapPin, Home, RefreshCw, Plus, X, Pencil, Award, ExternalLink, ChevronDown,
 } from "lucide-react";
@@ -38,8 +39,16 @@ import {
   fetchCertificationById,
   type Certification,
 } from "@/hooks/use-certifications";
+import {
+  SettingsCardRow,
+  type SettingsCardMeta,
+} from "@/components/settings-cards";
 
 export const Route = createFileRoute("/dashboard/profile")({
+  // ?tab=security deep-link target for the dashboard sidebar "Security" item
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+  }),
   head: () => ({ meta: [{ title: "My Profile — SkillBuddy" }] }),
   component: ProfilePage,
 });
@@ -78,6 +87,19 @@ function ProfilePage() {
   const [langSaving, setLangSaving] = useState(false);
   const { countries: countriesList, loading: countriesLoading } = useCountries();
   const isProvider = user?.roles?.includes("PROVIDER") || user?.role === "PROVIDER";
+
+  // Settings vs Security view — synced with ?tab=security so the dashboard
+  // sidebar "Security" item deep-links here.
+  const routeSearch = Route.useSearch();
+  const profileTab: "settings" | "security" = routeSearch.tab === "security" ? "security" : "settings";
+  const switchProfileTab = (tab: "settings" | "security") => {
+    // URL is the source of truth — shareable and back/forward-button friendly
+    navigate({
+      to: "/dashboard/profile",
+      search: tab === "security" ? { tab: "security" } : {},
+      replace: true,
+    });
+  };
   const { url: fetchedAvatar } = useProfilePicture(!!user && !user?.avatar_url);
   const {
     certifications,
@@ -1129,9 +1151,46 @@ function ProfilePage() {
           ) : null}
         </div>
 
+        {profileTab === "settings" ? (
         <div className="space-y-6">
-          {/* Language Preference */}
-          <section className="rounded-2xl border border-border bg-card p-6">
+        {/* Settings / Security segmented switcher */}
+        <div className="mb-6 inline-flex rounded-xl border border-border bg-card p-1">
+          {([
+            { id: "settings", label: "Settings", icon: Settings },
+            { id: "security", label: "Security", icon: ShieldCheck },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => switchProfileTab(t.id)}
+              className={`relative flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                profileTab === t.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {profileTab === t.id && (
+                <motion.span
+                  layoutId="profile-tab-pill"
+                  className="absolute inset-0 rounded-lg bg-primary"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                />
+              )}
+              <t.icon className="relative z-10 h-4 w-4" />
+              <span className="relative z-10">{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <SettingsCardRow
+          columns={2}
+          cards={[
+            {
+              id: "language",
+              title: "Language Preference",
+              description: "Choose your preferred language for the app interface.",
+              icon: Globe,
+              meta: LOCALES.find((l) => l.code === locale)?.name,
+              children: (
+                <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={Globe} title="Language Preference" />
             <p className="text-sm text-muted-foreground mb-4">Choose your preferred language for the app interface.</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1158,9 +1217,15 @@ function ProfilePage() {
                 </button>
               ))}
             </div>
-          </section>
-
-          {/* Edit Profile */}
+                </section>
+              ),
+            },
+            {
+              id: "edit-profile",
+              title: "Edit Profile",
+              description: "Update your name, username and phone number.",
+              icon: User,
+              children: (
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={User} title="Edit Profile" />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1243,8 +1308,14 @@ function ProfilePage() {
               </Button>
             </div>
           </section>
-
-          {/* Address */}
+              ),
+            },
+            {
+              id: "address",
+              title: "My Address",
+              description: "Your saved address — used as the default location for bookings.",
+              icon: MapPin,
+              children: (
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={MapPin} title="My Address" />
             <p className="text-sm text-muted-foreground mb-4">
@@ -1506,8 +1577,14 @@ function ProfilePage() {
               </div>
             )}
           </section>
-
-          {/* Documents */}
+              ),
+            },
+            {
+              id: "documents",
+              title: "Documents",
+              description: "Upload residence permits and your face authentication video.",
+              icon: FileText,
+              children: (
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={FileText} title="Documents" />
             <div className="space-y-6">
@@ -1590,9 +1667,18 @@ function ProfilePage() {
               </div>
             </div>
           </section>
+              ),
+            },
 
-          {/* Certifications (provider only) */}
-          {isProvider && (
+            // Certifications (provider only) — conditional array entry
+            ...(isProvider
+              ? [
+                  {
+                    id: "certifications",
+                    title: "Certifications",
+                    description: "Your uploaded certification documents.",
+                    icon: Award,
+                    children: (
             <section className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-start justify-between gap-3">
                 <SectionHeader icon={Award} title="Certifications" />
@@ -1912,9 +1998,62 @@ function ProfilePage() {
                 </div>
               )}
             </section>
-          )}
+                  ),
+                },
+              ]
+              : []),
+          ]}
+        />
+        </div>
+        ) : (
+        <div className="space-y-6">
+        {/* Settings / Security segmented switcher */}
+        <div className="mb-6 inline-flex rounded-xl border border-border bg-card p-1">
+          {([
+            { id: "settings", label: "Settings", icon: Settings },
+            { id: "security", label: "Security", icon: ShieldCheck },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => switchProfileTab(t.id)}
+              className={`relative flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                profileTab === t.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {profileTab === t.id && (
+                <motion.span
+                  layoutId="profile-tab-pill"
+                  className="absolute inset-0 rounded-lg bg-primary"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                />
+              )}
+              <t.icon className="relative z-10 h-4 w-4" />
+              <span className="relative z-10">{t.label}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Change Password */}
+          {/* Security heading */}
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Security
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage your password, active sessions, and account access.
+            </p>
+          </div>
+
+        <SettingsCardRow
+          columns={2}
+          cards={[
+            {
+              id: "password",
+              title: "Change Password",
+              description: "Update your password to keep your account secure.",
+              icon: Lock,
+              children: (
           <section className="rounded-2xl border border-border bg-card p-6">
             <SectionHeader icon={Lock} title="Change Password" />
             <p className="text-sm text-muted-foreground mb-4">Update your password to keep your account secure.</p>
@@ -1992,12 +2131,19 @@ function ProfilePage() {
               </p>
             </div>
           </section>
-
-          {/* Active Sessions */}
+              ),
+            },
+            {
+              id: "sessions",
+              title: "Where You're Logged In",
+              description: "See the devices currently signed in to your account and log out any you don't recognize.",
+              icon: Globe,
+              meta: sessions.length > 0 ? `${sessions.length} device${sessions.length === 1 ? "" : "s"}` : undefined,
+              children: (
           <section className="rounded-2xl border border-border bg-card p-6">
-            <SectionHeader icon={Globe} title="Active Sessions" />
+            <SectionHeader icon={Globe} title="Where You're Logged In" />
             <p className="text-sm text-muted-foreground mb-4">
-              These are the devices currently logged into your account. If you don't recognize one, log it out for your security.
+              These are the devices currently signed in to your account. If you don't recognize one, log it out for your security.
             </p>
 
             {sessionsLoading && (
@@ -2157,14 +2303,20 @@ function ProfilePage() {
               </div>
             )}
           </section>
-
-          {/* Deactivate Account — Danger Zone */}
+              ),
+            },
+            {
+              id: "deactivate",
+              title: "Deactivate Account",
+              description: "Deactivating your account will sign you out and disable access. You can contact support to reactivate later.",
+              icon: AlertTriangle,
+              tone: "danger",
+              children: (
           <section className="rounded-2xl border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/10 p-6">
-            <SectionHeader icon={AlertTriangle} title="Danger Zone" />
+            <SectionHeader icon={AlertTriangle} title="Deactivate Account" />
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold">Deactivate Account</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Deactivating your account will sign you out and disable access.
                   You can contact support to reactivate later.
                 </p>
@@ -2182,7 +2334,12 @@ function ProfilePage() {
               </Button>
             </div>
           </section>
+              ),
+            },
+          ]}
+        />
         </div>
+        )}
       </div>
 
       {/* Deactivate Account Confirmation Dialog */}

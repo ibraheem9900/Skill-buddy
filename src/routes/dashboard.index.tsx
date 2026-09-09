@@ -3,7 +3,7 @@ import { useState, useCallback, useRef } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Bell, CreditCard, Heart, Settings, MapPin, Calendar, User, ShoppingBag, Wrench, CheckCircle2, Hand, Loader as Loader2, RefreshCw, Trash2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getFullName, isProfileComplete } from "@/lib/user-helpers";
 import { QRDownloadModal } from "@/components/qr-download-modal";
@@ -281,6 +281,9 @@ function DashboardIndex() {
     appOnly?: boolean;
     appTitle?: string;
     appMessage?: string;
+    /** Route target — when set, clicking navigates instead of switching panel */
+    to?: string;
+    search?: { tab?: string };
   }[] = [
     { id: "bookings", icon: Calendar, label: isProvider ? "My Jobs" : "My Bookings" },
     { id: "favorites", icon: Heart, label: "Saved Services" },
@@ -301,6 +304,13 @@ function DashboardIndex() {
       appMessage: "Add and manage payment methods securely. Pay for services directly from your phone.",
     },
     { id: "settings", icon: Settings, label: "Settings" },
+    {
+      id: "security",
+      icon: ShieldCheck,
+      label: "Security",
+      to: "/dashboard/profile",
+      search: { tab: "security" },
+    },
   ];
 
   return (
@@ -364,6 +374,10 @@ function DashboardIndex() {
                   onClick={() => {
                     if (item.appOnly && item.appTitle && item.appMessage) {
                       openQr(item.appTitle, item.appMessage);
+                    } else if (item.to) {
+                      // Security (and any future deep-link items) navigate to a
+                      // dedicated route rather than switching the local panel
+                      navigate({ to: item.to, search: item.search });
                     } else {
                       setActiveNav(item.id);
                     }
