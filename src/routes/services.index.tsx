@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { CategoriesSlider } from "@/components/categories-slider";
+import { RichText } from "@/components/rich-text";
 
 const searchSchema = z.object({
   category: fallback(z.string().optional(), undefined).default(undefined),
@@ -135,7 +136,8 @@ function ServicesPage() {
               )}
               <div>
                 <h2 className="font-display text-xl font-bold">{activeCat.name}</h2>
-                <p className="text-sm text-muted-foreground">{activeCat.description}</p>
+                {/* Backend sends rich HTML descriptions — render sanitized, not as plain text */}
+                <RichText html={activeCat.description} className="mt-1 rich-text max-w-3xl" />
               </div>
             </div>
           )}

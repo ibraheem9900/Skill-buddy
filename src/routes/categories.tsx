@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { CATEGORIES, getServicesByCategory } from "@/lib/data";
 import { useCategories } from "@/hooks/use-categories";
+import { htmlToPlainText } from "@/lib/sanitize";
 import * as Icons from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { motion } from "framer-motion";
@@ -66,7 +67,7 @@ function CategoriesPage() {
                     )}
                   </div>
                   <h3 className="font-bold">{c.name}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{c.description}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{htmlToPlainText(c.description)}</p>
                   <div className="mt-3 text-xs font-semibold text-primary">{c.count} services →</div>
                 </Link>
               </motion.div>
