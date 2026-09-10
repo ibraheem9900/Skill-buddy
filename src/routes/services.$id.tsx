@@ -5,17 +5,20 @@ import {
   fetchServiceDetail,
   fetchServiceInclusionOptions,
   fetchServiceMedia,
+  fetchServices,
   formatPriceRange,
   parseDecimal,
   sortServiceMedia,
+  type ApiService,
   type ServiceDetail,
   type ServiceInclusionOption,
   type ServiceMedia,
 } from "@/lib/services-api";
+import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X, Heart, Loader2 } from "lucide-react";
+import { Star, Play, BadgeCheck, Share2, ArrowLeft, ClipboardList, X, Heart, Loader2, Image as ImageIcon, MessageSquare, Inbox } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRDownloadModal } from "@/components/qr-download-modal";
@@ -49,6 +52,42 @@ const reviews = [
 ];
 
 type TabKey = "about" | "gallery" | "reviews";
+
+/** Shared About/Gallery/Reviews tab bar — identical on every service page. */
+function ServiceTabBar({ activeTab, onTab }: { activeTab: TabKey; onTab: (t: TabKey) => void }) {
+  return (
+    <div className="flex border-b border-border">
+      {(["about", "gallery", "reviews"] as TabKey[]).map((tab) => (
+        <button
+          key={tab}
+          onClick={() => onTab(tab)}
+          className={`relative px-5 py-3 text-sm font-semibold capitalize transition ${
+            activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {tab}
+          {activeTab === tab && (
+            <motion.div
+              layoutId="tab-indicator"
+              className="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Friendly centered empty state — matches the app-wide pattern (dashboard, addresses, certs). */
+function ServiceEmptyState({ icon: Icon, title, hint }: { icon: React.ElementType; title: string; hint?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
+      <Icon className="mb-3 h-10 w-10 text-muted-foreground/40" />
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground/60">{hint}</p>}
+    </div>
+  );
+}
 
 function ServiceDetail() {
   const { id } = Route.useParams();
@@ -214,25 +253,7 @@ function ServiceDetail() {
           {/* SECTION 3 — Tabs */}
           <div className="mt-8">
             {/* Tab bar */}
-            <div className="flex border-b border-border">
-              {(["about", "gallery", "reviews"] as TabKey[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative px-5 py-3 text-sm font-semibold capitalize transition ${
-                    activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab}
-                  {activeTab === tab && (
-                    <motion.div
-                      layoutId="tab-indicator"
-                      className="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
+            <ServiceTabBar activeTab={activeTab} onTab={setActiveTab} />
 
             {/* Tab content with fade transition */}
             <AnimatePresence mode="wait">
@@ -273,20 +294,28 @@ function ServiceDetail() {
                       <h3 className="font-semibold">Gallery ({service.gallery.length})</h3>
                       <button className="text-sm font-semibold text-primary hover:underline">View All</button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {service.gallery.map((img, i) => (
-                        <motion.button
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => setLightboxImg(img)}
-                          className="aspect-square overflow-hidden rounded-xl bg-muted"
-                        >
-                          <img src={img} alt="" className="h-full w-full object-cover transition hover:scale-105" />
-                        </motion.button>
-                      ))}
-                    </div>
+                    {service.gallery.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {service.gallery.map((img, i) => (
+                          <motion.button
+                            key={i}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            onClick={() => setLightboxImg(img)}
+                            className="aspect-square overflow-hidden rounded-xl bg-muted"
+                          >
+                            <img src={img} alt="" className="h-full w-full object-cover transition hover:scale-105" />
+                          </motion.button>
+                        ))}
+                      </div>
+                    ) : (
+                      <ServiceEmptyState
+                        icon={ImageIcon}
+                        title="This service doesn't have any pictures yet."
+                        hint="Check back soon — photos are added by the service provider."
+                      />
+                    )}
                   </div>
                 )}
 
@@ -314,31 +343,39 @@ function ServiceDetail() {
                       </div>
                     </div>
                     {/* Individual reviews */}
-                    <div className="space-y-4">
-                      {reviews.map((r, i) => (
-                        <motion.div
-                          key={r.name}
-                          initial={{ opacity: 0, y: 16 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.07 }}
-                          className="rounded-2xl border border-border bg-card p-5"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img src={r.avatar} alt="" className="h-10 w-10 rounded-full" />
-                            <div className="flex-1">
-                              <div className="font-semibold">{r.name}</div>
-                              <div className="text-xs text-muted-foreground">{r.date}</div>
+                    {reviews.length > 0 ? (
+                      <div className="space-y-4">
+                        {reviews.map((r, i) => (
+                          <motion.div
+                            key={r.name}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.07 }}
+                            className="rounded-2xl border border-border bg-card p-5"
+                          >
+                            <div className="flex items-center gap-3">
+                              <img src={r.avatar} alt="" className="h-10 w-10 rounded-full" />
+                              <div className="flex-1">
+                                <div className="font-semibold">{r.name}</div>
+                                <div className="text-xs text-muted-foreground">{r.date}</div>
+                              </div>
+                              <div className="flex text-warning">
+                                {Array.from({ length: r.rating }).map((_, j) => (
+                                  <Star key={j} className="h-3.5 w-3.5 fill-current" />
+                                ))}
+                              </div>
                             </div>
-                            <div className="flex text-warning">
-                              {Array.from({ length: r.rating }).map((_, j) => (
-                                <Star key={j} className="h-3.5 w-3.5 fill-current" />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="mt-3 text-sm text-foreground/90">{r.text}</p>
-                        </motion.div>
-                      ))}
-                    </div>
+                            <p className="mt-3 text-sm text-foreground/90">{r.text}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <ServiceEmptyState
+                        icon={MessageSquare}
+                        title="This service doesn't have any reviews yet."
+                        hint="Be the first to share your experience."
+                      />
+                    )}
                     <Button onClick={() => setModalOpen(true)} className="w-full" variant="outline">
                       Write a Review
                     </Button>
@@ -379,13 +416,13 @@ function ServiceDetail() {
           )}
         </div>
 
-        {/* RIGHT: sidebar — related services only */}
+        {/* RIGHT: sidebar — related services only (empty state when none) */}
         <aside className="hidden lg:block">
-          {related.length > 0 && (
-            <div className="sticky top-24 rounded-3xl border border-border bg-card p-4">
-              <h3 className="px-2 pb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                More in {service.category}
-              </h3>
+          <div className="sticky top-24 rounded-3xl border border-border bg-card p-4">
+            <h3 className="px-2 pb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+              More in {service.category}
+            </h3>
+            {related.length > 0 ? (
               <div className="space-y-2">
                 {related.map((r) => (
                   <Link
@@ -405,8 +442,15 @@ function ServiceDetail() {
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
+                <Inbox className="mb-2 h-8 w-8 text-muted-foreground/40" />
+                <p className="text-xs font-medium text-muted-foreground">
+                  This category doesn't have more services yet.
+                </p>
+              </div>
+            )}
+          </div>
         </aside>
       </div>
 
@@ -480,6 +524,33 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
   const [externalMedia, setExternalMedia] = useState<ServiceMedia[] | null>(null);
   const [externalInclusions, setExternalInclusions] = useState<ServiceInclusionOption[] | null>(null);
   const [activeMedia, setActiveMedia] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabKey>("about");
+  // Sibling services in the same category, resolved from the cached catalog.
+  const [related, setRelated] = useState<ApiService[] | null>(null);
+
+  // "More in [Category]" — from the cached catalog (fetchServices caches session-wide).
+  useEffect(() => {
+    if (!detail?.category_name) {
+      setRelated([]);
+      return;
+    }
+    let alive = true;
+    void fetchServices()
+      .then((list) => {
+        if (!alive) return;
+        setRelated(
+          list
+            .filter((s) => s.category_name === detail.category_name && s.id !== detail.id)
+            .slice(0, 5),
+        );
+      })
+      .catch(() => {
+        if (alive) setRelated([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [detail]);
 
   useEffect(() => {
     let alive = true;
@@ -645,45 +716,167 @@ function LiveServiceDetail({ serviceId }: { serviceId: number }) {
             )}
           </div>
 
-          {/* Body: description, what to expect, inclusions */}
-          <div className="mt-8 space-y-6">
-            {detail.description && (
-              <div>
-                <h3 className="font-bold">About</h3>
-                <p className="mt-2 leading-relaxed text-foreground/90">{detail.description}</p>
-              </div>
-            )}
-            {detail.what_to_expect && (
-              <div>
-                <h3 className="font-bold">What to Expect</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{detail.what_to_expect}</p>
-              </div>
-            )}
-            {inclusionOptions.length > 0 && (
-              <div>
-                <h3 className="font-bold">What's included</h3>
-                <ul className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                  {inclusionOptions.map((o) => (
-                    <li key={o.id} className="flex items-center gap-2">
-                      <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />{o.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {/* Tabs — About / Gallery / Reviews, same structure on every service */}
+          <div className="mt-8">
+            <ServiceTabBar activeTab={activeTab} onTab={setActiveTab} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-6"
+              >
+                {activeTab === "about" && (
+                  <div className="space-y-6">
+                    {detail.description && (
+                      <div>
+                        <h3 className="font-bold">About</h3>
+                        {/* Backend rich HTML — sanitized + styled via the shared RichText component */}
+                        <RichText
+                          html={detail.description}
+                          className="rich-text mt-2 text-foreground/90"
+                        />
+                      </div>
+                    )}
+                    {detail.what_to_expect && (
+                      <div>
+                        <h3 className="font-bold">What to Expect</h3>
+                        <RichText
+                          html={detail.what_to_expect}
+                          className="rich-text mt-2 text-muted-foreground"
+                        />
+                      </div>
+                    )}
+                    {inclusionOptions.length > 0 && (
+                      <div>
+                        <h3 className="font-bold">What's included</h3>
+                        <ul className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                          {inclusionOptions.map((o) => (
+                            <li key={o.id} className="flex items-center gap-2">
+                              <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />{o.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "gallery" && (
+                  <div>
+                    {(() => {
+                      const images = mediaItems.filter((m) => m.media_type !== "video");
+                      return (
+                        <>
+                          <div className="mb-4 flex items-center justify-between">
+                            <h3 className="font-semibold">Gallery ({images.length})</h3>
+                          </div>
+                          {images.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                              {images.map((m) => (
+                                <button
+                                  key={m.id}
+                                  onClick={() => setActiveMedia(mediaItems.indexOf(m))}
+                                  className="aspect-square overflow-hidden rounded-xl bg-muted"
+                                >
+                                  <img
+                                    src={m.media_url ?? ""}
+                                    alt=""
+                                    className="h-full w-full object-cover transition hover:scale-105"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <ServiceEmptyState
+                              icon={ImageIcon}
+                              title="This service doesn't have any pictures yet."
+                              hint="Check back soon — photos are added by the service provider."
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {activeTab === "reviews" && (
+                  <div className="space-y-6">
+                    <ServiceEmptyState
+                      icon={MessageSquare}
+                      title="This service doesn't have any reviews yet."
+                      hint="Be the first to share your experience."
+                    />
+                    <Button onClick={() => setModalOpen(true)} className="w-full" variant="outline">
+                      Write a Review
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* RIGHT: price summary rail */}
+        {/* RIGHT: price rail + "More in [Category]" (empty state when no siblings) */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 rounded-3xl border border-border bg-card p-5">
-            <div className="text-xs text-muted-foreground">Price range</div>
-            <div className="mt-1 font-mono text-2xl font-bold text-primary">{priceText}</div>
-            {detail.price_range && (
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{detail.price_range}</p>
-            )}
-            {(low != null || high != null) && (
-              <p className="mt-3 text-xs text-muted-foreground">Rates vary with job scope and location.</p>
+          <div className="sticky top-24 space-y-4">
+            <div className="rounded-3xl border border-border bg-card p-5">
+              <div className="text-xs text-muted-foreground">Price range</div>
+              <div className="mt-1 font-mono text-2xl font-bold text-primary">{priceText}</div>
+              {detail.price_range && (
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{detail.price_range}</p>
+              )}
+              {(low != null || high != null) && (
+                <p className="mt-3 text-xs text-muted-foreground">Rates vary with job scope and location.</p>
+              )}
+            </div>
+
+            {detail.category_name && (
+              <div className="rounded-3xl border border-border bg-card p-4">
+                <h3 className="px-2 pb-3 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                  More in {detail.category_name}
+                </h3>
+                {related == null ? (
+                  <div className="flex items-center justify-center gap-2 py-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-xs text-muted-foreground">Loading…</span>
+                  </div>
+                ) : related.length > 0 ? (
+                  <div className="space-y-2">
+                    {related.map((s) => (
+                      <Link
+                        key={s.id}
+                        to="/services/$id"
+                        params={{ id: String(s.id) }}
+                        className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-accent"
+                      >
+                        {s.thumbnail_url ? (
+                          <img src={s.thumbnail_url} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary/10 text-lg font-extrabold text-primary">
+                            {s.title.trim().charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="line-clamp-1 text-sm font-semibold">{s.title}</div>
+                          <div className="font-mono text-xs text-primary">
+                            {formatPriceRange(parseDecimal(s.price_from), parseDecimal(s.price_to)) ?? "Price on request"}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
+                    <Inbox className="mb-2 h-8 w-8 text-muted-foreground/40" />
+                    <p className="text-xs font-medium text-muted-foreground">
+                      This category doesn't have more services yet.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </aside>
