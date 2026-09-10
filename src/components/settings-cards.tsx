@@ -4,13 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
 /**
- * Trello-style horizontal card row for the dashboard Settings/Security tabs.
- * Desktop/tablet: cards sit in a horizontal scroll row. Mobile (<sm): cards
- * stack vertically. Clicking a card opens its content in an animated modal —
- * full-screen sheet on mobile, centered dialog on desktop — with fade + scale
- * transitions (Framer Motion, already used across the app). Dismissible via
- * close button, backdrop click, and Escape. Pure presentation: whatever is
- * passed as `children` renders unchanged inside the modal.
+ * Settings/Security card grid + modal shell for the dashboard.
+ *
+ * Cards render in a responsive CSS grid — 1 column on mobile, 2 on tablet,
+ * 3 on desktop — with a uniform fixed height per card (long content scrolls
+ * internally instead of growing the card). Clicking a card opens its content
+ * in a single shared animated modal: full-screen sheet on mobile, centered
+ * dialog on desktop, with fade + scale transitions (Framer Motion, already
+ * used across the app). Dismissible via close button, backdrop click, and
+ * Escape. Pure presentation: whatever is passed as `children` renders
+ * unchanged inside the modal.
  */
 
 export interface SettingsCardMeta {
@@ -50,9 +53,10 @@ export function SettingsCardRow({ cards, columns }: { cards: SettingsCardMeta[];
 
   return (
     <>
+      {/* Uniform grid — 1 col mobile, 2 cols tablet, 3 cols desktop. No horizontal scroll. */}
       <div
-        className={`-mx-4 flex flex-col gap-4 px-4 pb-2 sm:mx-0 sm:flex-row sm:overflow-x-auto sm:px-0 sm:pb-3 ${
-          columns === 3 ? "sm:snap-x" : ""
+        className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${
+          columns === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"
         }`}
       >
         {cards.map((c) => (
@@ -71,14 +75,14 @@ function SettingsTile({ card, onOpen }: { card: SettingsCardMeta; onOpen: () => 
     <button
       type="button"
       onClick={onOpen}
-      className={`group flex w-full shrink-0 flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card sm:w-[264px] ${
+      className={`group flex h-48 w-full flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card ${
         danger
           ? "border-red-200 hover:border-red-300 dark:border-red-900/40 dark:hover:border-red-800"
           : "border-border hover:border-primary/50"
       }`}
     >
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
           danger
             ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
             : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
@@ -87,9 +91,12 @@ function SettingsTile({ card, onOpen }: { card: SettingsCardMeta; onOpen: () => 
         <Icon className="h-5 w-5" />
         {/* h-5 (20px) = 50% of the 40px chip — matches the category-icon size ratio */}
       </div>
-      <div className="w-full">
+      <div className="w-full min-h-0 flex-1">
         <p className={`font-semibold ${danger ? "text-red-700 dark:text-red-300" : ""}`}>{card.title}</p>
-        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{card.description}</p>
+        {/* Fixed-height card: description scrolls internally if it ever exceeds the card */}
+        <p className="mt-1 max-h-10 overflow-y-auto text-xs leading-relaxed text-muted-foreground">
+          {card.description}
+        </p>
       </div>
       {card.meta && (
         <span className="mt-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
@@ -115,7 +122,9 @@ function SettingsModal({ card, onClose }: { card: SettingsCardMeta | null; onClo
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm"
+          // z-[10000] — above the fixed navbar (`.navbar` is z-index: 9999) so
+          // the dim/blur covers the whole viewport including the navbar.
+          className="fixed inset-0 z-[10000] bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
@@ -129,13 +138,13 @@ function SettingsModal({ card, onClose }: { card: SettingsCardMeta | null; onClo
             exit={{ opacity: 0, scale: 0.96, y: 24 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed inset-x-0 bottom-0 z-[90] flex max-h-[92dvh] w-full flex-col rounded-t-2xl border border-border bg-card shadow-xl sm:absolute sm:inset-0 sm:m-auto sm:h-fit sm:max-h-[85vh] sm:w-full sm:max-w-2xl sm:rounded-2xl"
+            className="fixed inset-x-0 bottom-0 z-[10001] flex max-h-[92dvh] w-full flex-col rounded-t-2xl border border-border bg-card shadow-xl sm:absolute sm:inset-0 sm:m-auto sm:h-fit sm:max-h-[85vh] sm:w-full sm:max-w-2xl sm:rounded-2xl"
           >
-            {/* Header */}
+            {/* Shared header — icon chip + title + close button, identical for every modal */}
             <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
               <div className="flex items-center gap-3">
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                     card.tone === "danger"
                       ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                       : "bg-primary/10 text-primary"
@@ -149,7 +158,7 @@ function SettingsModal({ card, onClose }: { card: SettingsCardMeta | null; onClo
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>

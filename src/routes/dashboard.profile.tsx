@@ -100,6 +100,12 @@ function ProfilePage() {
       replace: true,
     });
   };
+
+  // Fully isolated views: reset page scroll when switching so Settings and
+  // Security never share scroll state or bleed into each other visually.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [profileTab]);
   const { url: fetchedAvatar } = useProfilePicture(!!user && !user?.avatar_url);
   const {
     certifications,
@@ -1180,8 +1186,19 @@ function ProfilePage() {
           ))}
         </div>
 
+          {/* Settings heading */}
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              <Settings className="h-5 w-5 text-primary" />
+              Settings
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage your profile, language, addresses, and documents.
+            </p>
+          </div>
+
         <SettingsCardRow
-          columns={2}
+          columns={3}
           cards={[
             {
               id: "language",
@@ -2046,7 +2063,7 @@ function ProfilePage() {
           </div>
 
         <SettingsCardRow
-          columns={2}
+          columns={3}
           cards={[
             {
               id: "password",
@@ -2342,9 +2359,9 @@ function ProfilePage() {
         )}
       </div>
 
-      {/* Deactivate Account Confirmation Dialog */}
+      {/* Deactivate Account Confirmation Dialog — z-[10000] to cover the fixed navbar (z-9999) */}
       {deactivateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !deactivating && setDeactivateOpen(false)} />
           <div className="relative w-full max-w-md rounded-2xl border border-red-200 bg-card p-6 shadow-xl dark:border-red-900/50">
             <div className="mb-4 flex items-center gap-3">
