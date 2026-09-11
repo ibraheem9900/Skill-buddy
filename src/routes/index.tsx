@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { CategoryCard } from "@/components/category-card";
 import { useTheme } from "@/components/theme-provider";
 import { SERVICES, TESTIMONIALS, OFFERS, CATEGORIES } from "@/lib/data";
-import { CATEGORIES_FULL } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
+import { Loader as Loader2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import iconTransparent from "@/assets/skillbuddy-icon-transparent.png";
 
@@ -298,7 +299,9 @@ function HeroSearchBar({ isActive, t }: { isActive: boolean; t: (k: string) => s
 /* ── Section 1: Categories — 6 at a time, arrows, animated ──────────────────── */
 function CategoriesSection({ isActive }: { isActive: boolean }) {
   const { t } = useI18n();
-  const allCats = CATEGORIES_FULL.slice(0, 12);
+  const { categories: apiCats, loading: catsLoading, error: catsError, retry: retryCats } = useCategories();
+  // Backend categories (live), sliced to 12 like before — falls back to the curated local list on error/empty.
+  const allCats = (apiCats.length > 0 ? apiCats : CATEGORIES).slice(0, 12);
   const VISIBLE_COUNT = 6;
   const [startIndex, setStartIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -359,7 +362,24 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
           </motion.div>
         </div>
 
+        {catsLoading && (
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading categories…
+          </div>
+        )}
+        {!catsLoading && catsError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950/20">
+            <p className="text-sm text-red-600 dark:text-red-400">{catsError}</p>
+            <button onClick={retryCats} className="mt-2 text-sm font-semibold text-primary hover:underline">Try again</button>
+          </div>
+        )}
+        {!catsLoading && !catsError && allCats.length === 0 && (
+          <p className="py-12 text-center text-sm text-muted-foreground">No categories available yet.</p>
+        )}
+
         {/* Desktop: 6 at a time with arrows */}
+        {!catsLoading && !catsError && allCats.length > 0 && (
+        <>
         <div className="hidden md:block">
           <div className="flex items-center gap-3">
             <motion.button
@@ -459,6 +479,8 @@ function CategoriesSection({ isActive }: { isActive: boolean }) {
           </motion.button>
         </div>
         <style>{`.md\\:hidden::-webkit-scrollbar{display:none}`}</style>
+        </>
+        )}
       </div>
     </section>
   );

@@ -59,11 +59,11 @@ function CategoriesPage() {
                   search={{ category: c.slug }}
                   className="group flex h-full flex-col items-center rounded-3xl border border-border bg-card p-6 text-center shadow-card transition hover:-translate-y-1 hover:border-primary hover:shadow-elegant"
                 >
-                  <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl overflow-hidden bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition group-hover:from-primary group-hover:to-primary-glow group-hover:text-primary-foreground">
+                  <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl overflow-hidden bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition group-hover:from-primary group-hover:to-primary-glow group-hover:text-white">
                     {c.icon_url ? (
-                      <img src={c.icon_url} alt={c.name} className="h-8 w-8 object-contain" />
+                      <img src={c.icon_url} alt={c.name} className="h-9 w-9 object-contain transition-[filter] duration-200 group-hover:brightness-0 group-hover:invert dark:brightness-0 dark:invert" />
                     ) : (
-                      <Icon className="h-8 w-8" />
+                      <Icon className="h-9 w-9" />
                     )}
                   </div>
                   <h3 className="font-bold">{c.name}</h3>
