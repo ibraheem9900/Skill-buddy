@@ -49,7 +49,9 @@ function DashboardLayout() {
               </button>
             </p>
             <Button asChild variant="outline" className="mt-6 w-full">
-              <Link to="/verify-email">Verification help</Link>
+              <Link to="/verify-email" search={{ email: user?.email }}>
+                Verification help
+              </Link>
             </Button>
           </div>
         </div>

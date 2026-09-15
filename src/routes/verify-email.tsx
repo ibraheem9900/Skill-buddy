@@ -46,8 +46,22 @@ function VerifyEmailPage() {
 
   const [status, setStatus] = useState<
     "pending" | "success" | "error" | "no-token" | "resending"
-  >(token ? "pending" : "no-token");
-  const [errorMessage, setErrorMessage] = useState("");
+  >(() => {
+    // token → auto-verify; email (post-signup/login redirect) → check-inbox;
+    // neither → dead/invalid link (shown without calling the API).
+    if (token) return "pending";
+    if (emailFromUrl) return "no-token";
+    return "error";
+  });
+  const [errorKind, setErrorKind] = useState<
+    "link" | "malformed" | "network" | "generic"
+  >(() => (token || emailFromUrl ? "generic" : "link"));
+  const [errorMessage, setErrorMessage] = useState(() =>
+    token || emailFromUrl
+      ? ""
+      : "This verification link is invalid. Please open the link from your verification email, or request a new one below."
+  );
+  const [verifyAttempt, setVerifyAttempt] = useState(0);
   const [displayEmail, setDisplayEmail] = useState(emailFromUrl ?? "");
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -74,7 +88,7 @@ function VerifyEmailPage() {
     };
   }, []);
 
-  // Auto-verify if token is in URL
+  // Auto-verify if token is in URL (also re-runs when the user hits Retry)
   useEffect(() => {
     if (!token) return;
 
@@ -87,8 +101,32 @@ function VerifyEmailPage() {
           body: JSON.stringify({ token }),
         });
 
+        // Confirmed against the live API (not documented in Swagger):
+        //   401 {"detail":"Invalid token."}  — invalid, expired, AND already-used
+        //     tokens all return this same 401; the backend does not distinguish
+        //   422 {detail:[{loc:["body","token"], msg:"Field required"}]}
+        //   200 {"message":"..."}
+        if (res.status === 401) {
+          setErrorKind("link");
+          setErrorMessage(
+            "This verification link is invalid or has already been used. If you already verified your email, you can log in below — otherwise request a new verification email."
+          );
+          setStatus("error");
+          return;
+        }
+
+        if (res.status === 422) {
+          setErrorKind("malformed");
+          setErrorMessage(
+            "This verification link is malformed and cannot be processed. Please request a new verification email."
+          );
+          setStatus("error");
+          return;
+        }
+
         if (!res.ok) {
-          let msg = "Invalid or expired verification link.";
+          setErrorKind("generic");
+          let msg = "Verification failed. Please try again.";
           try {
             const data = await res.json();
             if (typeof data.detail === "string") msg = data.detail;
@@ -103,13 +141,16 @@ function VerifyEmailPage() {
         }
         setStatus("success");
       } catch {
-        setErrorMessage("Could not reach the server. Please try again.");
+        setErrorKind("network");
+        setErrorMessage(
+          "Could not reach the server. Please check your connection and try again."
+      );
         setStatus("error");
       }
     };
 
     verify();
-  }, [token]);
+  }, [token, verifyAttempt]);
 
   // Resend verification email
   const handleResend = async () => {
@@ -237,34 +278,52 @@ function VerifyEmailPage() {
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
                   <XCircle className="h-9 w-9 text-red-600 dark:text-red-400" />
                 </div>
-                <h2 className="text-2xl font-extrabold">Verification failed</h2>
+                <h2 className="text-2xl font-extrabold">
+                  {errorKind === "network" ? "Connection problem" : "Verification failed"}
+                </h2>
                 <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
 
                 <div className="mt-6 space-y-3">
-                  {!displayEmail && (
-                    <div>
-                      <Label htmlFor="resend-email-error">Email address</Label>
-                      <Input
-                        id="resend-email-error"
-                        type="email"
-                        value={displayEmail}
-                        onChange={(e) => setDisplayEmail(e.target.value)}
-                        placeholder="you@email.com"
-                        className="mt-1.5 h-11"
-                      />
-                    </div>
+                  {errorKind === "network" && (
+                    <Button
+                      onClick={() => {
+                        setStatus("pending");
+                        setVerifyAttempt((n) => n + 1);
+                      }}
+                      className="h-11 w-full"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Try again
+                    </Button>
                   )}
-                  <Button
-                    onClick={handleResend}
-                    disabled={cooldown > 0 || !displayEmail}
-                    variant="outline"
-                    className="h-11 w-full gap-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    {cooldown > 0
-                      ? `Resend in ${cooldown}s`
-                      : "Resend verification email"}
-                  </Button>
+                  {errorKind !== "network" && (
+                    <>
+                      {!displayEmail && (
+                        <div>
+                          <Label htmlFor="resend-email-error">Email address</Label>
+                          <Input
+                            id="resend-email-error"
+                            type="email"
+                            value={displayEmail}
+                            onChange={(e) => setDisplayEmail(e.target.value)}
+                            placeholder="you@email.com"
+                            className="mt-1.5 h-11"
+                          />
+                        </div>
+                      )}
+                      <Button
+                        onClick={handleResend}
+                        disabled={cooldown > 0 || !displayEmail}
+                        variant="outline"
+                        className="h-11 w-full gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        {cooldown > 0
+                          ? `Resend in ${cooldown}s`
+                          : "Resend verification email"}
+                      </Button>
+                    </>
+                  )}
                   <Button asChild variant="outline" className="h-11 w-full">
                     <Link to="/auth/login">Back to Login</Link>
                   </Button>
