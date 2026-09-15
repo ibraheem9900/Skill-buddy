@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Loader as Loader2, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader as Loader2, Mail, Lock, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { toast } from "sonner";
@@ -55,7 +55,13 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oAuthLoading, setOAuthLoading] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    general?: string;
+    unverifiedEmail?: string;
+  }>({});
+  const [resending, setResending] = useState(false);
 
   const validate = (): boolean => {
     const errs: typeof errors = {};
@@ -124,13 +130,17 @@ function Login() {
           // Generic, non-leaking message — never reveal which part failed.
           setErrors({ general: t("auth.error.invalidCredentials") });
         } else if (
+          res.status === 403 ||
           msg.toLowerCase().includes("verif") ||
           msg.toLowerCase().includes("not verified") ||
           msg.toLowerCase().includes("confirm")
         ) {
+          // 403 {"detail":"Email not verified."} (confirmed live) → offer the
+          // resend action right here; email they typed is passed as context.
           setErrors({
             general:
               "Your email is not verified yet. Please check your inbox for the verification link.",
+            unverifiedEmail: email,
           });
         } else {
           setErrors({ general: msg });
@@ -189,6 +199,43 @@ function Login() {
     }
   };
 
+  // Resend verification email from the login page's unverified-account banner.
+  // Same endpoint/behavior as the verify-email page (probed live: registered
+  // unverified → 200 + message; unregistered → 200 with generic wording;
+  // malformed → 422). The banner context already knows the email, so no input
+  // field is shown here.
+  const handleResendVerification = async () => {
+    const target = errors.unverifiedEmail;
+    if (!target || resending) return;
+    setResending(true);
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+      const res = await fetch(`${baseUrl}/api/v1/auth/resend-verify_email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: target.trim() }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        let msg = "Failed to resend verification email.";
+        if (typeof data?.detail === "string") msg = data.detail;
+        else if (typeof data?.message === "string") msg = data.message;
+        toast.error(msg);
+        return;
+      }
+      toast.success(
+        typeof data?.message === "string"
+          ? data.message
+          : "Verification email sent — check your inbox."
+      );
+      setErrors((err) => ({ ...err, unverifiedEmail: undefined }));
+    } catch {
+      toast.error("Could not reach the server. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleOAuth = (provider: "google" | "apple") => {
     setOAuthLoading(provider);
     const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
@@ -243,6 +290,23 @@ function Login() {
             {errors.general && (
               <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 p-3 text-sm text-red-600 dark:text-red-400">
                 {errors.general}
+                {errors.unverifiedEmail && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    className="mt-2 flex items-center gap-1.5 text-xs font-medium hover:underline disabled:opacity-60"
+                  >
+                    {resending ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3" />
+                    )}
+                    {resending
+                      ? "Sending…"
+                      : `Resend verification email to ${errors.unverifiedEmail}`}
+                  </button>
+                )}
               </div>
             )}
 

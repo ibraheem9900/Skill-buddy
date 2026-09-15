@@ -62,6 +62,10 @@ function VerifyEmailPage() {
       : "This verification link is invalid. Please open the link from your verification email, or request a new one below."
   );
   const [verifyAttempt, setVerifyAttempt] = useState(0);
+  const [resendFieldError, setResendFieldError] = useState("");
+  // Which card the user started the resend from, so a failed resend returns
+  // them to the same context instead of always dumping to check-inbox.
+  const resendOriginRef = useRef<"error" | "no-token">("no-token");
   const [displayEmail, setDisplayEmail] = useState(emailFromUrl ?? "");
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -152,40 +156,63 @@ function VerifyEmailPage() {
     verify();
   }, [token, verifyAttempt]);
 
-  // Resend verification email
+  // Resend verification email — POST /api/v1/auth/resend-verify_email.
+  // Live-API behavior (probed, not in Swagger):
+  //   registered unverified email → 200 "Verification email sent successfully."
+  //   unregistered email          → 200 "If the email exists, a verification
+  //     email has been sent."  (backend's own wording already encodes whether
+  //     the account exists, so we surface its message verbatim rather than
+  //     inventing one that could reveal more)
+  //   malformed email             → 422 detail[{loc:["body","email"], msg}]
   const handleResend = async () => {
-    if (cooldown > 0 || !displayEmail) return;
+    if (cooldown > 0 || !displayEmail || status === "resending") return;
 
+    resendOriginRef.current = status === "error" ? "error" : "no-token";
+    setResendFieldError("");
     setStatus("resending");
     try {
       const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
       const res = await fetch(`${baseUrl}/api/v1/auth/resend-verify_email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: displayEmail }),
+        body: JSON.stringify({ email: displayEmail.trim() }),
       });
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        let msg = "Failed to resend verification email.";
-        try {
-          const data = await res.json();
-          if (typeof data.detail === "string") msg = data.detail;
-          else if (typeof data.message === "string") msg = data.message;
-          else if (Array.isArray(data.detail) && data.detail.length > 0) {
-            msg = data.detail[0]?.msg ?? msg;
+        // 422 malformed email → inline error under the email input
+        if (res.status === 422 && Array.isArray(data?.detail)) {
+          const emailErr = data.detail.find(
+            (d: { loc?: unknown[] }) => Array.isArray(d?.loc) && d.loc[d.loc.length - 1] === "email"
+          );
+          if (emailErr) {
+            setResendFieldError(emailErr.msg ?? "Please enter a valid email address.");
+            setStatus(resendOriginRef.current);
+            return;
           }
-        } catch {}
+        }
+        let msg = "Failed to resend verification email.";
+        if (typeof data?.detail === "string") msg = data.detail;
+        else if (typeof data?.message === "string") msg = data.message;
+        else if (Array.isArray(data?.detail) && data.detail.length > 0) {
+          msg = data.detail[0]?.msg ?? msg;
+        }
         toast.error(msg);
-        setStatus("no-token");
+        setStatus(resendOriginRef.current);
         return;
       }
 
-      toast.success("Verification email sent! Check your inbox.");
+      // Success — surface the backend's own message (safe per probe above).
+      toast.success(
+        typeof data?.message === "string"
+          ? data.message
+          : "Verification email sent — check your inbox."
+      );
       startCooldown();
       setStatus("no-token");
     } catch {
       toast.error("Could not reach the server. Please try again.");
-      setStatus("no-token");
+      setStatus(resendOriginRef.current);
     }
   };
 
@@ -305,10 +332,16 @@ function VerifyEmailPage() {
                             id="resend-email-error"
                             type="email"
                             value={displayEmail}
-                            onChange={(e) => setDisplayEmail(e.target.value)}
+                            onChange={(e) => {
+                              setDisplayEmail(e.target.value);
+                              setResendFieldError("");
+                            }}
                             placeholder="you@email.com"
-                            className="mt-1.5 h-11"
+                            className={`mt-1.5 h-11 ${resendFieldError ? "border-red-500" : ""}`}
                           />
+                          {resendFieldError && (
+                            <p className="mt-1 text-xs text-red-500">{resendFieldError}</p>
+                          )}
                         </div>
                       )}
                       <Button
@@ -361,10 +394,16 @@ function VerifyEmailPage() {
                         id="resend-email"
                         type="email"
                         value={displayEmail}
-                        onChange={(e) => setDisplayEmail(e.target.value)}
+                        onChange={(e) => {
+                          setDisplayEmail(e.target.value);
+                          setResendFieldError("");
+                        }}
                         placeholder="you@email.com"
-                        className="mt-1.5 h-11"
+                        className={`mt-1.5 h-11 ${resendFieldError ? "border-red-500" : ""}`}
                       />
+                      {resendFieldError && (
+                        <p className="mt-1 text-xs text-red-500">{resendFieldError}</p>
+                      )}
                     </div>
                   )}
                   <Button
