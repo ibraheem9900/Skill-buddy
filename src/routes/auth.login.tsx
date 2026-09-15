@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { useLoader } from "@/context/LoaderContext";
 import { useAuth } from "@/context/AuthContext";
-import { extractErrorMessage } from "@/lib/api-client";
+import { extractErrorMessage, extractFieldErrors } from "@/lib/api-client";
 
 function GoogleIcon() {
   return (
@@ -59,6 +59,8 @@ function Login() {
 
   const validate = (): boolean => {
     const errs: typeof errors = {};
+    // The identifier field accepts EITHER the registered email OR the personal
+    // code — the backend resolves which, so only presence is validated here.
     if (!email.trim()) errs.email = t("auth.validation.emailRequired");
     if (!password) errs.password = t("auth.validation.passwordRequired");
     setErrors(errs);
@@ -73,12 +75,17 @@ function Login() {
     showLoader();
 
     try {
+      // POST /api/v1/auth/login — OAuth2 password flow. The backend's `username`
+      // field accepts EITHER the registered email OR the personal code, so the
+      // identifier typed into this form is sent as-is. Must be form-urlencoded.
+      // Direct fetch (not apiClient): this endpoint issues the tokens, so the
+      // 401-refresh interceptor must not intercept auth failures here.
       const baseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
       const res = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          grant_type: "password",
+          grant_type: "password", // fixed value per API schema (pattern ^password$)
           username: email,
           password,
         }),
@@ -89,9 +96,34 @@ function Login() {
       if (!res.ok) {
         hideLoader();
         setLoading(false);
-        // Surface "not verified" specifically
-        const msg = extractErrorMessage(data, "Invalid email or password.");
+        setPassword(""); // security: clear password on any failed attempt
+
+        // Confirmed against the live API (not in Swagger):
+        //   401 {"detail":"Invalid credentials."} — wrong email/code or password
+        //   403 {"detail":"Email not verified."} — account created, not verified
+        //   422 {detail:[{loc:["body","username"|"password"], msg}]}
+        if (res.status === 422) {
+          const fieldErrors = extractFieldErrors(data);
+          setErrors({
+            email: fieldErrors.username, // backend field is username → identifier input
+            password: fieldErrors.password,
+            general:
+              !fieldErrors.username && !fieldErrors.password
+                ? extractErrorMessage(data, t("auth.error.generic"))
+                : undefined,
+          });
+          return;
+        }
+
+        const msg = extractErrorMessage(data, t("auth.error.invalidCredentials"));
         if (
+          res.status === 401 ||
+          msg.toLowerCase().includes("invalid credential") ||
+          msg.toLowerCase().includes("incorrect")
+        ) {
+          // Generic, non-leaking message — never reveal which part failed.
+          setErrors({ general: t("auth.error.invalidCredentials") });
+        } else if (
           msg.toLowerCase().includes("verif") ||
           msg.toLowerCase().includes("not verified") ||
           msg.toLowerCase().includes("confirm")
@@ -110,14 +142,10 @@ function Login() {
       if (data.user && data.user.is_verified === false) {
         hideLoader();
         setLoading(false);
-        // Store tokens so the user doesn't need to re-enter credentials
-        signIn(
-          data.user,
-          data.access_token,
-          data.refresh_token,
-          data.roles ?? [],
-          data.active_role ?? ""
-        );
+        // Store tokens so the user doesn't need to re-enter credentials.
+        // /auth/login returns no roles/active_role — session restore
+        // repopulates them from /users/me.
+        signIn(data.user, data.access_token, data.refresh_token, [], "");
         // Redirect to verify-email page with their email pre-filled
         navigate({
           to: "/verify-email",
@@ -126,13 +154,10 @@ function Login() {
         return;
       }
 
-      signIn(
-        data.user,
-        data.access_token,
-        data.refresh_token,
-        data.roles ?? [],
-        data.active_role ?? ""
-      );
+      // 200: { access_token, refresh_token, token_type, user }. /auth/login
+      // returns no roles/active_role (the legacy /users/login did) — pass empty
+      // defaults; AuthContext.restore()/refreshUser() repopulates via /users/me.
+      signIn(data.user, data.access_token, data.refresh_token, [], "");
 
       hideLoader();
       setLoading(false);

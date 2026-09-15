@@ -93,6 +93,8 @@ const en: Dict = {
   "auth.login.createAccount": "Create an account",
   "auth.login.rememberMe": "Remember me",
   "auth.login.forgotPassword": "Forgot password?",
+  "auth.error.invalidCredentials": "Incorrect email/code or password",
+  "auth.error.generic": "Something went wrong. Please try again.",
   "auth.validation.emailRequired": "Email is required",
   "auth.validation.emailInvalid": "Invalid email address",
   "auth.validation.passwordRequired": "Password is required",
