@@ -10,6 +10,10 @@ import { useAuth } from "@/context/AuthContext";
 import { apiClient, extractErrorMessage } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
+import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
+import { useCounties } from "@/hooks/use-counties";
+import { useCities } from "@/hooks/use-cities";
+import { fetchServices } from "@/lib/services-api";
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -40,10 +44,8 @@ const CATEGORIES_LIST = Object.keys(CATEGORY_SUBCATEGORIES);
 type FormData = {
   firstName: string;
   lastName: string;
-  email: string;
   phone: string;
-  address: string;
-  personalCode: string;
+  providerType: string;
   category: string;
   preference1: string;
   preference2: string;
@@ -53,7 +55,31 @@ type FormData = {
   terms: boolean;
 };
 
-type FormErrors = Partial<Record<keyof FormData, string>>;
+/** provider_type enum values accepted by POST /api/v1/providers/profile. */
+const PROVIDER_TYPES = ["INDIVIDUAL", "COMPANY", "AGENCY"] as const;
+
+/** Structured address selection (Country → County → City + street fields). */
+type AddressForm = {
+  country_id: string;
+  county_id: string;
+  city_id: string;
+  house_number: string;
+  street_address: string;
+  postal_code: string;
+  landmark: string;
+};
+
+const EMPTY_ADDRESS: AddressForm = {
+  country_id: "",
+  county_id: "",
+  city_id: "",
+  house_number: "",
+  street_address: "",
+  postal_code: "",
+  landmark: "",
+};
+
+type FormErrors = Partial<Record<keyof FormData | "address", string>>;
 
 function CustomSelect({
   value,
@@ -157,18 +183,22 @@ function BecomeASkillBuddy() {
   // PART 3: Pre-fill form with logged-in user's data
   const [formInitialized, setFormInitialized] = useState(false);
 
-  const validate = (data: FormData): FormErrors => {
+  const validate = (data: FormData, addr: AddressForm): FormErrors => {
     const errors: FormErrors = {};
     if (!data.firstName.trim()) errors.firstName = t("becomeSkillbuddy.firstNameRequired");
     if (!data.lastName.trim()) errors.lastName = t("becomeSkillbuddy.lastNameRequired");
-    if (!data.email.trim() || !/^[^\@\s]+@[^\@\s]+\.[^\@\s]+$/.test(data.email)) errors.email = t("becomeSkillbuddy.emailRequired");
     if (!data.phone.trim()) errors.phone = t("becomeSkillbuddy.phoneRequired");
-    if (!data.address.trim()) errors.address = t("becomeSkillbuddy.addressRequired");
-    if (!/^\d{11}$/.test(data.personalCode)) errors.personalCode = t("becomeSkillbuddy.personalCodeError");
+    // Structured address: Country → County → City are mandatory; street fields follow
+    if (!addr.country_id) errors.address = "Please select your country.";
+    else if (!addr.county_id) errors.address = "Please select your county/region.";
+    else if (!addr.city_id) errors.address = "Please select your city.";
+    else if (!addr.street_address.trim()) errors.address = "Please enter your street address.";
     if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
     if (data.category && !data.preference1) errors.preference1 = "Please select your Preference 1";
     if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
+    if (data.bio.trim().length > 500) errors.bio = "Bio must be 500 characters or fewer.";
     if (!data.hourlyRate || isNaN(Number(data.hourlyRate)) || Number(data.hourlyRate) <= 0) errors.hourlyRate = "Please enter a valid hourly rate.";
+    if (!data.providerType) errors.providerType = "Please select your provider type.";
     if (!data.serviceRadius || isNaN(Number(data.serviceRadius)) || Number(data.serviceRadius) <= 0) errors.serviceRadius = "Please enter a valid service radius.";
     if (!data.terms) errors.terms = t("becomeSkillbuddy.termsRequired");
     return errors;
@@ -183,22 +213,78 @@ function BecomeASkillBuddy() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormData>({
-    firstName: "", lastName: "", email: "", phone: "",
-    address: "", personalCode: "", category: "", preference1: "",
+    firstName: "", lastName: "", phone: "", providerType: "", category: "", preference1: "",
     preference2: "", bio: "", hourlyRate: "", serviceRadius: "10", terms: false,
   });
 
-  // PART 3: Pre-fill form with user data from auth context
+  // Structured address (Country → County → City cascade) — reuses the same
+  // public countries/counties/cities endpoints as Settings → My Address.
+  const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
+  const { countries: countriesList, loading: countriesLoading } = useCountries();
+
+  const countryIdNum = address.country_id ? Number(address.country_id) : null;
+  const countyIdNum = address.county_id ? Number(address.county_id) : null;
+  const { counties: addrCounties, loading: countiesLoading } = useCounties(countryIdNum);
+  const { cities: addrCities, loading: citiesLoading } = useCities(countyIdNum);
+
+  // Phone split into country code (from the Countries API) + local number —
+  // same parse/update pattern as Settings → Edit Profile.
+  const parsePhoneNumber = (phone: string) => {
+    if (!phone) return { countryCode: "+372", localNumber: "" };
+    const match = phone.match(/^(\+\d{1,4})\s*(.*)$/);
+    if (match) return { countryCode: match[1], localNumber: match[2] };
+    return { countryCode: "+372", localNumber: phone };
+  };
+  const initialParsed = parsePhoneNumber(user?.phone_number ?? "");
+  const [phoneCountryCode, setPhoneCountryCode] = useState(initialParsed.countryCode);
+  const [phoneLocalNumber, setPhoneLocalNumber] = useState(initialParsed.localNumber);
+
+  const updatePhone = (code: string, local: string) => {
+    setPhoneCountryCode(code);
+    setPhoneLocalNumber(local);
+    set("phone", local ? `${code} ${local}` : "");
+  };
+
+  const handleAddressChange = (key: keyof AddressForm, value: string) => {
+    setAddress((prev) => {
+      const next = { ...prev, [key]: value };
+      // Cascading resets — changing a parent clears the dependent selections
+      if (key === "country_id") {
+        next.county_id = "";
+        next.city_id = "";
+      } else if (key === "county_id") {
+        next.city_id = "";
+      }
+      return next;
+    });
+    if (addressErrors[key] || addressErrors.address) {
+      setAddressErrors((prev) => {
+        const n = { ...prev };
+        delete n[key];
+        delete n.address;
+        return n;
+      });
+    }
+  };
+
+  // PART 3: Pre-fill form with user data from auth context.
+  // Email and personal code are identity fields owned by the account — they are
+  // displayed read-only (never submitted; the backend derives them from the token).
   useEffect(() => {
     if (user && !formInitialized) {
       setForm((prev) => ({
         ...prev,
         firstName: user.first_name || "",
         lastName: user.last_name || "",
-        email: user.email || "",
-        personalCode: user.personal_code || "",
-        address: [user.street_address, user.house_number, user.city, user.county, user.country].filter(Boolean).join(", "),
+        phone: user.phone_number || "",
       }));
+      // Sync the phone split-state (country code + local number) with the prefilled value
+      if (user.phone_number) {
+        const parsed = parsePhoneNumber(user.phone_number);
+        setPhoneCountryCode(parsed.countryCode);
+        setPhoneLocalNumber(parsed.localNumber);
+      }
       setFormInitialized(true);
     }
   }, [user, formInitialized]);
@@ -228,21 +314,69 @@ function BecomeASkillBuddy() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs = validate(form);
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    const errs = validate(form, address);
+    const addrFieldErrors: Record<string, string> = {};
+    if (errs.address) addrFieldErrors.address = errs.address;
+    const otherErrs: FormErrors = { ...errs };
+    delete otherErrs.address;
+    setAddressErrors(addrFieldErrors);
+    setErrors(otherErrs);
+    if (Object.keys(errs).length > 0) return;
     setLoading(true);
 
     try {
-      // POST /api/v1/providers/profile — creates the provider profile
-      // The user's role is NOT changed locally; approval is a separate backend action
+      // POST /api/v1/providers/profile — creates the provider profile.
+      // Confirmed schema (ProviderProfileCreateRequest): bio (≤500), hourly_rate,
+      // provider_type (≤20 chars — INDIVIDUAL/COMPANY/AGENCY), service_radius (1–100).
+      // Email/personal code are NOT part of the schema — the backend derives the
+      // user from the Authorization token, so they are display-only in this form.
       const payload = {
         bio: form.bio,
         hourly_rate: Number(form.hourlyRate),
-        provider_type: form.preference1 || form.category,
+        provider_type: form.providerType,
         service_radius: Number(form.serviceRadius),
       };
 
       await apiClient.post("/api/v1/providers/profile", payload);
+
+      // ── TEMPORARY WORKAROUND — provider category preferences ────────────────
+      // There is no dedicated backend endpoint yet for storing a provider's
+      // selected service categories/preferences. Until one exists, persist the
+      // category/preference selections via the existing Client Favorites API
+      // (POST /api/v1/clients/favorites { service_id }). The backend currently
+      // exposes no services matching these category names, so the matching
+      // service_id lookup is best-effort: when no service exists for a
+      // selection, the failed POST is logged (not silently swallowed) and the
+      // overall application flow still succeeds. REPLACE THIS BLOCK when the
+      // dedicated provider-preferences endpoint ships.
+      try {
+        const services = await fetchServices();
+        const byTitle = new Map(services.map((s) => [s.title.toLowerCase().trim(), s.id]));
+        const byCategory = new Map(services.map((s) => [s.category_name.toLowerCase().trim(), s.id]));
+        const selections = [form.category, form.preference1, form.preference2].filter(Boolean);
+        const results = await Promise.allSettled(
+          selections.map(async (name) => {
+            const serviceId =
+              byTitle.get(name.toLowerCase().trim()) ??
+              byCategory.get(name.toLowerCase().trim());
+            if (serviceId == null) {
+              throw new Error(
+                `No backend service matches "${name}" — cannot store as favorite yet.`
+              );
+            }
+            await apiClient.post("/api/v1/clients/favorites", { service_id: serviceId });
+            return { name, serviceId };
+          })
+        );
+        for (const r of results) {
+          if (r.status === "rejected") {
+            console.warn("[become-a-skillbuddy] TEMPORARY favorites workaround:", r.reason);
+          }
+        }
+      } catch (favErr) {
+        console.warn("[become-a-skillbuddy] TEMPORARY favorites workaround failed:", favErr);
+      }
+      // ── END TEMPORARY WORKAROUND ─────────────────────────────────────────
 
       setLoading(false);
       setSubmitted(true);
@@ -409,62 +543,175 @@ function BecomeASkillBuddy() {
                 </div>
               </div>
 
-              {/* Email */}
+              {/* Email — identity field from the account: read-only, never submitted.
+                  Same pattern as Settings → Edit Profile. */}
               <div>
                 <label className={labelClass}>{t("becomeSkillbuddy.email")} *</label>
                 <input
                   type="email"
-                  className={inputClass(errors.email)}
-                  placeholder={t("becomeSkillbuddy.emailPlaceholder")}
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
+                  className={`${inputClass()} bg-muted cursor-not-allowed opacity-80`}
+                  value={user?.email ?? ""}
+                  readOnly
+                  disabled
                 />
-                {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed here.</p>
               </div>
 
-              {/* Phone */}
+              {/* Phone — same Countries-API country-code selector as Edit Profile */}
               <div>
                 <label className={labelClass}>{t("becomeSkillbuddy.phone")} *</label>
-                <input
-                  type="tel"
-                  className={inputClass(errors.phone)}
-                  placeholder={t("becomeSkillbuddy.phonePlaceholder")}
-                  value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={phoneCountryCode}
+                    onChange={(e) => updatePhone(e.target.value, phoneLocalNumber)}
+                    disabled={countriesLoading}
+                    className="h-[46px] w-32 shrink-0 rounded-xl border border-gray-200 bg-[#F8FAFB] px-2 text-sm text-[#0D1117] outline-none transition-colors focus:border-[#2D7A5F] focus:ring-2 focus:ring-[#2D7A5F]/30 dark:border-gray-700 dark:bg-[#161B22] dark:text-white"
+                  >
+                    {countriesLoading ? (
+                      <option>Loading…</option>
+                    ) : (
+                      countriesList.map((c) => (
+                        <option key={c.id} value={c.phone_code}>
+                          {getFlagEmoji(c.iso2)} {c.phone_code}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <input
+                    type="tel"
+                    className={inputClass(errors.phone)}
+                    placeholder={t("becomeSkillbuddy.phonePlaceholder")}
+                    value={phoneLocalNumber}
+                    onChange={(e) => updatePhone(phoneCountryCode, e.target.value)}
+                  />
+                </div>
                 {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
               </div>
 
-              {/* Address */}
-              <div>
+              {/* Address — structured Country → County → City cascade followed by the
+                  street fields, reusing the same public endpoints as Settings → My Address. */}
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
                 <label className={labelClass}>{t("becomeSkillbuddy.address")} *</label>
-                <input
-                  className={inputClass(errors.address)}
-                  placeholder={t("becomeSkillbuddy.addressPlaceholder")}
-                  value={form.address}
-                  onChange={(e) => set("address", e.target.value)}
-                />
-                {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Country</label>
+                    <select
+                      value={address.country_id}
+                      onChange={(e) => handleAddressChange("country_id", e.target.value)}
+                      disabled={countriesLoading}
+                      className="h-[42px] w-full rounded-xl border border-gray-200 bg-[#F8FAFB] px-2 text-sm text-[#0D1117] outline-none transition-colors focus:border-[#2D7A5F] focus:ring-2 focus:ring-[#2D7A5F]/30 disabled:opacity-50 dark:border-gray-700 dark:bg-[#161B22] dark:text-white"
+                    >
+                      <option value="">Select country</option>
+                      {countriesList.map((c) => (
+                        <option key={c.id} value={c.id}>{getFlagEmoji(c.iso2)} {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">County / Region</label>
+                    <select
+                      value={address.county_id}
+                      onChange={(e) => handleAddressChange("county_id", e.target.value)}
+                      disabled={!address.country_id || countiesLoading}
+                      className="h-[42px] w-full rounded-xl border border-gray-200 bg-[#F8FAFB] px-2 text-sm text-[#0D1117] outline-none transition-colors focus:border-[#2D7A5F] focus:ring-2 focus:ring-[#2D7A5F]/30 disabled:opacity-50 dark:border-gray-700 dark:bg-[#161B22] dark:text-white"
+                    >
+                      <option value="">
+                        {!address.country_id ? "Select country first" : countiesLoading ? "Loading…" : "Select county"}
+                      </option>
+                      {addrCounties.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">City</label>
+                    <select
+                      value={address.city_id}
+                      onChange={(e) => handleAddressChange("city_id", e.target.value)}
+                      disabled={!address.county_id || citiesLoading}
+                      className="h-[42px] w-full rounded-xl border border-gray-200 bg-[#F8FAFB] px-2 text-sm text-[#0D1117] outline-none transition-colors focus:border-[#2D7A5F] focus:ring-2 focus:ring-[#2D7A5F]/30 disabled:opacity-50 dark:border-gray-700 dark:bg-[#161B22] dark:text-white"
+                    >
+                      <option value="">
+                        {!address.county_id ? "Select county first" : citiesLoading ? "Loading…" : "Select city"}
+                      </option>
+                      {addrCities.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {/* Street fields unlock only after Country → County → City are chosen */}
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Street Address</label>
+                    <input
+                      className={inputClass()}
+                      placeholder="Street address"
+                      value={address.street_address}
+                      onChange={(e) => handleAddressChange("street_address", e.target.value)}
+                      disabled={!address.city_id}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">House Number</label>
+                    <input
+                      className={inputClass()}
+                      placeholder="e.g. 12"
+                      value={address.house_number}
+                      onChange={(e) => handleAddressChange("house_number", e.target.value)}
+                      disabled={!address.city_id}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Postal Code</label>
+                    <input
+                      className={inputClass()}
+                      placeholder="e.g. 10111"
+                      value={address.postal_code}
+                      onChange={(e) => handleAddressChange("postal_code", e.target.value)}
+                      disabled={!address.city_id}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Landmark (optional)</label>
+                    <input
+                      className={inputClass()}
+                      placeholder="e.g. Near the main square"
+                      value={address.landmark}
+                      onChange={(e) => handleAddressChange("landmark", e.target.value)}
+                      disabled={!address.city_id}
+                    />
+                  </div>
+                </div>
+                {addressErrors.address && <p className="text-xs text-red-500">{addressErrors.address}</p>}
               </div>
 
-              {/* Personal Code */}
+              {/* Personal Code — identity field from the account: read-only, never submitted.
+                  Same pattern as Settings → Edit Profile. */}
               <div>
                 <label className={labelClass}>{t("becomeSkillbuddy.personalCode")} *</label>
                 <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]{11}"
-                  maxLength={11}
-                  className={inputClass(errors.personalCode)}
-                  placeholder="00000000000"
-                  value={form.personalCode}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "").slice(0, 11);
-                    set("personalCode", val);
-                  }}
+                  type="text"
+                  className={`${inputClass()} bg-muted cursor-not-allowed opacity-80`}
+                  placeholder="—"
+                  value={user?.personal_code ?? ""}
+                  readOnly
+                  disabled
                 />
-                <p className="mt-1 text-xs text-muted-foreground">{form.personalCode.length}/11 — {t("becomeSkillbuddy.personalCodeHint")}</p>
-                {errors.personalCode && <p className="mt-1 text-xs text-red-500">{errors.personalCode}</p>}
+                <p className="mt-1 text-xs text-muted-foreground">Personal ID code cannot be changed.</p>
+              </div>
+
+              {/* Provider Type — must be one of the enum values the backend accepts */}
+              <div>
+                <label className={labelClass}>Provider Type *</label>
+                <CustomSelect
+                  value={form.providerType}
+                  onChange={(val) => set("providerType", val)}
+                  options={[...PROVIDER_TYPES]}
+                  placeholder="Select provider type"
+                  error={errors.providerType}
+                />
+                {errors.providerType && <p className="mt-1 text-xs text-red-500">{errors.providerType}</p>}
               </div>
 
               {/* CV Upload */}
@@ -557,14 +804,14 @@ function BecomeASkillBuddy() {
                   placeholder={t("becomeSkillbuddy.aboutPlaceholder")}
                   rows={5}
                   minLength={50}
-                  maxLength={1000}
+                  maxLength={500}
                   style={{ minHeight: 120 }}
                   value={form.bio}
                   onChange={(e) => set("bio", e.target.value)}
                 />
                 <div className="mt-1 flex justify-between">
                   {errors.bio ? <p className="text-xs text-red-500">{errors.bio}</p> : <span />}
-                  <p className={`text-xs ${form.bio.length < 50 ? "text-muted-foreground" : "text-[#2D7A5F]"}`}>{form.bio.length} / 1000</p>
+                  <p className={`text-xs ${form.bio.length < 50 ? "text-muted-foreground" : form.bio.length > 500 ? "text-red-500" : "text-[#2D7A5F]"}`}>{form.bio.length} / 500</p>
                 </div>
               </div>
 
