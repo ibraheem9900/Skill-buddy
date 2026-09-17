@@ -13,7 +13,8 @@ import { useProviderCurrentStatus } from "@/hooks/use-provider-current-status";
 import { useCountries, getFlagEmoji } from "@/hooks/use-countries";
 import { useCounties } from "@/hooks/use-counties";
 import { useCities } from "@/hooks/use-cities";
-import { fetchServices } from "@/lib/services-api";
+import { useCategories } from "@/hooks/use-categories";
+import type { ApiService } from "@/lib/services-api";;
 
 export const Route = createFileRoute("/become-a-skillbuddy")({
   head: () => ({
@@ -25,21 +26,27 @@ export const Route = createFileRoute("/become-a-skillbuddy")({
   component: BecomeASkillBuddy,
 });
 
-const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
-  "Creative & Design": ["Photographer", "Graphic Designer", "Interior Designer", "Architect", "Videographer", "Illustrator"],
-  "Pet Care": ["Pet Sitter", "Dog Walker", "Pet Trainer", "Vet Assistant", "Groomer"],
-  "Beauty & Personal Care": ["Makeup Artist", "Hair Stylist", "Nail Artist", "Barber", "Esthetician", "Eyebrow Specialist"],
-  "Health & Wellness": ["Yoga Instructor", "Personal Trainer", "Massage Therapist", "Nutritionist", "Life Coach", "Physiotherapist"],
-  "Home & Property": ["Home Cleaner", "Plumber", "Electrician", "Painter", "AC Repair", "Laundry", "Pool Cleaner", "Locksmith", "Window Cleaner", "Carpet Cleaner"],
-  "Personal & Household Assistance": ["Caretaker", "Driver", "Cook", "Babysitter", "House Keeper", "Personal Assistant"],
-  "Education & Training": ["Home Tutor", "Music Teacher", "Dance Teacher", "Language Coach", "Sports Coach", "Driving Instructor"],
-  "Event & Party": ["Event Planner", "DJ", "Decorator", "Catering", "Photographer", "Entertainer"],
-  "Business & Professional": ["Accountant", "Legal Advisor", "IT Support", "Marketing Consultant", "Bookkeeper", "Tax Advisor"],
-  "Travel & Transportation": ["Tour Guide", "Driver", "Moving & Shifting", "Travel Planner", "Airport Transfer"],
-  "Repair & Customization": ["Shoe Repair", "Tailor", "Phone Repair", "General Repair", "Furniture Repair", "Appliance Repair"],
-};
+// ─── Backend-driven data ─────────────────────────────────────────────────────
 
-const CATEGORIES_LIST = Object.keys(CATEGORY_SUBCATEGORIES);
+// Categories and services are fetched LIVE from the backend — no hardcoded
+// lists. Categories come from GET /api/v1/categories (via the shared
+// useCategories hook); each category's services come from
+// GET /api/v1/categories/{category_id}/services so preference selections map
+// to REAL service ids for the favorites workaround below.
+
+// Per-session cache of services per category_id (same pattern as use-counties)
+const categoryServicesCache = new Map<number, ApiService[]>();
+
+async function fetchCategoryServices(categoryId: number): Promise<ApiService[]> {
+  const cached = categoryServicesCache.get(categoryId);
+  if (cached) return cached;
+  const data = await apiClient.get<ApiService[]>(
+    `/api/v1/categories/${categoryId}/services`
+  );
+  const arr = Array.isArray(data) ? data : [];
+  categoryServicesCache.set(categoryId, arr);
+  return arr;
+}
 
 type FormData = {
   firstName: string;
@@ -183,7 +190,7 @@ function BecomeASkillBuddy() {
   // PART 3: Pre-fill form with logged-in user's data
   const [formInitialized, setFormInitialized] = useState(false);
 
-  const validate = (data: FormData, addr: AddressForm): FormErrors => {
+  const validate = (data: FormData, addr: AddressForm, categoryHasServices: boolean): FormErrors => {
     const errors: FormErrors = {};
     if (!data.firstName.trim()) errors.firstName = t("becomeSkillbuddy.firstNameRequired");
     if (!data.lastName.trim()) errors.lastName = t("becomeSkillbuddy.lastNameRequired");
@@ -194,7 +201,9 @@ function BecomeASkillBuddy() {
     else if (!addr.city_id) errors.address = "Please select your city.";
     else if (!addr.street_address.trim()) errors.address = "Please enter your street address.";
     if (!data.category) errors.category = t("becomeSkillbuddy.categoryRequired");
-    if (data.category && !data.preference1) errors.preference1 = "Please select your Preference 1";
+    // Preference 1 is only mandatory when the backend actually has services in
+    // the selected category — with zero services there is nothing to choose.
+    if (data.category && categoryHasServices && !data.preference1) errors.preference1 = "Please select your Preference 1";
     if (!data.bio.trim() || data.bio.trim().length < 50) errors.bio = t("becomeSkillbuddy.bioMinLength");
     if (data.bio.trim().length > 500) errors.bio = "Bio must be 500 characters or fewer.";
     if (!data.hourlyRate || isNaN(Number(data.hourlyRate)) || Number(data.hourlyRate) <= 0) errors.hourlyRate = "Please enter a valid hourly rate.";
@@ -222,6 +231,58 @@ function BecomeASkillBuddy() {
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
   const { countries: countriesList, loading: countriesLoading } = useCountries();
+
+  // Categories fetched LIVE from GET /api/v1/categories (shared cached hook —
+  // the same one powering /categories and the homepage carousel).
+  const {
+    categories: backendCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    retry: retryCategories,
+  } = useCategories();
+
+  // FIXED hook order: this hook used to be called inside the `submitted`
+  // render branch, which crashed React with error #310 ("rendered more hooks
+  // than during the previous render"). It must be called unconditionally —
+  // `enabled` gates the fetch instead.
+  const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(submitted);
+
+  // Services of the selected category — fetched live from
+  // GET /api/v1/categories/{category_id}/services so the preference dropdowns
+  // show REAL services and each selection maps to a real service_id for the
+  // favorites workaround in handleSubmit.
+  const [categoryServices, setCategoryServices] = useState<ApiService[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+  const selectedCategoryId = backendCategories.find((c) => c.name === form.category)?.id ?? null;
+
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      setCategoryServices([]);
+      setServicesError(null);
+      setServicesLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setServicesLoading(true);
+    setServicesError(null);
+    fetchCategoryServices(selectedCategoryId)
+      .then((data) => {
+        if (!cancelled) setCategoryServices(data);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCategoryServices([]);
+          setServicesError("Couldn't load services for this category.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setServicesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCategoryId]);
 
   const countryIdNum = address.country_id ? Number(address.country_id) : null;
   const countyIdNum = address.county_id ? Number(address.county_id) : null;
@@ -314,7 +375,7 @@ function BecomeASkillBuddy() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs = validate(form, address);
+    const errs = validate(form, address, categoryServices.length > 0);
     const addrFieldErrors: Record<string, string> = {};
     if (errs.address) addrFieldErrors.address = errs.address;
     const otherErrs: FormErrors = { ...errs };
@@ -342,30 +403,43 @@ function BecomeASkillBuddy() {
       // ── TEMPORARY WORKAROUND — provider category preferences ────────────────
       // There is no dedicated backend endpoint yet for storing a provider's
       // selected service categories/preferences. Until one exists, persist the
-      // category/preference selections via the existing Client Favorites API
-      // (POST /api/v1/clients/favorites { service_id }). The backend currently
-      // exposes no services matching these category names, so the matching
-      // service_id lookup is best-effort: when no service exists for a
-      // selection, the failed POST is logged (not silently swallowed) and the
-      // overall application flow still succeeds. REPLACE THIS BLOCK when the
-      // dedicated provider-preferences endpoint ships.
+      // selections via the existing Client Favorites API
+      // (POST /api/v1/clients/favorites { service_id }).
+      //
+      // The dropdowns are backend-driven: Preference 1/2 are REAL service
+      // titles from GET /api/v1/categories/{category_id}/services, so the
+      // service_id comes straight from the fetched objects (no name guessing).
+      // The selected category itself is favorited via its first service (a
+      // category has no own service_id), skipped when the category is empty.
+      // Each POST fails independently (Promise.allSettled) without blocking
+      // the application flow. REPLACE THIS BLOCK when the dedicated
+      // provider-preferences endpoint ships.
       try {
-        const services = await fetchServices();
+        let services = categoryServices;
+        if (services.length === 0 && selectedCategoryId != null) {
+          // Fresh fetch in case the user submitted before the cascade loaded
+          services = await fetchCategoryServices(selectedCategoryId);
+        }
         const byTitle = new Map(services.map((s) => [s.title.toLowerCase().trim(), s.id]));
-        const byCategory = new Map(services.map((s) => [s.category_name.toLowerCase().trim(), s.id]));
-        const selections = [form.category, form.preference1, form.preference2].filter(Boolean);
+        const prefIds = new Set<number>();
+        for (const pref of [form.preference1, form.preference2]) {
+          if (!pref) continue;
+          const id = byTitle.get(pref.toLowerCase().trim());
+          if (id != null) prefIds.add(id);
+          else console.warn(`[become-a-skillbuddy] TEMPORARY favorites workaround: no service_id found for preference "${pref}"`);
+        }
+        const categoryFirstServiceId =
+          prefIds.size === 0 && services.length > 0 ? services[0].id : null;
+        const idsToFavorit = [
+          ...prefIds,
+          ...(categoryFirstServiceId != null && prefIds.size === 0
+            ? [categoryFirstServiceId]
+            : []),
+        ];
         const results = await Promise.allSettled(
-          selections.map(async (name) => {
-            const serviceId =
-              byTitle.get(name.toLowerCase().trim()) ??
-              byCategory.get(name.toLowerCase().trim());
-            if (serviceId == null) {
-              throw new Error(
-                `No backend service matches "${name}" — cannot store as favorite yet.`
-              );
-            }
+          idsToFavorit.map(async (serviceId) => {
             await apiClient.post("/api/v1/clients/favorites", { service_id: serviceId });
-            return { name, serviceId };
+            return serviceId;
           })
         );
         for (const r of results) {
@@ -397,8 +471,9 @@ function BecomeASkillBuddy() {
   }
 
   if (submitted) {
-    // Fetch the current application status to display
-    const { currentStatus, loading: statusLoading } = useProviderCurrentStatus(true);
+    // currentStatus/statusLoading come from useProviderCurrentStatus(submitted)
+    // at the top of the component — a hook must never be called inside a
+    // conditional branch (that was crashing React with error #310).
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -747,16 +822,26 @@ function BecomeASkillBuddy() {
                     setForm((p) => ({ ...p, category: val, preference1: "", preference2: "" }));
                     if (errors.category) setErrors((p) => { const n = { ...p }; delete n.category; return n; });
                   }}
-                  options={CATEGORIES_LIST}
-                  placeholder={t("becomeSkillbuddy.categoryPlaceholder")}
+                  options={backendCategories.map((c) => c.name)}
+                  placeholder={categoriesLoading ? "Loading categories…" : t("becomeSkillbuddy.categoryPlaceholder")}
                   error={errors.category}
                 />
+                {categoriesError && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {categoriesError}{" "}
+                    <button type="button" onClick={retryCategories} className="underline hover:no-underline">Retry</button>
+                  </p>
+                )}
+                {!categoriesLoading && !categoriesError && backendCategories.length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">No categories are available right now.</p>
+                )}
                 {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
               </div>
 
-              {/* Preference 1 + Preference 2 — fade in after category selected. Both share the
-                  identical options list (the selected category's specific services); Preference 2
-                  excludes whatever is chosen in Preference 1 to prevent picking the same value twice. */}
+              {/* Preference 1 + Preference 2 — fade in after category selected. Options are
+                  the selected category's REAL services from
+                  GET /api/v1/categories/{category_id}/services; Preference 2 excludes whatever
+                  is chosen in Preference 1 to prevent picking the same value twice. */}
               <AnimatePresence>
                 {form.category && (
                   <motion.div
@@ -766,19 +851,23 @@ function BecomeASkillBuddy() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="space-y-5"
                   >
-                    {/* Preference 1 — MANDATORY */}
+                    {/* Preference 1 — mandatory when the category has services */}
                     <div>
-                      <label className={labelClass}>Preference 1 *</label>
+                      <label className={labelClass}>
+                        Preference 1 {categoryServices.length === 0 && !servicesLoading && <span className="text-muted-foreground font-normal">(no services available yet)</span>}
+                      </label>
                       <CustomSelect
                         value={form.preference1}
                         onChange={(val) => {
                           set("preference1", val);
                           if (errors.preference1) setErrors((p) => { const n = { ...p }; delete n.preference1; return n; });
                         }}
-                        options={CATEGORY_SUBCATEGORIES[form.category] ?? []}
-                        placeholder="Choose your preferred service"
+                        options={categoryServices.map((s) => s.title)}
+                        disabled={servicesLoading || categoryServices.length === 0}
+                        placeholder={servicesLoading ? "Loading services…" : categoryServices.length === 0 ? "No services in this category yet" : "Choose your preferred service"}
                         error={errors.preference1}
                       />
+                      {servicesError && <p className="mt-1 text-xs text-red-500">{servicesError}</p>}
                       {errors.preference1 && <p className="mt-1 text-xs text-red-500">{errors.preference1}</p>}
                     </div>
 
@@ -788,8 +877,9 @@ function BecomeASkillBuddy() {
                       <CustomSelect
                         value={form.preference2}
                         onChange={(val) => set("preference2", val)}
-                        options={(CATEGORY_SUBCATEGORIES[form.category] ?? []).filter((opt) => opt !== form.preference1)}
-                        placeholder="Choose another preference (optional)"
+                        options={categoryServices.map((s) => s.title).filter((opt) => opt !== form.preference1)}
+                        disabled={servicesLoading || categoryServices.length === 0}
+                        placeholder={servicesLoading ? "Loading services…" : categoryServices.length === 0 ? "No services in this category yet" : "Choose another preference (optional)"}
                       />
                     </div>
                   </motion.div>
